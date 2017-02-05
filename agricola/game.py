@@ -1,345 +1,34 @@
-import abc
 from future.utils import iteritems
 import itertools
 import copy
 
-from agricola import Player, TextInterface, AgricolaInvalidChoice
+from agricola import (
+    Player, TextInterface, AgricolaException)
+from agricola.action import get_actions, get_simple_actions
+from agricola.cards import get_occupations, get_minor_improvements, get_major_improvements
 from agricola.utils import check_random_state
 
-
-# TODO: have classes for each of the configurations that are talked about in
-# the agricola manual (e.g. 2 players, 3 player, 4 players, variations, etc.).
-
-# TODO: to implement choices, each action can supply a list of choices to make,
-# and can require that when taking the action, values for those choices are supplied.
-# So a form of "lookahead".
-
-# TODO: decide whether exceptions should be thrown or return True/False when actions can't be applied.
-
-
-class Action(object):
-    @abc.abstractmethod
-    def __str__(self):
-        raise NotImplemented()
-
-    def choices(self, game):
-        return []
-
-    @abc.abstractmethod
-    def condition(self, game, player, choices=None):
-        return False
-
-    @abc.abstractmethod
-    def effect(self, game, player, choices=None):
-        pass
-
-    def turn(self):
-        # Called at the beginning of every round.
-        pass
-
-
-class AlwaysApplies(Action):
-    def condition(self, game, player, choices=None):
-        return True
-
-
-class ResourceAcquisition(AlwaysApplies):
-    resources = {}
-
-    def __str__(self):
-        s = ["<" + self.__class__.__name__ + ":"]
-
-        pairs = list(iteritems(self.resources))
-        n_pairs = len(pairs)
-
-        for i, (k, v) in enumerate(pairs[:-1]):
-            s.append("+{0} {1},".format(v, k[2:]))
-        if n_pairs > 1:
-            s.append("and")
-        s.append("+{0} {1}".format(pairs[-1][1], pairs[-1][0]))
-
-        return ' '.join(s) + '>'
-
-    def effect(self, game, player, choices=None):
-        for resource, amount in iteritems(self.resources):
-            setattr(player, resource, getattr(player, resource) + amount)
-
-
-class Accumulating(ResourceAcquisition):
-    acc_amount = {}
-
-    def __init__(self):
-        self.resources = {}
-        for k, v in iteritems(self.acc_amount):
-            self.resources[k] = 0
-
-    def __str__(self):
-        s = ["<" + self.__class__.__name__ + ":"]
-
-        pairs = list(iteritems(self.resources))
-        n_pairs = len(pairs)
-
-        for i, (k, v) in enumerate(pairs[:-1]):
-            s.append("+{0} {1},".format(v, k[2:]))
-        if n_pairs > 1:
-            s.append("and")
-        s.append("+{0} {1}".format(pairs[-1][1], pairs[-1][0]))
-
-        pairs = list(iteritems(self.acc_amount))
-        n_pairs = len(pairs)
-
-        s.append("(replenishes")
-        for i, (k, v) in enumerate(pairs[:-1]):
-            s.append("+{0} {1},".format(v, k[2:]))
-        if n_pairs > 1:
-            s.append("and")
-        s.append("+{0} {1})".format(pairs[-1][1], pairs[-1][0]))
-
-        return ' '.join(s) + '>'
-
-    def effect(self, game, player, choices=None):
-        super(Accumulating, self).effect(player)
-        for resource in self.acc_amount:
-            self.resources[resource] = 0
-
-    def turn(self):
-        for resource, amount in iteritems(self.acc_amount):
-            self.resources[resource] += amount
-
-
-class BasicWishForChildren(Action):
-    def condition(self, game, player, choices=None):
-        return player.people_avail > 0
-
-    def effect(self, game, player, choices=None):
-        player.add_people(1)
-
-
-class ModestWishForChildren(Action):
-    def condition(self, game, player):
-        pass
-
-
-class UrgentWishForChildren(Action):
-    pass
-
-
-class DayLaborer(ResourceAcquisition):
-    resources = dict(food=2)
-
-
-class Fishing(Accumulating):
-    acc_amount = dict(food=1)
-
-
-class TravellingPlayers(Fishing):
-    pass
-
-
-class Copse(Accumulating):
-    acc_amount = dict(wood=1)
-
-
-class Grove(Accumulating):
-    acc_amount = dict(wood=2)
-
-
-class Forest(Accumulating):
-    acc_amount = dict(wood=3)
-
-
-class ClayPit(Accumulating):
-    acc_amount = dict(clay=1)
-
-
-class Hollow(Accumulating):
-    acc_amount = dict(clay=2)
-
-
-class EasternQuarry(Accumulating):
-    acc_amount = dict(stone=1)
-
-
-class WesternQuarry(EasternQuarry):
-    pass
-
-
-class ResourceMarket2Player(ResourceAcquisition):
-    resources = dict(food=1, stone=1)
-
-
-class ResourceMarket3Player(ResourceAcquisition):
-    resources = dict(food=1)
-
-    def choices(self, game):
-        return [("1 reed/1 stone", ["reed", "stone"])]
-
-    def effect(self, game, player, choices=None):
-        reed = choices[0] == 'reed'
-        stone = choices[0] == 'stone'
-
-        if not reed and not stone:
-            raise AgricolaInvalidChoice()
-
-        resources = self.resources.copy()
-        resources[choices[0]] = 1
-
-        for resource, amount in iteritems(self.resources):
-            setattr(player, resource, getattr(player, resource) + amount)
-
-
-class ResourceMarket4Player(ResourceAcquisition):
-    resources = dict(food=1, stone=1, reed=1)
-
-
-class ReedBank(Accumulating):
-    acc_amount = dict(reed=1)
-
-
-class SheepMarket(Accumulating):
-    acc_amount = dict(sheep=1)
-
-
-class PigMarket(Accumulating):
-    acc_amount = dict(boar=1)
-
-
-class CattleMarket(Accumulating):
-    acc_amount = dict(cattle=1)
-
-
-class AnimalMarket(ResourceAcquisition):
-    resources = dict()
-
-    def choices(self, game):
-        return [("1 sheep, 1 food/1 boar/1 cow, -1 food", ["sheep", "boar", "cow"])]
-
-    def effect(self, game, player, choices=None):
-        resources = self.resources.copy()
-        if choices[0] == "sheep":
-            resources['food'] = 1
-        elif choices[0] == "boar":
-            pass
-        elif choices[0] == "cow":
-            resources['food'] = -1
-        else:
-            raise AgricolaInvalidChoice()
-
-        resources[choices[0]] = 1
-
-        for resource, amount in iteritems(self.resources):
-            setattr(player, resource, getattr(player, resource) + amount)
-
-
-class FarmExpansion(Action):
-    def condition(self, game, player, choices=None):
-        return len(player.empty_spaces) > 0
-
-    def choices(self, game):
-        return [("Locations.", None), ('Stable locations.', None)]
-
-    def effect(self, game, player, choices=None):
-        if len(choices) < 2:
-            raise AgricolaInvalidChoice()
-
-        if not isinstance(choices[0], list) and not isinstance(choices[1], list):
-            raise AgricolaInvalidChoice("At least one of the two actions (build rooms or build stables) must be selected to use this action space.")
-
-        room_spaces = choices[0]
-        if room_spaces is None:
-            pass
-        elif isinstance(room_spaces, list):
-            player.build_rooms(room_spaces)
-        else:
-            raise AgricolaInvalidChoice()
-
-        stable_spaces = choices[0]
-        if stable_spaces is None:
-            pass
-        elif isinstance(stable_spaces, list):
-            player.build_stables(stable_spaces)
-        else:
-            raise AgricolaInvalidChoice()
-
-
-class HouseRedevelopment(Action):
-    pass
-
-
-class FarmRedevelopment(Action):
-    pass
-
-
-class MajorImprovement(Action):
-    pass
-
-
-class Fencing(Action):
-    pass
-
-
-class Lessons(Action):
-    pass
-
-
-class Lessons3Player(Action):
-    pass
-
-
-class Lessons4Player(Action):
-    pass
-
-
-class MeetingPlace(Action):
-    # TODO: consider passing in the overall game state along with the player state.
-    def effect(self, game, player, choices=None):
-        game.set_first(player)
-
-
-class MeetingPlaceFamily(Accumulating, MeetingPlace):
-    acc_amount = dict(food=1)
-
-    def effect(self, game, player, choices=None):
-        MeetingPlace.effect(self, game, player)
-        Accumulating.effect(self, game, player)
-
-
-class Farmland(Action):
-    def condition(self, game, player, choices=None):
-        return len(player.empty_spaces) > 0
-
-    def effect(self, game, player, choices=None):
-        # TODO: need to accept fields...
-        player.plow_fields()
-
-
-class Cultivation(Action):
-    def condition(self, game, player, choices=None):
-        return len(player.empty_spaces) > 0
-
-    def effect(self, game, player, choices=None):
-        # TODO: need to accept fields...
-        player.plow_fields()
-
-
-class GrainUtilization(Action):
-    pass
-
-
-class GrainSeeds(ResourceAcquisition):
-    resources = dict(grain=1)
-
-
-class VegetableSeeds(ResourceAcquisition):
-    resources = dict(veg=1)
-
-
-class SideJob(Action):
-    pass
-
-
-class CompoundAction(Action):
-    pass
+# TODO: make sure that certain actions which allow two things to be done have
+# the order of the two things respected (and make sure player can't take the
+# action if they can't take the first action.
+
+
+class DefaultCardDrawer(object):
+    def __init__(self, cards_per_player=7):
+        self.cards_per_player = cards_per_player
+
+    def draw_cards(self, n_players, deck, rng=None):
+        rng = check_random_state(rng)
+
+        cards = rng.choice(deck, n_players * self.cards_per_player, replace=False)
+        rng.shuffle(cards)
+        cards = list(cards)
+
+        hands = []
+        for i in range(n_players):
+            hand = cards[i*self.cards_per_player:(i+1)*self.cards_per_player]
+            hands.append(hand)
+        return hands
 
 
 class AgricolaGame(object):
@@ -359,13 +48,23 @@ class AgricolaGame(object):
         If a list, length must be equal to ``n_players`` (allows specifying
         different starting configurations for different players). If not
         supplied, the default starting configuration is used for every player.
+    occupations: list of Occupation instances
+        Pool of occupations to draw from.
+    minor_improvements: list of MinorImprovement instances
+        Pool of minor improvements to draw from.
+    major_improvements: list of MajorImprovement instances
+        Pool of major improvements to draw from.
     randomize: bool (default: True)
         If False, respect the within-stage ordering of actions
         in ``actions``. Otherwise, randomize the order of the
         actions within a stage.
 
     """
-    def __init__(self, actions, n_players, initial_player=None, randomize=True):
+    def __init__(
+            self, actions, n_players, initial_player=None,
+            occupations=None, minor_improvements=None, major_improvements=None,
+            occ_card_drawer=None, mi_card_drawer=None, randomize=True):
+
         self.actions = actions
         self.n_players = n_players
 
@@ -379,12 +78,19 @@ class AgricolaGame(object):
                     "``initial_player`` must be an agricola.Player instance or "
                     "a list thereof.")
         elif initial_player is None:
-            initial_player = Player()
+            initial_player = Player("0")
         elif not isinstance(initial_player, Player):
             raise ValueError(
                 "``initial_player`` must be an agricola.Player instance or "
                 "a list thereof.")
         self.initial_player = initial_player
+
+        self.occupations = occupations
+        self.minor_improvements = minor_improvements
+        self.major_improvements = major_improvements or []
+
+        self.occ_card_drawer = occ_card_drawer or DefaultCardDrawer()
+        self.mi_card_drawer = mi_card_drawer or DefaultCardDrawer()
 
         self.randomize = randomize
 
@@ -400,6 +106,8 @@ class AgricolaGame(object):
         return ''.join(s)
 
     def set_first_player(self, player):
+        if isinstance(player, int):
+            player = self.players[player]
         self.first_player = player
 
     @property
@@ -415,25 +123,43 @@ class AgricolaGame(object):
         else:
             self.action_order = self.actions
 
-        self.players = [copy.deepcopy(self.initial_player) for i in range(self.n_players)]
-        self.first_player = first_player or rng.randint(self.n_players)
+        self.players = [
+            copy.deepcopy(self.initial_player) for i in range(self.n_players)]
+        for i, p in enumerate(self.players):
+            p.name = str(i)
+
+        if self.occupations:
+            occ_hands = self.occ_card_drawer.draw_cards(
+                self.n_players, self.occupations, rng)
+            for hand, player in zip(occ_hands, self.players):
+                player.give_cards('occupations', hand)
+
+        if self.minor_improvements:
+            mi_hands = self.mi_card_drawer.draw_cards(
+                self.n_players, self.minor_improvements, rng)
+            for hand, player in zip(mi_hands, self.players):
+                player.give_cards('minor_improvements', hand)
+
+        self.set_first_player(first_player or rng.randint(self.n_players))
 
         players = self.players
         ui.start_game(self)
 
-        round_idx = 1
-        stage_idx = 1
+        self.round_idx = 1
+        self.stage_idx = 1
         self.actions_taken = {}
+
+        # Main loop
 
         actions_avail = self.actions_avail = [a for a in self.action_order[0]]
         for stage_actions in self.action_order[1:]:
-            ui.begin_stage(stage_idx)
+            ui.begin_stage(self.stage_idx)
             for round_action in stage_actions:
                 actions_avail.append(round_action)
                 for action in actions_avail:
                     action.turn()
 
-                ui.begin_round(round_idx, round_action)
+                ui.begin_round(self.round_idx, round_action)
 
                 player_turns = [p.people for p in players]
                 remaining_players = set(range(len(players)))
@@ -448,25 +174,34 @@ class AgricolaGame(object):
                         action = None
                         while action is None:
                             action = ui.get_action(i)
+
                             if action not in actions_avail:
                                 ui.action_failed(
                                     "that action is not available this round")
                                 action = None
+                                continue
                             elif action in self.actions_taken:
                                 ui.action_failed(
                                     "that action has already been taken by "
                                     "player {0}".format(self.actions_taken[action]))
                                 action = None
+                                continue
 
-                            elif not action.condition(self, players[i]):
-                                ui.action_failed(
-                                    "player {0} does not meet the requirements "
-                                    "for performing that action".format(i))
+                            choices = action.choices(self, players[i])
+                            if choices:
+                                choices = ui.get_choices(self.players[i], choices)
 
+                            try:
+                                action.effect(self, players[i], choices)
+                            except AgricolaException as e:
+                                ui.action_failed(str(e))
                                 action = None
+
                         ui.action_successful()
 
-                        action.effect(players[i])
+                        print("Player after action: ")
+                        print(players[i])
+
                         self.actions_taken[action] = i
 
                         player_turns[i] -= 1
@@ -476,14 +211,14 @@ class AgricolaGame(object):
                                 break
 
                 ui.end_round()
-                round_idx += 1
+                self.round_idx += 1
 
             ui.harvest()
             for p in players:
                 p.harvest()
             ui.end_stage()
 
-            stage_idx += 1
+            self.stage_idx += 1
 
         self.score = {}
 
@@ -492,8 +227,53 @@ class AgricolaGame(object):
             self.score[i] = p.score()
 
 
+class SimpleAgricolaGame(AgricolaGame):
+    def __init__(self, n_players):
+        from agricola.action import Lessons
+        actions = get_simple_actions()
+        occupations = get_occupations(n_players)
+        actions[0].append(Lessons())
+
+        super(SimpleAgricolaGame, self).__init__(
+            actions, n_players, occupations=occupations)
+
+
+class LessonsAgricolaGame(AgricolaGame):
+    def __init__(self, n_players):
+        from agricola.action import Lessons, Farmland, Fencing
+        n_base = 4
+        n_rounds = 2
+        n_phases = 3
+        actions = [[Fencing() for i in range(n_base)]]
+        actions.extend([[Farmland() for i in range(n_rounds)] for j in range(n_phases)])
+        occupations = get_occupations(n_players)
+
+        super(LessonsAgricolaGame, self).__init__(
+            actions, n_players, occupations=occupations)
+
+
+class StandardAgricolaGame(AgricolaGame):
+    def __init__(self, n_players, family=False):
+        actions = get_actions(family, n_players)
+
+        if family:
+            occupations, minor_improvements = None, None
+        else:
+            occupations = get_occupations(n_players)
+            minor_improvements = get_minor_improvements()
+
+        major_improvements = get_major_improvements()
+
+        super(StandardAgricolaGame, self).__init__(
+            actions, n_players,
+            occupations=occupations,
+            minor_improvements=minor_improvements,
+            major_improvements=major_improvements)
+
+
 if __name__ == "__main__":
-    actions = [[Copse(), Grove(), Fishing()], [Forest(), DayLaborer()]]
-    game = AgricolaGame(actions, 1)
+    #game = LessonsAgricolaGame(2)
+    #game = SimpleAgricolaGame(2)
+    game = StandardAgricolaGame(2)
     ui = TextInterface()
     game.play(ui)

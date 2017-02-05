@@ -1,7 +1,5 @@
-# agricola
-from agricola.main import (
-    AgricolaException, AgricolaLogicError,
-    AgricolaNotEnoughResources, AgricolaPoorlyFormed,
-    AgricolaImpossible, AgricolaInvalidChoice)
-from agricola.player import Player
-from agricola.ui import TextInterface
+from .exceptions import (
+    AgricolaException, AgricolaNotEnoughResources, AgricolaLogicError,
+    AgricolaPoorlyFormed, AgricolaInvalidChoice, AgricolaImpossible)
+from .player import Player
+from .ui import TextInterface

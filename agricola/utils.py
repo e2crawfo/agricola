@@ -41,16 +41,19 @@ def _fence_loc_to_grid_loc(fence_loc, cell_shape):
     return np.array(fence_loc) * (cell_shape + 1)
 
 
-def draw_grid(cells, cell_shape, fences=None):
+def draw_grid(cells, cell_shape, fences=None, enum=True):
     """
     Parameters
     ----------
     cells: numpy array
-        pass
+        Each element gives the character to draw at a location
+        in the larger grid.
     cell_shape: tuple-like, length=2
         Shape of a cell in *matrix* format (y-idx first).
     fences: list of fences
         Fences to draw (also in matrix format).
+    enum: bool
+        Whether to put co-ordinates in margins.
 
     """
     fences = fences or []
@@ -96,7 +99,26 @@ def draw_grid(cells, cell_shape, fences=None):
         for j in range(shape[1]):
             upper_left = 1 + np.array((i, j)) * (1 + cell_shape)
             bottom_right = upper_left + cell_shape
-            grid[upper_left[0]:bottom_right[0], upper_left[1]:bottom_right[1]] = cells[i, j]
+            grid[upper_left[0]:bottom_right[0],
+                 upper_left[1]:bottom_right[1]] = cells[i, j]
+
+    if enum:
+        top = np.tile(np.array(' '), (1, grid.shape[1]))
+        unit_width = cell_shape[1] + 1
+        for i in range(cells.shape[1]):
+            s = str(i)
+            start = i * unit_width + int(unit_width/2.0)
+            top[0, start] = s
+
+        left = np.tile(np.array(' '), (grid.shape[0] + 1, 1))
+        unit_height = cell_shape[0] + 1
+        for i in range(cells.shape[0]):
+            s = str(i)
+            start = 1 + i * unit_height + int(unit_height/2.0)
+            left[start, 0] = s
+
+        grid = np.vstack((top, grid))
+        grid = np.hstack((left, grid))
 
     return '\n'.join(''.join(c for c in row) for row in grid)
 

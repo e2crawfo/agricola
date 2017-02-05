@@ -1,14 +1,17 @@
-import numpy as np
-import networkx as nx
+import abc
 import itertools
 from collections import OrderedDict, Counter
-import abc
 from future.utils import with_metaclass, iteritems
+from copy import deepcopy
+from pprint import pformat
+
+import numpy as np
+import networkx as nx
 
 from agricola.utils import (
     multiset_satisfy, draw_grid, index_check, orthog_adjacent)
 from agricola import (
-    AgricolaNotEnoughResources, AgricolaLogicError,
+    AgricolaException, AgricolaNotEnoughResources, AgricolaLogicError,
     AgricolaPoorlyFormed, AgricolaImpossible)
 
 
@@ -175,69 +178,94 @@ RESOURCE_TYPES = ('food wood clay stone reed sheep boar cattle grain veg '
                   'rooms people people_avail grain_fields veg_fields empty_fields fields '
                   'empty_spaces used_spaces')
 RESOURCE_TYPES = RESOURCE_TYPES.split(' ')
+ANIMALS = ['sheep', 'boar', 'cattle']
 
 
 class PlayerStateChange(object):
     """ Encapsulates a change to a Player object.
 
+    Supposed to allow atomic changes, so that a set of changes will be completely
+    applied if an only if a set of conditions are all met.
+
     Parameters
     ----------
     description: str
         Textual description of the change to effect.
-    cost: dict (str -> int)
-        Dictionary mapping from resource names to integers
-        specifying the amount of that resource required before applying
-        this state change. This argument can be omitted.
     change: dict (str -> int) (optional)
         Dictionary mapping from resource names to integers
         specifying the delta to be applied for that resource. This
         argument can be omitted, in which case this object simply
-        checks that the supplied costs are satisfied.
+        checks that the supplied prereq are satisfied. No resource amounts
+        are permitted to go below 0.
+    prereq: dict (str -> int)
+        Dictionary mapping from resource names to integers
+        specifying the minimum amount of that resource required
+        for applying this state change. This argument can be omitted.
+        Some things that seem like prereqs can actually be supplied
+        as changes.
+    change_fns: list of fn (player, game)
+        List of functions, each accepting a player and a game, and returning None.
+        Allowed to make modifications to the player, should not alter the game.
+    prereq_fns: list of fn (player, game)
+        List of functions, each accepting a player and a game, and returning a boolean
+        giving whether the player meets the prerequisites checked by that function.
+        Should not alter the player or the game.
 
     """
-    def __init__(self, description, cost=None, change=None):
+    def __init__(self, description, change=None, prereq=None, change_fns=None, prereq_fns=None):
         self.description = description
-        self.cost = cost or {}
-        for k, v in cost:
+
+        self.change = change or {}
+        self.prereq = prereq or {}
+
+        self.change_fns = change_fns or []
+        self.prereq_fns = prereq_fns or []
+
+        for k, v in iteritems(self.change):
             if k not in RESOURCE_TYPES:
                 raise AgricolaLogicError(
                     "Malformed PlayerStateChange object. "
                     "{0} is not a valid resource type.".format(k))
-        self.change = change or {}
+
+            if v < 0:
+                self.prereq[k] = self.prereq.get(k, 0) - v
 
     def check_and_apply(self, player):
-        for key, val in iteritems(self.cost):
-            if getattr(player, key) < self.cost[key]:
+        for k, v in iteritems(self.prereq):
+            if getattr(player, k) < v:
                 raise AgricolaNotEnoughResources(self._error_message(player))
 
+        for fn in self.prereq_fns:
+            if not fn(self, self.game):
+                raise AgricolaException("Prerequisite unsatisfied.")
+
         for k, v in iteritems(self.change):
-            player.k += v
+            setattr(player, k, v + getattr(player, k))
+
+        for fn in self.change_fns:
+            fn(self, self.game)
 
     def _error_message(self, player):
         s = [self.description + ' requires']
-        pairs = list(iteritems(self.cost))
-        n_pairs = len(pairs)
 
-        for i, (k, v) in enumerate(pairs[:-1]):
-            s.append("{0} {1},".format(v, k[2:]))
-        if n_pairs > 1:
-            s.append("and")
-        s.append("{0} {1},".format(pairs[-1][1], pairs[-1][0]))
+        pairs = list(iteritems(self.prereq))
+
+        _s = []
+        for k, v in pairs:
+            _s.append("{0} {1}".format(v, k))
+        s.append('/'.join(_s))
 
         s.append("but player only has")
-        for i, (k, v) in enumerate(pairs):
-            s.append("{0} {1},".format(v, getattr(player, k)))
-        if n_pairs > 1:
-            s.append("and")
-        s.append("{0} {1}.".format(pairs[-1][1], pairs[-1][0]))
+
+        _s = []
+        for k, v in pairs:
+            _s.append("{0} {1}".format(getattr(player, k), k))
+        s.append('/'.join(_s))
 
         return ' '.join(s)
 
 
 class Player(object):
-    # TODO: Some resources are defined explicitly, others are defined through properties that
-    # check the status indirectly.
-
     # TODO: In the constructor, just set all self attributes without doing checks. Then at the end, call a function
     # which checks that constraints are satisfied.
 
@@ -249,17 +277,20 @@ class Player(object):
 
     # TODO: Restrict when and how many times cooking can be
     # done (e.g. joinery (wood to food) can only be done once per harvest).
+
+    # TODO: beggar tokens
     def __init__(
-            self, shape=None, house_type='wood', rooms=None, fields=None, stables=None, pastures=None,
+            self, name, shape=None, house_type='wood', rooms=None, fields=None, stables=None, pastures=None,
             food=0, wood=0, clay=0, stone=0, reed=0,
             sheep=0, boar=0, cattle=0, grain=0, veg=0,
-            people=2, people_avail=3, fences_avail=15, stables_avail=4):
+            people=2, people_avail=3, fences_avail=15, stables_avail=4,
+            occupations=None, minor_improvements=None, major_improvements=None, hand=None):
+        self.name = name
 
-        resources = dict(
+        self.resources = dict(
             food=food, wood=wood, clay=clay, stone=stone, reed=reed,
-            sheep=sheep, boar=boar, cattle=cattle, grain=grain, veg=veg)
-        for k, v in iteritems(resources):
-            setattr(self, k, v)
+            grain=grain, veg=veg)
+        self.animals = dict(sheep=sheep, boar=boar, cattle=cattle)
 
         if shape is None:
             shape = (3, 5)
@@ -280,9 +311,17 @@ class Player(object):
 
         self._fields = fields or []
 
-        self.occupations = []
-        self.minor_improvements = []
-        self.major_improvements = []
+        # Played cards
+        self.occupations = occupations or []
+        self.minor_improvements = minor_improvements or []
+        self.major_improvements = major_improvements or []
+        self.played_cards = {
+            attr: getattr(self, attr)
+            for attr in ['occupations', 'minor_improvements', 'major_improvements']}
+
+        # Hand cards
+        hand = hand or {'minor_improvements': [], 'occupations': []}
+        self.hand = deepcopy(hand)
 
         self.house_progression = ['wood', 'clay', 'stone']
         self.room_cost = 5
@@ -290,8 +329,8 @@ class Player(object):
         # The last rate can be applied infinitely many times during a turn.
         self.bread_rates = [0]
 
-        self.cooking_rates = dict(
-            grain=1, veg=1, sheep=0, boar=0, cattle=0, wood=0, clay=0, reed=0)
+        self.cooking_rates = dict(grain=1, veg=1, sheep=0, boar=0, cattle=0)
+        self.harvest_rates = dict(wood=[], clay=[], reed=[])
 
         self.occupied = OrderedDict()
 
@@ -309,6 +348,20 @@ class Player(object):
         self._check_spatial_objects(self._fields, 'field')
         Field.check_connected_group(self._fields)
         self.occupied['field'] = self._fields
+
+    def __getattr__(self, key):
+        if key in ["resources", "animals"]:
+            return self.__getattribute__(key)
+
+        if hasattr(self, "resources") and key in self.resources:
+            return self.resources[key]
+        if hasattr(self, "animals") and key in self.animals:
+            return self.animals[key]
+
+        return self.__getattribute__(key)
+
+    def give_cards(self, attr, cards):
+        self.hand[attr].extend(cards)
 
     @property
     def rooms(self):
@@ -381,9 +434,10 @@ class Player(object):
             for j in range(self.shape[1]):
                 if (i, j) not in used_spaces:
                     empty_spaces.add((i, j))
+        return empty_spaces
 
     def __str__(self):
-        s = "<Player\n\n"
+        s = ["<Player\n"]
         grid = np.tile('.', self.shape)
 
         room_spaces = set(self.room_spaces)
@@ -399,13 +453,24 @@ class Player(object):
                     grid[space] = '^'
                 elif space in field_spaces:
                     grid[space] = '~'
-        s += draw_grid(grid, (3, 4), self.fences)
+        s.append(draw_grid(grid, (3, 5), self.fences))
 
+        x = []
         for key in RESOURCE_TYPES:
-            s += "\n{0}: {1}".format(key, getattr(self, key))
-        s += "\nSCORE: {0}".format(self.score())
-        s += "\n>"
-        return s
+            x.append("{0}: {1}".format(key, getattr(self, key)))
+        s.append(', '.join(x))
+        # for key in RESOURCE_TYPES:
+        #     s.append("{0}: {1}".format(key, getattr(self, key)))
+
+        s.append("Played cards:")
+        s.append(pformat(self.played_cards, indent=1))
+
+        s.append("Hand:")
+        s.append(pformat(self.hand, indent=1))
+
+        s.append("SCORE: {0}".format(self.score()))
+        s.append(">")
+        return '\n'.join(s)
 
     def score(self):
         return 0
@@ -441,43 +506,36 @@ class Player(object):
                                 name, space, object_type))
 
     def add_people(self, n=1):
+        if self.people_avail < n:
+            raise AgricolaImpossible(
+                "Trying to add {0} people, but player has only {1} people "
+                "available.".format(n, self.people_avail))
         self.people += n
+        self.people_avail -= n
 
-    def add_food(self, n=1):
-        self.food += n
+    def add_resources(self, **resources):
+        for r in resources:
+            if r not in self.resources:
+                raise AgricolaPoorlyFormed("{0} is not a resource type".format(r))
 
-    def add_wood(self, n=1):
-        self.wood += n
+        description = "Adding resources "
+        change = {r: amount for r, amount in iteritems(resources)}
+        state_change = PlayerStateChange(description, change=change)
+        state_change.check_and_apply(self)
 
-    def add_clay(self, n=1):
-        self.clay += n
+    def add_animals(self, **animals):
+        for animal, count in iteritems(animals):
+            if animal not in self.animals:
+                raise AgricolaPoorlyFormed("{0} is not an animal type".format(animal))
 
-    def add_stone(self, n=1):
-        self.stone += n
+            animal_counts = self.animals.copy()
+            animal_counts[animal] += count
+            self._check_animal_capacity(animal_counts.values(), count, animal)
+            self.animals[animal] += count
 
-    def add_reed(self, n=1):
-        self.reed += n
-
-    def add_sheep(self, n=1):
-        animal_counts = (self.n_sheep + n, self.n_boar, self.n_cattle)
-        self._check_animal_capacity(animal_counts, n, 'sheep')
-        self.sheep += n
-
-    def add_boar(self, n=1):
-        animal_counts = (self.n_sheep, self.n_boar + n, self.n_cattle)
-        self._check_animal_capacity(animal_counts, n, 'boar')
-        self.boar += n
-
-    def add_cattle(self, n=1):
-        animal_counts = (self.n_sheep, self.n_boar, self.n_cattle + n)
-        self._check_animal_capacity(animal_counts, n, 'cattle')
-        self.cattle += n
-
-    def add_grain(self, n=1):
-        self.grain += n
-
-    def add_veg(self, n=1):
-        self.veg += n
+    def change_state(self, description, change=None, prereq=None):
+        state_change = PlayerStateChange(description, change=change, prereq=prereq)
+        state_change.check_and_apply(self)
 
     def build_rooms(self, spaces):
         rooms = [Room(s) for s in spaces]
@@ -488,9 +546,10 @@ class Player(object):
         n_rooms = len(spaces)
 
         description = "Building {0} rooms".format(n_rooms)
-        cost = {self.house_type: self.room_cost * n_rooms, 'reed': 2 * n_rooms}
-        state_change = PlayerStateChange(description, cost=cost)
+        change = {self.house_type: -self.room_cost * n_rooms, 'reed': -2 * n_rooms}
+        state_change = PlayerStateChange(description, change=change)
         state_change.check_and_apply(self)
+
         self._rooms.extend(rooms)
 
     def upgrade_house(self, material):
@@ -503,8 +562,8 @@ class Player(object):
             raise
 
         description = "Upgrading house from {0} to {1}".format(self.house_type, material_required)
-        cost = {self.material_required: self.n_rooms, 'reed': 1}
-        state_change = PlayerStateChange(description, cost=cost)
+        change = {self.material_required: -self.n_rooms, 'reed': -1}
+        state_change = PlayerStateChange(description, change=change)
         state_change.check_and_apply(self)
 
         self.house_type = material_required
@@ -521,8 +580,7 @@ class Player(object):
             Pastures to add.
 
         """
-        if isinstance(pastures, Pasture):
-            pastures = [pastures]
+        pastures = [Pasture(p) for p in pastures]
         for p in pastures:
             self._check_spatial_objects(p, 'pasture', omit=['stable'])
         Pasture.check_connected_group(self._pastures + pastures)
@@ -533,7 +591,8 @@ class Player(object):
 
         description = "Building {0} pastures".format(len(pastures))
         n_fences = len(new_fences)
-        state_change = PlayerStateChange(description, cost=dict(wood=n_fences, fences_avail=n_fences))
+        change = dict(wood=-n_fences, fences_avail=-n_fences)
+        state_change = PlayerStateChange(description, change=change)
         state_change.check_and_apply(self)
 
         self._pastures = self._pastures + pastures
@@ -548,7 +607,8 @@ class Player(object):
 
         n_stables = len(spaces)
         description = "Building {0} stables".format(len(spaces))
-        state_change = PlayerStateChange(description, cost=dict(wood=unit_cost*n_stables, stables_avail=-n_stables))
+        change = dict(wood=-unit_cost*n_stables, stables_avail=-n_stables)
+        state_change = PlayerStateChange(description, change=change)
         state_change.check_and_apply(self)
 
         self._stables.extend(stables)
@@ -576,7 +636,9 @@ class Player(object):
 
     def sow(self, n_grain, n_veg):
         description = "Sowing {0} grain and {1} veg".format(n_grain, n_veg)
-        state_change = PlayerStateChange(description, cost=dict(grain=n_grain, veg=n_veg, empty_fields=n_grain+n_veg))
+        change = dict(grain=-n_grain, veg=-n_veg)
+        prereq = dict(empty_fields=n_grain+n_veg)
+        state_change = PlayerStateChange(description, change=change, prereq=prereq)
         state_change.check_and_apply(self)
 
         empty_fields = (f for f in self._fields if f.is_empty())
@@ -593,10 +655,11 @@ class Player(object):
         bread_rates = self.bread_rates[:-1][:n]
         n_left = max(n - len(bread_rates), 0)
         bread_rates.extend([self.bread_rates[-1]] * n_left)
-        n_food = itertools.product(bread_rates)
+        food = sum(bread_rates)
 
-        description = "Baking bread {0} times".format(n)
-        state_change = PlayerStateChange(description, cost=dict(grain=n), change=dict(food=n_food))
+        description = "Baking bread {0} times for {1} food".format(n, food)
+        change = dict(grain=-n, food=food)
+        state_change = PlayerStateChange(description, change=change)
         state_change.check_and_apply(self)
 
     def cook_food(self, counts):
@@ -612,17 +675,22 @@ class Player(object):
             change[r] = -c
             change['food'] += self.cooking_rates[r]
 
-        state_change = PlayerStateChange(description, cost=counts, change=change)
+        state_change = PlayerStateChange(description, change=change)
         state_change.check_and_apply(self)
 
-    def add_occupation(self, occupation):
+    def play_occupation(self, occupation):
         occupation.check_and_apply(self)
+
+        self.hand['occupations'].remove(occupation)
         self.occupations.append(occupation)
 
-    def add_minor_improvement(self, improvement):
+    def play_minor_improvement(self, improvement):
         improvement.check_and_apply(self)
+
+        self.hand['minor_improvements'].remove(improvement)
         self.minor_improvements.append(improvement)
 
-    def add_major_improvement(self, improvement):
+    def play_major_improvement(self, improvement):
         improvement.check_and_apply(self)
+
         self.major_improvements.append(improvement)
