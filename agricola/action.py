@@ -150,7 +150,7 @@ class BasicWishForChildren(Action):
     def _effect(self, game, player, choices):
         player.add_people(1)
         if choices[0] is not None:
-            player.play_minor_improvement(choices[0])
+            player.play_minor_improvement(choices[0], game)
 
 
 class ModestWishForChildren(Action):
@@ -324,9 +324,9 @@ class HouseRedevelopment(Action):
         imp = choices[1]
         if imp is not None:
             if isinstance(imp, MinorImprovementCard):
-                player.play_minor_improvement(imp)
+                player.play_minor_improvement(imp, game)
             elif isinstance(imp, MajorImprovementCard):
-                player.play_major_improvement(imp)
+                player.play_major_improvement(imp, game)
                 game.major_improvements.remove(imp)
             else:
                 raise AgricolaPoorlyFormed(
@@ -356,9 +356,9 @@ class MajorImprovement(Action):
     def _effect(self, game, player, choices):
         imp = choices[0]
         if isinstance(imp, MinorImprovementCard):
-            player.play_minor_improvement(imp)
+            player.play_minor_improvement(imp, game)
         elif isinstance(imp, MajorImprovementCard):
-            player.play_major_improvement(imp)
+            player.play_major_improvement(imp, game)
             game.major_improvements.remove(imp)
         else:
             raise AgricolaPoorlyFormed(
@@ -393,7 +393,7 @@ class Lessons(Action):
         if len(player.occupations) > 0:
             player.change_state("Playing occupation", change={'food': -1})
 
-        player.play_occupation(choices[0])
+        player.play_occupation(choices[0], game)
 
 
 class Lessons3P(Action):
@@ -404,7 +404,7 @@ class Lessons3P(Action):
 
     def _effect(self, game, player, choices):
         player.change_state("Playing occupation", change={'food': -2})
-        player.play_occupation(choices[0])
+        player.play_occupation(choices[0], game)
 
 
 class Lessons4P(Action):
@@ -419,7 +419,7 @@ class Lessons4P(Action):
         else:
             player.change_state("Playing occupation", change={'food': -1})
 
-        player.play_occupation(choices[0])
+        player.play_occupation(choices[0], game)
 
 
 class MeetingPlace(Action):
@@ -432,7 +432,7 @@ class MeetingPlace(Action):
     def _effect(self, game, player, choices):
         game.set_first_player(player)
         if choices[0] is not None:
-            player.play_minor_improvement(choices[0])
+            player.play_minor_improvement(choices[0], game)
 
 
 class MeetingPlaceFamily(Accumulating):

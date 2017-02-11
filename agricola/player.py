@@ -454,13 +454,10 @@ class Player(object):
                 elif space in field_spaces:
                     grid[space] = '~'
         s.append(draw_grid(grid, (3, 5), self.fences))
-
         x = []
-        for key in RESOURCE_TYPES:
+        for key in 'food wood clay stone reed sheep boar cattle grain veg'.split(' '):
             x.append("{0}: {1}".format(key, getattr(self, key)))
         s.append(', '.join(x))
-        # for key in RESOURCE_TYPES:
-        #     s.append("{0}: {1}".format(key, getattr(self, key)))
 
         s.append("Played cards:")
         s.append(pformat(self.played_cards, indent=1))
@@ -472,8 +469,45 @@ class Player(object):
         s.append(">")
         return '\n'.join(s)
 
+    @staticmethod
+    def _score_mapping(value, thresholds, points=None):
+        points = points or [-1] + range(len(thresholds)-1)
+        thresholds = sorted(thresholds)
+        if value < thresholds[0]:
+            return points[0]
+
+        for i in range(len(thresholds)-1):
+            if value >= thresholds[i] and value < thresholds[i+1]:
+                return points[i+1]
+
+        return points[-1]
+
     def score(self):
-        return 0
+        score = 0
+
+        score += self._score_mapping(self.pastures, [1, 2, 3, 4], [-1, 1, 2, 3, 4])
+        score += self._score_mapping(self.fields, [1, 3, 4, 5], [-1, 1, 2, 3, 4])
+
+        score += self._score_mapping(self.grain, [1, 4, 6, 8], [-1, 1, 2, 3, 4])
+        score += self._score_mapping(self.veg, [1, 2, 3, 4], [-1, 1, 2, 3, 4])
+
+        score += self._score_mapping(self.sheep, [1, 4, 6, 8], [-1, 1, 2, 3, 4])
+        score += self._score_mapping(self.boar, [1, 3, 5, 7], [-1, 1, 2, 3, 4])
+        score += self._score_mapping(self.cattle, [1, 2, 4, 6], [-1, 1, 2, 3, 4])
+
+        score += max(self.fenced_stables, 4)
+        score -= len(self.empty_spaces)
+
+        score += 3 * self.people
+
+        multiplier = {'wood': 0, 'clay': 1, 'stone': 2}[self.house_type]
+        score += multiplier * self.rooms
+
+        score += sum([occ.victory_points(self) for occ in self.occupations])
+        score += sum([imp.victory_points(self) for imp in self.minor_improvements])
+        score += sum([imp.victory_points(self) for imp in self.major_improvements])
+
+        return score
 
     def harvest(self):
         pass
@@ -678,19 +712,19 @@ class Player(object):
         state_change = PlayerStateChange(description, change=change)
         state_change.check_and_apply(self)
 
-    def play_occupation(self, occupation):
-        occupation.check_and_apply(self)
+    def play_occupation(self, occupation, game):
+        occupation.check_and_apply(self, game)
 
         self.hand['occupations'].remove(occupation)
         self.occupations.append(occupation)
 
-    def play_minor_improvement(self, improvement):
-        improvement.check_and_apply(self)
+    def play_minor_improvement(self, improvement, game):
+        improvement.check_and_apply(self, game)
 
         self.hand['minor_improvements'].remove(improvement)
         self.minor_improvements.append(improvement)
 
-    def play_major_improvement(self, improvement):
-        improvement.check_and_apply(self)
+    def play_major_improvement(self, improvement, game):
+        improvement.check_and_apply(self, game)
 
         self.major_improvements.append(improvement)

@@ -37,8 +37,7 @@ def get_user_choice(player, choice_spec):
             print(choice_spec.desc)
 
             response = input()
-            if not response:
-                return None
+
             try:
                 _response = int(response)
                 if _response < 0:

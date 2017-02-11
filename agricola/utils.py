@@ -41,7 +41,7 @@ def _fence_loc_to_grid_loc(fence_loc, cell_shape):
     return np.array(fence_loc) * (cell_shape + 1)
 
 
-def draw_grid(cells, cell_shape, fences=None, enum=True):
+def draw_grid(cells, cell_shape, fences=None, enum=True, asarray=False):
     """
     Parameters
     ----------
@@ -120,7 +120,10 @@ def draw_grid(cells, cell_shape, fences=None, enum=True):
         grid = np.vstack((top, grid))
         grid = np.hstack((left, grid))
 
-    return '\n'.join(''.join(c for c in row) for row in grid)
+    if asarray:
+        return grid
+    else:
+        return '\n'.join(''.join(c for c in row) for row in grid)
 
 
 def multiset_subtract(a, b):

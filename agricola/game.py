@@ -175,14 +175,16 @@ class AgricolaGame(object):
                         while action is None:
                             action = ui.get_action(i)
 
-                            if action not in actions_avail:
-                                ui.action_failed(
-                                    "that action is not available this round")
+                            if action is None:
+                                ui.action_failed("No action chosen")
+                                continue
+                            elif action not in actions_avail:
+                                ui.action_failed("That action is not available this round")
                                 action = None
                                 continue
                             elif action in self.actions_taken:
                                 ui.action_failed(
-                                    "that action has already been taken by "
+                                    "That action has already been taken by "
                                     "player {0}".format(self.actions_taken[action]))
                                 action = None
                                 continue

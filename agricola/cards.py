@@ -52,7 +52,7 @@ def get_major_improvements():
 
 
 class Occupation(with_metaclass(abc.ABCMeta, Card)):
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, game):
         print("Applying occupation {0}.".format(self.name))
 
     @property
@@ -70,6 +70,9 @@ class Occupation(with_metaclass(abc.ABCMeta, Card)):
     @abc.abstractproperty
     def text(self):
         pass
+
+    def victory_points(self):
+        return 0
 
 
 class PaperMaker(Occupation):
@@ -368,7 +371,7 @@ class MinorImprovement(with_metaclass(abc.ABCMeta, Card)):
     def __init__(self):
         pass
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, game):
         print("Applying minor improvement {0}.".format(self.name))
         description = "Playing minor improvement {0}".format(self)
 
@@ -753,7 +756,7 @@ class BreadPaddle(MinorImprovement):
 class Handplow(MinorImprovement):
     _cost = dict(wood=1)
     deck = 'A'
-    text = 'Add 5 to the urrent round and place 1 field tile on the corresponding round space. At the start of that round, you can plow the field.'
+    text = 'Add 5 to the current round and place 1 field tile on the corresponding round space. At the start of that round, you can plow the field.'
 
 
 class MilkJug(MinorImprovement):
@@ -787,7 +790,7 @@ class MajorImprovement(with_metaclass(abc.ABCMeta, Card)):
     def __init__(self):
         pass
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, game):
         print("Applying major improvement {0}.".format(self.name))
         description = "Playing major improvement {0}".format(self)
         change = {k: -v for k, v in iteritems(self.cost)}
