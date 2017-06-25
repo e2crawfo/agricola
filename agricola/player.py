@@ -1,7 +1,7 @@
 import abc
 import itertools
-from collections import OrderedDict, Counter
-from future.utils import with_metaclass, iteritems
+from collections import OrderedDict, Counter, defaultdict
+from future.utils import with_metaclass
 from copy import deepcopy
 from pprint import pformat
 
@@ -9,7 +9,8 @@ import numpy as np
 import networkx as nx
 
 from agricola.utils import (
-    multiset_satisfy, draw_grid, index_check, orthog_adjacent)
+    EventGenerator, EventScope, multiset_satisfy, draw_grid,
+    index_check, orthog_adjacent, score_mapping)
 from agricola import (
     AgricolaException, AgricolaNotEnoughResources, AgricolaLogicError,
     AgricolaPoorlyFormed, AgricolaImpossible)
@@ -40,6 +41,12 @@ class SpatialObject(with_metaclass(abc.ABCMeta, object)):
 
     @staticmethod
     def orthog_graph(objects, require_connected=True):
+        """ Create an undirected graph from a collection of spatial objects.
+
+        Two objects are connected in the graph iff those objects are
+        orthogonally adjacent to one another.
+
+        """
         if isinstance(objects, SpatialObject):
             objects = [objects]
 
@@ -134,6 +141,7 @@ class Pasture(SpatialObject, AnimalPen):
         if isinstance(spaces[0], int):
             spaces = [spaces]
         self.spaces = list(set(spaces))
+        self.size = len(self.spaces)
 
         self.n_stables = 0
 
@@ -145,7 +153,7 @@ class Pasture(SpatialObject, AnimalPen):
             fences.append(((s[0], s[1]), (s[0]+1, s[1])))  # Left
 
         counts = Counter(fences)
-        self._fences = [f for f, c in iteritems(counts) if c == 1]
+        self._fences = [f for f, c in counts.items() if c == 1]
 
     @property
     def fences(self):
@@ -221,7 +229,7 @@ class PlayerStateChange(object):
         self.change_fns = change_fns or []
         self.prereq_fns = prereq_fns or []
 
-        for k, v in iteritems(self.change):
+        for k, v in self.change.items():
             if k not in RESOURCE_TYPES:
                 raise AgricolaLogicError(
                     "Malformed PlayerStateChange object. "
@@ -231,7 +239,7 @@ class PlayerStateChange(object):
                 self.prereq[k] = self.prereq.get(k, 0) - v
 
     def check_and_apply(self, player):
-        for k, v in iteritems(self.prereq):
+        for k, v in self.prereq.items():
             if getattr(player, k) < v:
                 raise AgricolaNotEnoughResources(self._error_message(player))
 
@@ -239,7 +247,7 @@ class PlayerStateChange(object):
             if not fn(self, self.game):
                 raise AgricolaException("Prerequisite unsatisfied.")
 
-        for k, v in iteritems(self.change):
+        for k, v in self.change.items():
             setattr(player, k, v + getattr(player, k))
 
         for fn in self.change_fns:
@@ -248,7 +256,7 @@ class PlayerStateChange(object):
     def _error_message(self, player):
         s = [self.description + ' requires']
 
-        pairs = list(iteritems(self.prereq))
+        pairs = list(self.prereq.items())
 
         _s = []
         for k, v in pairs:
@@ -265,7 +273,7 @@ class PlayerStateChange(object):
         return ' '.join(s)
 
 
-class Player(object):
+class Player(EventGenerator):
     # TODO: In the constructor, just set all self attributes without doing checks. Then at the end, call a function
     # which checks that constraints are satisfied.
 
@@ -285,6 +293,7 @@ class Player(object):
             sheep=0, boar=0, cattle=0, grain=0, veg=0,
             people=2, people_avail=3, fences_avail=15, stables_avail=4,
             occupations=None, minor_improvements=None, major_improvements=None, hand=None):
+        super(Player, self).__init__()
         self.name = name
 
         self.resources = dict(
@@ -326,7 +335,8 @@ class Player(object):
         self.house_progression = ['wood', 'clay', 'stone']
         self.room_cost = 5
 
-        # The last rate can be applied infinitely many times during a turn.
+        # The last rate in this list can be applied infinitely
+        # many times during a turn.
         self.bread_rates = [0]
 
         self.cooking_rates = dict(grain=1, veg=1, sheep=0, boar=0, cattle=0)
@@ -349,6 +359,34 @@ class Player(object):
         Field.check_connected_group(self._fields)
         self.occupied['field'] = self._fields
 
+        # round_idx -> dictionary of resources
+        self.futures = defaultdict(lambda: defaultdict(int))
+
+        self.game = None
+
+    def _validate_event_name(self, event_name):
+        return event_name in [
+            'start_round',
+            'start_stage',
+            'end_round',
+            'end_stage',
+            'field_phase',
+            'feeding_phase',
+            'breeding_phase',
+            'renovation',
+            'build_room',
+            'build_pasture',
+            'build_stable'
+            'plow_field',
+            'birth',
+            'occupation',
+            'minor_improvement',
+            'major_improvement'
+        ] or event_name.startswith('Action: ')
+
+    def set_game(self, game):
+        self.game = game
+
     def __getattr__(self, key):
         if key in ["resources", "animals"]:
             return self.__getattribute__(key)
@@ -359,6 +397,9 @@ class Player(object):
             return self.animals[key]
 
         return self.__getattribute__(key)
+
+    def action_played(self, action):
+        self.trigger_event("Action: {}".format(action.name))
 
     def give_cards(self, attr, cards):
         self.hand[attr].extend(cards)
@@ -469,31 +510,18 @@ class Player(object):
         s.append(">")
         return '\n'.join(s)
 
-    @staticmethod
-    def _score_mapping(value, thresholds, points=None):
-        points = points or [-1] + range(len(thresholds)-1)
-        thresholds = sorted(thresholds)
-        if value < thresholds[0]:
-            return points[0]
-
-        for i in range(len(thresholds)-1):
-            if value >= thresholds[i] and value < thresholds[i+1]:
-                return points[i+1]
-
-        return points[-1]
-
     def score(self):
         score = 0
 
-        score += self._score_mapping(self.pastures, [1, 2, 3, 4], [-1, 1, 2, 3, 4])
-        score += self._score_mapping(self.fields, [1, 3, 4, 5], [-1, 1, 2, 3, 4])
+        score += score_mapping(self.pastures, [1, 2, 3, 4], [-1, 1, 2, 3, 4])
+        score += score_mapping(self.fields, [1, 3, 4, 5], [-1, 1, 2, 3, 4])
 
-        score += self._score_mapping(self.grain, [1, 4, 6, 8], [-1, 1, 2, 3, 4])
-        score += self._score_mapping(self.veg, [1, 2, 3, 4], [-1, 1, 2, 3, 4])
+        score += score_mapping(self.grain, [1, 4, 6, 8], [-1, 1, 2, 3, 4])
+        score += score_mapping(self.veg, [1, 2, 3, 4], [-1, 1, 2, 3, 4])
 
-        score += self._score_mapping(self.sheep, [1, 4, 6, 8], [-1, 1, 2, 3, 4])
-        score += self._score_mapping(self.boar, [1, 3, 5, 7], [-1, 1, 2, 3, 4])
-        score += self._score_mapping(self.cattle, [1, 2, 4, 6], [-1, 1, 2, 3, 4])
+        score += score_mapping(self.sheep, [1, 4, 6, 8], [-1, 1, 2, 3, 4])
+        score += score_mapping(self.boar, [1, 3, 5, 7], [-1, 1, 2, 3, 4])
+        score += score_mapping(self.cattle, [1, 2, 4, 6], [-1, 1, 2, 3, 4])
 
         score += max(self.fenced_stables, 4)
         score -= len(self.empty_spaces)
@@ -508,6 +536,18 @@ class Player(object):
         score += sum([imp.victory_points(self) for imp in self.major_improvements])
 
         return score
+
+    def start_round(self, round_idx):
+        with EventScope('start_round', self):
+            resources = self.futures[round_idx]
+
+            for resource, amount in resources.items():
+                # TODO: handle fields differently than the other resources
+                pass
+
+    def end_round(self):
+        with EventScope('end_round', self):
+            pass
 
     def harvest(self):
         pass
@@ -524,13 +564,13 @@ class Player(object):
         for o in objects:
             spaces.extend(o.spaces)
         counts = Counter(spaces)
-        for k, v in iteritems(counts):
+        for k, v in counts.items():
             if v > 1:
                 raise AgricolaImpossible(
                     "Trying to add two {0}s that "
                     "overlap at space {1}.".format(name, k))
 
-        for object_type, objects in iteritems(self.occupied):
+        for object_type, objects in self.occupied.items():
             if object_type not in omit:
                 for space in spaces:
                     if any(space in o for o in objects):
@@ -538,6 +578,11 @@ class Player(object):
                             "Trying to place a {0} at space {1} where "
                             "a {2} already exists.".format(
                                 name, space, object_type))
+
+    def add_future(self, rounds, resource, amount, absolute=False):
+        offset = 0 if absolute else self.game.round_idx
+        for r in rounds:
+            self.futures[offset + r][resource] += amount
 
     def add_people(self, n=1):
         if self.people_avail < n:
@@ -553,12 +598,11 @@ class Player(object):
                 raise AgricolaPoorlyFormed("{0} is not a resource type".format(r))
 
         description = "Adding resources "
-        change = {r: amount for r, amount in iteritems(resources)}
-        state_change = PlayerStateChange(description, change=change)
+        state_change = PlayerStateChange(description, change=resources)
         state_change.check_and_apply(self)
 
     def add_animals(self, **animals):
-        for animal, count in iteritems(animals):
+        for animal, count in animals.items():
             if animal not in self.animals:
                 raise AgricolaPoorlyFormed("{0} is not an animal type".format(animal))
 
@@ -630,6 +674,8 @@ class Player(object):
         state_change.check_and_apply(self)
 
         self._pastures = self._pastures + pastures
+        for p in pastures:
+            self.trigger_event('build_pasture', pasture=p)
 
     def build_stables(self, spaces, unit_cost):
         if isinstance(spaces[0], int):
@@ -705,26 +751,26 @@ class Player(object):
         """
         description = "Cooking food"
         change = {'food': 0}
-        for r, c in iteritems(counts):
-            change[r] = -c
-            change['food'] += self.cooking_rates[r]
+        for resource, count in counts.items():
+            change[resource] = -count
+            change['food'] += self.cooking_rates[resource]
 
         state_change = PlayerStateChange(description, change=change)
         state_change.check_and_apply(self)
 
     def play_occupation(self, occupation, game):
-        occupation.check_and_apply(self, game)
+        occupation.check_and_apply(self)
 
         self.hand['occupations'].remove(occupation)
         self.occupations.append(occupation)
 
     def play_minor_improvement(self, improvement, game):
-        improvement.check_and_apply(self, game)
+        improvement.check_and_apply(self)
 
         self.hand['minor_improvements'].remove(improvement)
         self.minor_improvements.append(improvement)
 
     def play_major_improvement(self, improvement, game):
-        improvement.check_and_apply(self, game)
+        improvement.check_and_apply(self)
 
         self.major_improvements.append(improvement)

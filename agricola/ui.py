@@ -6,10 +6,10 @@ from agricola.action import (
     VariableLengthListChoice, SpaceChoice)
 
 
-def get_user_choice(player, choice_spec):
+def get_user_choice(name, choice_spec):
     if isinstance(choice_spec, DiscreteChoice):
         while True:
-            print("Player {0} choice: ".format(player.name))
+            print("Player {0} choice: ".format(name))
             print(choice_spec.desc)
             for i, opt in enumerate(choice_spec.options):
                 print("    {0}: {1}".format(i, opt))
@@ -33,7 +33,7 @@ def get_user_choice(player, choice_spec):
     elif isinstance(choice_spec, CountChoice):
         while True:
             print("Player {0}, enter an integer "
-                  "(min: 0, max: {1}): ".format(player.name, choice_spec.n))
+                  "(min: 0, max: {1}): ".format(name, choice_spec.n))
             print(choice_spec.desc)
 
             response = input()
@@ -53,20 +53,20 @@ def get_user_choice(player, choice_spec):
     elif isinstance(choice_spec, ListChoice):
         responses = []
         for sc in choice_spec.subchoices:
-            response = get_user_choice(player, sc)
+            response = get_user_choice(name, sc)
             responses.append(response)
         return responses
 
     elif isinstance(choice_spec, VariableLengthListChoice):
-        length = get_user_choice(player, CountChoice(desc="List length."))
+        length = get_user_choice(name, CountChoice(desc="List length."))
         responses = []
         for i in range(length):
-            response = get_user_choice(player, choice_spec.subchoice)
+            response = get_user_choice(name, choice_spec.subchoice)
             responses.append(response)
         return responses
     elif isinstance(choice_spec, SpaceChoice):
         while True:
-            print("Player {0}, enter a grid co-ordinate (y, x): ".format(player.name))
+            print("Player {0}, enter a grid co-ordinate (y, x): ".format(name))
             print(choice_spec.desc)
             response = input()
 
@@ -104,18 +104,17 @@ class UserInterface(object):
         print("Beginning round {0}".format(round_idx))
         print("New action is: {0}.".format(action))
 
-    def get_action(self, i):
-        ar = self.game.actions_remaining
+    def get_action(self, name, actions_remaining):
         # action = np.random.choice(list(ar))
-        action = get_user_choice(self.game.players[i], DiscreteChoice(ar, "Take an action."))
+        action = get_user_choice(
+            name, DiscreteChoice(actions_remaining, "Take an action."))
         print("\n" + ("*" * 20))
         print(self.game)
-        print("Player {0} chooses action {1}.".format(i, action))
+        print("Player {0} chooses action {1}.".format(name, action))
         return action
 
-    def get_choices(self, player, choices):
-        print(player)
-        return [get_user_choice(player, c) for c in choices]
+    def get_choices(self, name, choices):
+        return [get_user_choice(name, c) for c in choices]
 
     def harvest(self):
         print("Harvesting.")

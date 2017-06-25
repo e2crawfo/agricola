@@ -1,8 +1,78 @@
 import numpy as np
 import numbers
 import itertools
-from collections import OrderedDict, Counter
-from future.utils import iteritems
+from collections import OrderedDict, Counter, defaultdict
+from future.utils import iteritems, with_metaclass
+import abc
+
+
+class EventGenerator(with_metaclass(abc.ABCMeta, object)):
+    def __init__(self):
+        self.listeners = defaultdict(list)  # event_name -> listeners
+
+    @abc.abstractmethod
+    def _validate_event_name(self, event_name):
+        """ Return false if the event name is not valid. """
+        raise NotImplementedError()
+
+    def listen_for_event(self, listener, event_name, before=False):
+        valid = self._validate_event_name(event_name)
+        if not valid:
+            raise Exception(
+                "{} is not a valid event name for class {}.".format(
+                    event_name, self.__class__.__name__))
+        if before:
+            event_name += '-before'
+
+        self.listeners[event_name].append(listener)
+
+    def stop_listening(self, listener, event_name, before=False):
+        if before:
+            event_name += '-before'
+        try:
+            self.listeners[event_name].remove(listener)
+        except (ValueError, KeyError):
+            pass
+
+    def trigger_event(self, event_name, *args, before=False, **kwargs):
+        valid = self._validate_event_name(event_name)
+        if not valid:
+            raise Exception(
+                "{} is not a valid event name for class {}.".format(
+                    event_name, self.__class__.__name__))
+
+        if before:
+            event_name += '-before'
+
+        if event_name in self.listeners:
+            for l in self.listeners:
+                l.trigger(self, *args, **kwargs)
+
+
+class EventScope(object):
+    def __init__(self, event_name, event_generator):
+        self.event_name = event_name
+        self.event_generator = event_generator
+
+    def __enter__(self):
+        self.event_generator.trigger_event(self.event_name, before=True)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is None:
+            self.event_generator.trigger_event(self.event_name, before=False)
+
+
+def score_mapping(value, thresholds, points=None):
+    points = points or [-1] + range(len(thresholds)-1)
+    thresholds = sorted(thresholds)
+    if value < thresholds[0]:
+        return points[0]
+
+    for i in range(len(thresholds)-1):
+        if value >= thresholds[i] and value < thresholds[i+1]:
+            return points[i+1]
+
+    return points[-1]
 
 
 def check_random_state(seed):

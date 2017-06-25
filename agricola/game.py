@@ -5,8 +5,9 @@ import copy
 from agricola import (
     Player, TextInterface, AgricolaException)
 from agricola.action import get_actions, get_simple_actions
-from agricola.cards import get_occupations, get_minor_improvements, get_major_improvements
-from agricola.utils import check_random_state
+from agricola.cards import (
+    get_occupations, get_minor_improvements, get_major_improvements)
+from agricola.utils import check_random_state, EventGenerator, EventScope
 
 # TODO: make sure that certain actions which allow two things to be done have
 # the order of the two things respected (and make sure player can't take the
@@ -31,8 +32,9 @@ class DefaultCardDrawer(object):
         return hands
 
 
-class AgricolaGame(object):
+class AgricolaGame(EventGenerator):
     """
+
     Parameters
     ----------
     actions: list of list of actions
@@ -94,6 +96,8 @@ class AgricolaGame(object):
 
         self.randomize = randomize
 
+        super(AgricolaGame, self).__init__()
+
     def __str__(self):
         s = ["<AgricolaGame \n\n"]
         s.append("Actions taken:\n")
@@ -105,6 +109,26 @@ class AgricolaGame(object):
         s += ">"
         return ''.join(s)
 
+    def _validate_event_name(self, event_name):
+        return event_name in [
+            'start_round',
+            'start_stage',
+            'end_round',
+            'end_stage',
+            'field_phase',
+            'feeding_phase',
+            'breeding_phase',
+            'renovation',
+            'build_room',
+            'build_pasture',
+            'build_stable'
+            'plow_field',
+            'birth',
+            'occupation',
+            'minor_improvement',
+            'major_improvement'
+        ] or event_name.startswith('Action: ')
+
     def set_first_player(self, player):
         if isinstance(player, int):
             player = self.players[player]
@@ -114,7 +138,13 @@ class AgricolaGame(object):
     def actions_remaining(self):
         return set(self.actions_avail) - set(self.actions_taken)
 
+    @property
+    def rounds_remaining(self):
+        """ Complete rounds remaining (i.e. doesn't include current round). """
+        return sum([len(s) for s in self.actions[1:]]) - self.round_idx
+
     def play(self, ui, first_player=None, rng=None):
+        self.ui = ui
         rng = check_random_state(rng)
         if self.randomize:
             self.action_order = (
@@ -127,6 +157,9 @@ class AgricolaGame(object):
             copy.deepcopy(self.initial_player) for i in range(self.n_players)]
         for i, p in enumerate(self.players):
             p.name = str(i)
+
+        for p in self.players:
+            p.set_game(self)
 
         if self.occupations:
             occ_hands = self.occ_card_drawer.draw_cards(
@@ -154,8 +187,10 @@ class AgricolaGame(object):
         actions_avail = self.actions_avail = [a for a in self.action_order[0]]
         for stage_actions in self.action_order[1:]:
             ui.begin_stage(self.stage_idx)
+
             for round_action in stage_actions:
                 actions_avail.append(round_action)
+
                 for action in actions_avail:
                     action.turn()
 
@@ -171,9 +206,10 @@ class AgricolaGame(object):
 
                 for i in itertools.cycle(order):
                     if i in remaining_players:
+                        player = self.players[i]
                         action = None
                         while action is None:
-                            action = ui.get_action(i)
+                            action = ui.get_action(player.name, self.actions_remaining)
 
                             if action is None:
                                 ui.action_failed("No action chosen")
@@ -189,12 +225,22 @@ class AgricolaGame(object):
                                 action = None
                                 continue
 
-                            choices = action.choices(self, players[i])
+                            choices = action.choices(player)
                             if choices:
-                                choices = ui.get_choices(self.players[i], choices)
+                                choices = self.get_choices(player, choices)
 
+                            action_event = "Action: {}".format(action.__class__.__name__)
                             try:
-                                action.effect(self, players[i], choices)
+                                # TODO: We currently have no way to roll-back what
+                                # goes on before an action occurs via pre-event triggers
+                                # if the action fails
+                                # which in some situations will give players access
+                                # to pre-action effects without taking the action
+                                # (if taking the action fails).
+                                with EventScope(action_event, self):
+                                    with EventScope(action_event, player):
+                                        action.effect(player, choices)
+
                             except AgricolaException as e:
                                 ui.action_failed(str(e))
                                 action = None
@@ -202,7 +248,7 @@ class AgricolaGame(object):
                         ui.action_successful()
 
                         print("Player after action: ")
-                        print(players[i])
+                        print(player)
 
                         self.actions_taken[action] = i
 
@@ -223,10 +269,17 @@ class AgricolaGame(object):
             self.stage_idx += 1
 
         self.score = {}
-
-        # Calculate score.
         for i, p in enumerate(players):
             self.score[i] = p.score()
+        self.ui = None
+
+    def get_choices(self, player, _choices):
+        choices = self.ui.get_choices(player.name, _choices)
+        return choices
+
+    def get_choice(self, player, _choice):
+        choices = self.get_choices(player.name, [_choice])
+        return choices[0]
 
 
 class SimpleAgricolaGame(AgricolaGame):

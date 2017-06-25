@@ -2,72 +2,37 @@ import abc
 from future.utils import iteritems, with_metaclass
 
 from agricola import AgricolaInvalidChoice, AgricolaImpossible, AgricolaPoorlyFormed
+from agricola.choice import (
+    DiscreteChoice, CountChoice, ListChoice,
+    VariableLengthListChoice, SpaceChoice)
 from agricola.cards import MinorImprovement as MinorImprovementCard
 from agricola.cards import MajorImprovement as MajorImprovementCard
-
-
-class Choice(object):
-    def __init__(self, desc=None):
-        self.desc = desc
-
-    def validate(self, choice):
-        pass
-
-
-class DiscreteChoice(Choice):
-    def __init__(self, options, desc=None):
-        if not options:
-            raise ValueError(
-                "Cannot create a DiscreteChoice instance with an empty "
-                "options list. Choice description is:\n{0}".format(desc))
-
-        super(DiscreteChoice, self).__init__(desc)
-        self.options = list(options)
-
-
-class CountChoice(Choice):
-    def __init__(self, n=None, desc=None):
-        self.n = n
-        super(CountChoice, self).__init__(desc)
-
-
-class ListChoice(Choice):
-    def __init__(self, subchoices, desc=None):
-        super(ListChoice, self).__init__(desc)
-        self.subchoices = subchoices
-
-
-class VariableLengthListChoice(Choice):
-    def __init__(self, subchoice, desc=None):
-        super(VariableLengthListChoice, self).__init__(desc)
-        self.subchoice = subchoice
-
-
-class SpaceChoice(Choice):
-    def __init__(self, desc=None):
-        super(SpaceChoice, self).__init__(desc)
 
 
 class Action(with_metaclass(abc.ABCMeta, object)):
     def __str__(self):
         return "<" + self.__class__.__name__ + ">"
 
-    def _check_choices(self, game, player, choices):
-        _choices = self.choices(game, player)
+    @property
+    def name(self):
+        return self.__class__.__name__
+
+    def _check_choices(self, player, choices):
+        _choices = self.choices(player)
         if len(choices) != len(_choices):
             raise AgricolaInvalidChoice(
                 "Expected {0} choices, but received {1} choices.".format(
                     len(_choices), len(choices)))
 
-    def choices(self, game, player):
+    def choices(self, player):
         return []
 
-    def effect(self, game, player, choices):
-        self._check_choices(game, player, choices)
-        self._effect(game, player, choices)
+    def effect(self, player, choices):
+        self._check_choices(player, choices)
+        self._effect(player, choices)
 
     @abc.abstractmethod
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         pass
 
     def turn(self):
@@ -92,7 +57,7 @@ class ResourceAcquisition(Action):
 
         return ' '.join(s) + '>'
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         for resource, amount in iteritems(self.resources):
             setattr(player, resource, getattr(player, resource) + amount)
 
@@ -129,8 +94,8 @@ class Accumulating(ResourceAcquisition):
 
         return ' '.join(s) + '>'
 
-    def _effect(self, game, player, choices):
-        super(Accumulating, self)._effect(game, player, choices)
+    def _effect(self, player, choices):
+        super(Accumulating, self)._effect(player, choices)
         for resource in self.acc_amount:
             self.resources[resource] = 0
 
@@ -140,22 +105,22 @@ class Accumulating(ResourceAcquisition):
 
 
 class BasicWishForChildren(Action):
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             DiscreteChoice(
                player.hand['minor_improvements'],
                "Pick an optional minor improvement after childbirth.")
         ]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         player.add_people(1)
         if choices[0] is not None:
-            player.play_minor_improvement(choices[0], game)
+            player.play_minor_improvement(choices[0], player.game)
 
 
 class ModestWishForChildren(Action):
-    def _effect(self, game, player, choices):
-        if game.round_idx < 5:
+    def _effect(self, player, choices):
+        if player.game.round_idx < 5:
             raise AgricolaImpossible(
                 "ModestWishForChildren action can only been chosen in "
                 "round 5 or later.")
@@ -164,7 +129,7 @@ class ModestWishForChildren(Action):
 
 
 class UrgentWishForChildren(Action):
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         player.add_people(1)
 
 
@@ -176,7 +141,7 @@ class Fishing(Accumulating):
     acc_amount = dict(food=1)
 
 
-class TravellingPlayers(Fishing):
+class TravelingPlayers(Fishing):
     pass
 
 
@@ -219,12 +184,12 @@ class ResourceMarket2P(ResourceAcquisition):
 class ResourceMarket3P(ResourceAcquisition):
     resources = dict(food=1)
 
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             DiscreteChoice(["reed", "stone"], "Choose between 1 reed/1 stone.")
         ]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         reed = choices[0] == 'reed'
         stone = choices[0] == 'stone'
 
@@ -260,13 +225,13 @@ class CattleMarket(Accumulating):
 class AnimalMarket(ResourceAcquisition):
     resources = dict()
 
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             DiscreteChoice(["sheep", "boar", "cattle"],
                            "Choose between 1 sheep, 1 food/1 boar/1 cattle, -1 food.")
         ]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         if choices[0] == "sheep":
             player.add_resources(food=1)
             player.add_animals(sheep=1)
@@ -280,13 +245,13 @@ class AnimalMarket(ResourceAcquisition):
 
 
 class FarmExpansion(Action):
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             VariableLengthListChoice(SpaceChoice("Room location.")),
             VariableLengthListChoice(SpaceChoice("Stable location."))
         ]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         if not isinstance(choices[0], list) and not isinstance(choices[1], list):
             raise AgricolaInvalidChoice(
                 "At least one of the two actions (build rooms or build stables) "
@@ -312,67 +277,67 @@ class FarmExpansion(Action):
 
 
 class HouseRedevelopment(Action):
-    def choices(self, game, player):
-        imps = player.hand["minor_improvements"] + game.major_improvements
+    def choices(self, player):
+        imps = player.hand["minor_improvements"] + player.game.major_improvements
         return [
             DiscreteChoice(["clay", "stone"], "Choose new house material."),
             DiscreteChoice(imps, "Choose an optional improvement after renovation.")]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         player.upgrade_house(choices[0])
 
         imp = choices[1]
         if imp is not None:
             if isinstance(imp, MinorImprovementCard):
-                player.play_minor_improvement(imp, game)
+                player.play_minor_improvement(imp, player.game)
             elif isinstance(imp, MajorImprovementCard):
-                player.play_major_improvement(imp, game)
-                game.major_improvements.remove(imp)
+                player.play_major_improvement(imp, player.game)
+                player.game.major_improvements.remove(imp)
             else:
                 raise AgricolaPoorlyFormed(
                     "Received {0}, but a major/minor improvement was expected.")
 
 
 class FarmRedevelopment(Action):
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             DiscreteChoice(["clay", "stone"], "Choose new house material."),
             ListChoice(ListChoice(SpaceChoice("Space to pasteurize.")))
         ]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         player.upgrade_house(choices[0])
         if choices[1] is not None:
             player.build_pastures(choices[1])
 
 
 class MajorImprovement(Action):
-    def choices(self, game, player):
-        imps = player.hand["minor_improvements"] + game.major_improvements
+    def choices(self, player):
+        imps = player.hand["minor_improvements"] + player.game.major_improvements
         return [
             DiscreteChoice(imps, "Choose a major or minor improvement.")
         ]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         imp = choices[0]
         if isinstance(imp, MinorImprovementCard):
-            player.play_minor_improvement(imp, game)
+            player.play_minor_improvement(imp, player.game)
         elif isinstance(imp, MajorImprovementCard):
-            player.play_major_improvement(imp, game)
-            game.major_improvements.remove(imp)
+            player.play_major_improvement(imp, player.game)
+            player.game.major_improvements.remove(imp)
         else:
             raise AgricolaPoorlyFormed(
                 "Received {0}, but a major/minor improvement was expected.")
 
 
 class Fencing(Action):
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             VariableLengthListChoice(
                 VariableLengthListChoice(SpaceChoice("Space to pasteurize.")))
         ]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         pastures = choices[0]
         if pastures is None:
             pass
@@ -384,81 +349,81 @@ class Fencing(Action):
 
 
 class Lessons(Action):
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             DiscreteChoice(player.hand['occupations'], 'Choose an occupation from your hand.')
         ]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         if len(player.occupations) > 0:
             player.change_state("Playing occupation", change={'food': -1})
 
-        player.play_occupation(choices[0], game)
+        player.play_occupation(choices[0], player.game)
 
 
 class Lessons3P(Action):
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             DiscreteChoice(player.hand['occupations'], 'Choose an occupation from your hand.')
         ]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         player.change_state("Playing occupation", change={'food': -2})
-        player.play_occupation(choices[0], game)
+        player.play_occupation(choices[0], player.game)
 
 
 class Lessons4P(Action):
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             DiscreteChoice(player.hand['occupations'], 'Choose an occupation from your hand.')
         ]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         if len(player.occupations) > 1:
             player.change_state("Playing occupation", change={'food': -2})
         else:
             player.change_state("Playing occupation", change={'food': -1})
 
-        player.play_occupation(choices[0], game)
+        player.play_occupation(choices[0], player.game)
 
 
 class MeetingPlace(Action):
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             DiscreteChoice(
                player.hand['minor_improvements'], "Choose an optional minor improvement.")
         ]
 
-    def _effect(self, game, player, choices):
-        game.set_first_player(player)
+    def _effect(self, player, choices):
+        player.game.set_first_player(player)
         if choices[0] is not None:
-            player.play_minor_improvement(choices[0], game)
+            player.play_minor_improvement(choices[0], player.game)
 
 
 class MeetingPlaceFamily(Accumulating):
     acc_amount = dict(food=1)
 
-    def _effect(self, game, player, choices):
-        game.set_first_player(player)
-        super(MeetingPlaceFamily, self)._effect(game, player, choices)
+    def _effect(self, player, choices):
+        player.game.set_first_player(player)
+        super(MeetingPlaceFamily, self)._effect(player, choices)
 
 
 class Farmland(Action):
-    def choices(self, game, player):
+    def choices(self, player):
         return [SpaceChoice("Space to plow.")]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         player.plow_fields(choices[0])
 
 
 class Cultivation(Action):
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             SpaceChoice("Space to plow."),
             CountChoice(player.grain, "Number of grain seeds to plant."),
             CountChoice(player.veg, "Number of vegatable seeds to plant.")]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         if all(i is None for i in choices):
             raise AgricolaInvalidChoice(
                 "Must perform at least one of: plow field, sow.")
@@ -473,13 +438,13 @@ class Cultivation(Action):
 
 
 class GrainUtilization(Action):
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             CountChoice(player.grain, "Number of grain seeds to plant."),
             CountChoice(player.veg, "Number of vegatable seeds to plant."),
             CountChoice(player.grain, "Number of grain bushels to bake into bread.")]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         if all(i is None for i in choices):
             raise AgricolaInvalidChoice("Must perform at least one of: sow, bake bread.")
 
@@ -501,12 +466,12 @@ class VegetableSeeds(ResourceAcquisition):
 
 
 class SideJob(Action):
-    def choices(self, game, player):
+    def choices(self, player):
         return [
             SpaceChoice("Stable location."),
             CountChoice(player.grain, "Number of grain bushels to bake into bread.")]
 
-    def _effect(self, game, player, choices):
+    def _effect(self, player, choices):
         if all(i is None for i in choices):
             raise AgricolaInvalidChoice(
                 "Must perform at least one of: build stable, bake bread.")
@@ -566,8 +531,8 @@ def get_actions(family, n_players):
     elif n_players == 4:
         actions[0].extend([
             Copse(), Grove(), ResourceMarket4P(), Hollow4P(),
-            Lessons4P(), TravellingPlayers()])
+            Lessons4P(), TravelingPlayers()])
     else:
         raise NotImplementedError(
-            "Do not know how to play a game with {0} players.".format(n_players))
+            "Do not know how to play a player.game with {0} players.".format(n_players))
     return actions
