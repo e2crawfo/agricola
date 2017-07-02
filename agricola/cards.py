@@ -3,8 +3,7 @@ from future.utils import with_metaclass
 
 from agricola.utils import score_mapping
 from agricola.choice import (
-    YesNoChoice, DiscreteChoice, CountChoice, ListChoice,
-    VariableLengthListChoice, SpaceChoice)
+    YesNoChoice, DiscreteChoice, CountChoice, ListChoice, SpaceChoice)
 
 
 class Card(with_metaclass(abc.ABCMeta, object)):
@@ -137,8 +136,8 @@ class Harpooner(Occupation):
         if player.wood >= 1:
             desc = ("Harpooner: Pay 1 wood to receive 1 food "
                     "for each of your people, and 1 reed?")
-            choice = player.game.get_choice(player, YesNoChoice(desc))
-            if choice:
+            use = player.game.get_choice(player, YesNoChoice(desc))
+            if use:
                 player.change_state(
                     "Harpooner effect.",
                     change=dict(wood=-1, food=player.people, reed=1))
@@ -407,8 +406,11 @@ class AssistantTiller(Occupation):
         player.listen_for_event(self, 'Action: DayLaborer')
 
     def trigger(self, player):
-        # TODO: choose field
-        player.plow_fields()
+        desc = "AssistantTiller: Plow a field?"
+        plow_field = player.game.get_choice(player, YesNoChoice(desc))
+        if plow_field:
+            space_to_plow = player.game.get_choices(player, SpaceChoice("Space to plow."))
+            player.plow_fields(space_to_plow)
 
 
 class Groom(Occupation):
@@ -422,8 +424,11 @@ class Groom(Occupation):
 
     def trigger(self, player):
         if player.house_type == 'stone':
-            #TODO
-            player.build_stables(unit_cost=1)
+            desc = "Groom: Build a stable for 1 wood?"
+            build_stable = player.game.get_choice(player, YesNoChoice(desc))
+            if build_stable:
+                stable_loc = player.game.get_choices(player, SpaceChoice("Stable location."))
+                player.build_stables(stable_loc, 1)
 
 
 class MasterBricklayer(Occupation):
@@ -473,7 +478,6 @@ class WallBuilder(Occupation):
         player.listen_for_event(self, 'build_room')
 
     def trigger(self, player):
-        round_idx = player.game.round_idx
         player.add_future(range(1, 5), 'food', 1)
 
 
@@ -486,8 +490,21 @@ class Cottager(Occupation):
         player.listen_for_event(self, 'Action: DayLaborer')
 
     def trigger(self, player):
-        # TODO player choice.
-        pass
+        choice = DiscreteChoice(
+            ['Build room', 'Renovate house', 'Do nothing'],
+            "Cottager effect")
+        action = player.game.get_choice(player, choice)
+
+        if action == choice.options[0]:
+            choice = SpaceChoice("Room location.")
+            room_loc = player.game.get_choice(player, choice)
+            player.build_rooms(room_loc)
+        elif action == choice.options[0]:
+            choice = DiscreteChoice(["clay", "stone"], "Choose new house material."),
+            material = player.game.get_choice(player, choice)
+            player.upgrade_house(material)
+        else:
+            pass
 
 
 class RoughCaster(Occupation):
@@ -510,11 +527,18 @@ class RoughCaster(Occupation):
 class RoofBallaster(Occupation):
     deck = 'B'
     min_players = 1
-    text = 'When you play this card, you can immediately pay 1 food to get 1 stone for each room you have.'
+    text = 'When you play this card, you can immediately pay 1 food total to receive 1 stone for each room you have.'
 
     def check_and_apply(self, player):
-        # TODO: choice
-        pass
+        make_exchange = player.game.get_choices(
+            player,
+            YesNoChoice(
+                "Pay 1 food total to receive 1 stone for each room you have?"))
+
+        if make_exchange:
+            player.change_state(
+                prereq=dict(food=1),
+                change=dict(food=-1, stone=player.rooms))
 
 
 class Tutor(Occupation):
@@ -591,8 +615,16 @@ class Childless(Occupation):
 
     def trigger(self, player):
         if player.rooms >= 3 and player.people == 2:
-            # TODO choice
-            player.add_resources(food=1)
+            choice = DiscreteChoice(
+                ["Grain", "Vegetable"],
+                "Childless: Select type of seeds to receive.")
+            seed_type = player.game.get_choices(player, [choice])
+            if seed_type == choice.options[0]:
+                player.add_resources(food=1, grain=1)
+            elif seed_type == choice.options[1]:
+                player.add_resources(food=1, veg=1)
+            else:
+                raise Exception()
 
 
 class Geologist(Occupation):
@@ -621,8 +653,12 @@ class MushroomCollector(Occupation):
         player.listen_for_event(self, 'Action: Copse')
 
     def trigger(self, player):
-        # TODO
-        pass
+        desc = "MushroomCollector; leave 1 wood to receive 2 food?"
+        use = player.game.get_choice(player, YesNoChoice(desc))
+        if use:
+            player.change_state(
+                "MushroomCollector effect.",
+                change=dict(wood=-1, food=2))
 
 
 class Scholar(Occupation):
@@ -635,14 +671,47 @@ class Scholar(Occupation):
 
     def trigger(self, player):
         if player.house_type == 'stone':
-            #TODO
-            pass
+            choice = DiscreteChoice(
+                ['Play occupation (at cost of 1 food).',
+                 'Play minor improvement (at cost listed on card)',
+                 'Do nothing'],
+                "Scholar effect")
+            action = player.game.get_choice(player, choice)
+
+            if action == choice.options[0]:
+                choice = DiscreteChoice(
+                    player.hand['occupations'],
+                    'Choose an occupation from your hand.')
+                occ = player.game.get_choice(player, choice)
+                player.play_occupation(occ, player.game)
+            elif action == choice.options[0]:
+                choice = DiscreteChoice(
+                    player.hand["minor_improvements"],
+                    "Choose a minor improvement to play.")
+                imp = player.game.get_choice(player, choice)
+                player.play_minor_improvement(imp, player.game)
+            else:
+                pass
 
 
 class PlowDriver(Occupation):
     deck = 'A'
     min_players = 1
     text = 'Once you live in a stone house, at the start of each round, you can pay 1 food to plow 1 field.'
+
+    def check_and_apply(self, player):
+        player.listen_for_event(self, 'start_round')
+
+    def trigger(self, player):
+        if player.house_type == 'stone' and player.food >= 1:
+            desc = "PlowDriver: Pay 1 food to plow a field?"
+            use = player.game.get_choice(player, YesNoChoice(desc))
+            if use:
+                player.change_state(
+                    "Plowdriver effect.", prereq=dict(food=1), change=dict(food=-1))
+                space_to_plow = player.game.get_choices(
+                    player, SpaceChoice("Space to plow."))
+                player.plow_fields(space_to_plow)
 
 
 class AnimalTamer(Occupation):
@@ -742,8 +811,9 @@ class Basket(MinorImprovement):
         player.listen_for_event(self, 'Action: Copse')
 
     def trigger(self, player, pasture):
-        # TODO. Need to add a member function to game that allows us to request a choice.
-        pass
+        use = player.game.get_choices(player, YesNoChoice("Basket: exchange 2 wood for 3 food?"))
+        if use:
+            player.change_state("Basket effect.", cost=dict(wood=2), change=dict(wood=-2, food=3))
 
 
 class ClayEmbankment(MinorImprovement):
@@ -885,8 +955,10 @@ class MiningHammer(MinorImprovement):
         player.listen_for_event(self, 'renovation')
 
     def trigger(self, player):
-        #TODO
-        pass
+        use = player.game.get_choices("MiningHammer: build 1 stable for free?")
+        if use:
+            stable_loc = player.game.get_choices(player, SpaceChoice("Stable location."))
+            player.build_stables(stable_loc, 0)
 
 
 class BigCountry(MinorImprovement):
@@ -995,8 +1067,8 @@ class ShiftingCultivation(MinorImprovement):
     traveling = True
 
     def _apply(self, player):
-        # TODO: user choice
-        player.plow_fields()
+        space_to_plow = player.game.get_choices(player, SpaceChoice("Space to plow."))
+        player.plow_fields(space_to_plow)
 
 
 class PondHut(MinorImprovement):
@@ -1057,7 +1129,10 @@ class MiniPasture(MinorImprovement):
     traveling = True
 
     def _apply(self, player):
-        player.build_pasture()
+
+        space_to_pasteurize = player.game.get_choices(
+            player, SpaceChoice("Space to pasteurize."))
+        player.build_pasture([space_to_pasteurize])
 
 
 class Pitchfork(MinorImprovement):
@@ -1220,7 +1295,10 @@ class ThreshingBoard(MinorImprovement):
         player.listen_for_event(self, 'Action: Cultivation')
 
     def trigger(self, player):
-        player.bake_bread()
+        grain = CountChoice(
+            player.grain,
+            "ThreshingBoard: Number of grain bushels to bake into bread?")
+        player.bake_bread(grain)
 
 
 class DutchWindmill(MinorImprovement):
@@ -1276,7 +1354,10 @@ class BreadPaddle(MinorImprovement):
         player.listen_for_event(self, 'occupation')
 
     def trigger(self, player):
-        player.bake_bread()
+        grain = CountChoice(
+            player.grain,
+            "BreadPaddle: Number of grain bushels to bake into bread?")
+        player.bake_bread(grain)
 
 
 class Handplow(MinorImprovement):
@@ -1294,7 +1375,7 @@ class MilkJug(MinorImprovement):
     text = 'Each time any player (including you) uses the "Cattle Market" accumulation space, you get 3 food, and each other player gets 1 food.'
 
     def _apply(self, player):
-        player.listen_for_event(self, 'Action: CattleMarket')
+        player.game.listen_for_event(self, 'Action: CattleMarket')
 
     def trigger(self, player):
         for p in player.game.players:

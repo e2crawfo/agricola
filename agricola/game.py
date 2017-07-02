@@ -8,6 +8,7 @@ from agricola.action import get_actions, get_simple_actions
 from agricola.cards import (
     get_occupations, get_minor_improvements, get_major_improvements)
 from agricola.utils import check_random_state, EventGenerator, EventScope
+from agricola.choice import Choice
 
 # TODO: make sure that certain actions which allow two things to be done have
 # the order of the two things respected (and make sure player can't take the
@@ -183,7 +184,6 @@ class AgricolaGame(EventGenerator):
         self.actions_taken = {}
 
         # Main loop
-
         actions_avail = self.actions_avail = [a for a in self.action_order[0]]
         for stage_actions in self.action_order[1:]:
             ui.begin_stage(self.stage_idx)
@@ -274,12 +274,17 @@ class AgricolaGame(EventGenerator):
         self.ui = None
 
     def get_choices(self, player, _choices):
-        choices = self.ui.get_choices(player.name, _choices)
-        return choices
+        return_as_list = True
+        if isinstance(_choices, Choice):
+            _choices = [_choices]
+            return_as_list = False
 
-    def get_choice(self, player, _choice):
-        choices = self.get_choices(player.name, [_choice])
-        return choices[0]
+        choices = self.ui.get_choices(player.name, _choices)
+
+        if not return_as_list:
+            choices = choices[0]
+
+        return choices
 
 
 class SimpleAgricolaGame(AgricolaGame):
@@ -295,7 +300,7 @@ class SimpleAgricolaGame(AgricolaGame):
 
 class LessonsAgricolaGame(AgricolaGame):
     def __init__(self, n_players):
-        from agricola.action import Lessons, Farmland, Fencing
+        from agricola.action import Farmland, Fencing
         n_base = 4
         n_rounds = 2
         n_phases = 3
@@ -327,8 +332,8 @@ class StandardAgricolaGame(AgricolaGame):
 
 
 if __name__ == "__main__":
-    #game = LessonsAgricolaGame(2)
-    #game = SimpleAgricolaGame(2)
+    # game = LessonsAgricolaGame(2)
+    # game = SimpleAgricolaGame(2)
     game = StandardAgricolaGame(2)
     ui = TextInterface()
     game.play(ui)
