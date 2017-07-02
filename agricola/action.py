@@ -47,12 +47,8 @@ class ResourceAcquisition(Action):
         s = ["<" + self.__class__.__name__ + ":"]
 
         pairs = list(iteritems(self.resources))
-        n_pairs = len(pairs)
-
-        for i, (k, v) in enumerate(pairs[:-1]):
-            s.append("+{0} {1},".format(v, k[2:]))
-        if n_pairs > 1:
-            s.append("and")
+        for k, v in pairs[:-1]:
+            s.append("+{0} {1},".format(v, k))
         s.append("+{0} {1}".format(pairs[-1][1], pairs[-1][0]))
 
         return ' '.join(s) + '>'

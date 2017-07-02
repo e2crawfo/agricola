@@ -1,7 +1,8 @@
 import abc
 from future.utils import with_metaclass
 
-from agricola.utils import score_mapping
+
+from agricola.utils import score_mapping, cumsum
 from agricola.choice import (
     YesNoChoice, DiscreteChoice, CountChoice, ListChoice, SpaceChoice)
 
@@ -89,7 +90,7 @@ class PaperMaker(Occupation):
         player.listen_for_event(self, 'Action: Lessons3P', before=True)
         player.listen_for_event(self, 'Action: Lessons4P', before=True)
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         #TODO
         response = 'clay'
         player.add_resources(response=1)
@@ -103,7 +104,7 @@ class Conjurer(Occupation):
     def check_and_apply(self, player):
         player.listen_for_event(self, 'Action: TravelingPlayers')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_resources(grain=1, wood=1)
 
 
@@ -117,7 +118,7 @@ class StorehouseKeeper(Occupation):
         player.listen_for_event(self, 'Action: ResourceMarket3P')
         player.listen_for_event(self, 'Action: ResourceMarket4P')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         choice = player.game.get_choice(
             player, DiscreteChoice(('clay', 'grain')),
             "StorehouseKeeper: Get 1 clay or 1 grain?")
@@ -132,7 +133,7 @@ class Harpooner(Occupation):
     def check_and_apply(self, player):
         player.listen_for_event(self, 'Action: Fishing')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         if player.wood >= 1:
             desc = ("Harpooner: Pay 1 wood to receive 1 food "
                     "for each of your people, and 1 reed?")
@@ -193,7 +194,7 @@ class Greengrocer(Occupation):
     def check_and_apply(self, player):
         player.listen_for_event(self, 'Action: GrainSeeds')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_resources(veg=1)
 
 
@@ -204,14 +205,16 @@ class Lutenist(Occupation):
 
     def check_and_apply(self, player):
         player.game.listen_for_event(self, 'Action: TravelingPlayers')
+        self.player = player
 
-    def trigger(self, player):
-        player.add_resources(food=1, veg=1)
-        if player.food >= 2:
-            desc = "Lutenist: Buy 1 vegetable for 2 food?"
-            choice = player.game.get_choice(player, YesNoChoice(desc))
-            if choice:
-                player.add_resources(food=-2, veg=1)
+    def trigger(self, player, **kwargs):
+        if player != self.player:
+            self.player.add_resources(food=1, veg=1)
+            if self.player.food >= 2:
+                desc = "Lutenist: Buy 1 vegetable for 2 food?"
+                use = self.player.game.get_choice(self.player, YesNoChoice(desc))
+                if use:
+                    self.player.change_state(cost=dict(food=2), change=dict(veg=1))
 
 
 class Braggart(Occupation):
@@ -232,7 +235,7 @@ class PigBreeder(Occupation):
     def check_and_apply(self, player):
         player.add_resources(boar=1)
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         pass
 
 
@@ -245,7 +248,7 @@ class BrushwoodCollector(Occupation):
         player.listen_for_event(self, 'build_room')
         player.listen_for_event(self, 'renovate')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         desc = "BrushwoodCollector: 1 wood in place of all reed?"
         choice = player.game.get_choice(player, YesNoChoice(desc))
         # TODO
@@ -278,7 +281,7 @@ class WoodCutter(Occupation):
         player.listen_for_event(self, 'Action: Grove')
         player.listen_for_event(self, 'Action: Copse')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_resources(wood=1)
 
 
@@ -318,7 +321,7 @@ class FirewoodCollector(Occupation):
         player.listen_for_event(self, 'Action: GrainUtilization')
         player.listen_for_event(self, 'Action: Cultivation')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_resources(wood=1)
 
 
@@ -340,7 +343,7 @@ class SeasonalWorker(Occupation):
     def check_and_apply(self, player):
         player.listen_for_event(self, 'Action: DayLaborer')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         # TODO: choose once its round 6
         player.add_resources(grain=1)
 
@@ -356,7 +359,7 @@ class ClayHutBuilder(Occupation):
         else:
             player.listen_for_event(self, 'renovation')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_future(range(1, 6), 'clay', 2)
         player.stop_listening(self, 'renovation')
 
@@ -381,7 +384,7 @@ class Pastor(Occupation):
         if not stop:
             player.game.listen_for_event(self, 'build_room')
 
-    def trigger(self):
+    def trigger(self, **kwargs):
         player = self.player
         assert player is not None
 
@@ -408,7 +411,7 @@ class AssistantTiller(Occupation):
     def check_and_apply(self, player):
         player.listen_for_event(self, 'Action: DayLaborer')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         desc = "AssistantTiller: Plow a field?"
         plow_field = player.game.get_choice(player, YesNoChoice(desc))
         if plow_field:
@@ -425,7 +428,7 @@ class Groom(Occupation):
         player.add_resources(wood=1)
         player.listen_for_event(self, 'start_round')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         if player.house_type == 'stone':
             desc = "Groom: Build a stable for 1 wood?"
             build_stable = player.game.get_choice(player, YesNoChoice(desc))
@@ -467,7 +470,7 @@ class SmallScaleFarmer(Occupation):
     def check_and_apply(self, player):
         player.listen_for_event(self, 'start_round')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         if player.rooms == 2:
             player.add_resources(wood=1)
 
@@ -480,7 +483,7 @@ class WallBuilder(Occupation):
     def check_and_apply(self, player):
         player.listen_for_event(self, 'build_room')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_future(range(1, 5), 'food', 1)
 
 
@@ -492,7 +495,7 @@ class Cottager(Occupation):
     def check_and_apply(self, player):
         player.listen_for_event(self, 'Action: DayLaborer')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         choice = DiscreteChoice(
             ['Build room', 'Renovate house', 'Do nothing'],
             "Cottager effect")
@@ -564,7 +567,7 @@ class OvenFiringBoy(Occupation):
         player.listen_for_event(self, 'Action: Grove')
         player.listen_for_event(self, 'Action: Copse')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         grain = CountChoice(
             player.grain,
             "OvenFiringBoy: Number of grain bushels to bake into bread?")
@@ -591,7 +594,7 @@ class Manservant(Occupation):
         else:
             player.listen_for_event(self, 'renovation')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         if player.house_type == 'stone':
             player.add_future(range(1, 4), 'food', 1)
             player.stop_listening(self, 'renovation')
@@ -605,7 +608,7 @@ class AdoptiveParents(Occupation):
     def check_and_apply(self, player):
         player.listen_for_event(self, 'birth')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         #TODO
         pass
 
@@ -618,7 +621,7 @@ class Childless(Occupation):
     def check_and_apply(self, player):
         player.listen_for_event(self, 'start_round')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         if player.rooms >= 3 and player.people == 2:
             choice = DiscreteChoice(
                 ["Grain", "Vegetable"],
@@ -643,7 +646,7 @@ class Geologist(Occupation):
         if player.game.n_players >= 3:
             player.listen_for_event(self, 'Action: ClayPit')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_resources(clay=1)
 
 
@@ -657,7 +660,7 @@ class MushroomCollector(Occupation):
         player.listen_for_event(self, 'Action: Grove')
         player.listen_for_event(self, 'Action: Copse')
 
-    def trigger(self, player):
+    def trigger(self, player, action):
         desc = "MushroomCollector; leave 1 wood to receive 2 food?"
         use = player.game.get_choice(player, YesNoChoice(desc))
         if use:
@@ -675,7 +678,7 @@ class Scholar(Occupation):
     def check_and_apply(self, player):
         player.listen_for_event(self, 'start_round')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         if player.house_type == 'stone':
             choice = DiscreteChoice(
                 ['Play occupation (at cost of 1 food).',
@@ -708,7 +711,7 @@ class PlowDriver(Occupation):
     def check_and_apply(self, player):
         player.listen_for_event(self, 'start_round')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         if player.house_type == 'stone' and player.food >= 1:
             desc = "PlowDriver: Pay 1 food to plow a field?"
             use = player.game.get_choice(player, YesNoChoice(desc))
@@ -891,7 +894,7 @@ class HerringPot(MinorImprovement):
     def _apply(self, player):
         player.listen_for_event(self, 'Action: Fishing')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_future(range(1, 4), 'food', 1)
 
 
@@ -931,7 +934,7 @@ class Scullery(MinorImprovement):
     def _apply(self, player):
         player.listen_for_event(self, 'start_round')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         if player.house_type == 'wood':
             player.add_resources(food=1)
 
@@ -948,7 +951,7 @@ class Canoe(MinorImprovement):
     def _apply(self, player):
         player.listen_for_event(self, 'Action: Fishing')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_resources(food=1, reed=1)
 
 
@@ -961,7 +964,7 @@ class MiningHammer(MinorImprovement):
         player.add_resources(food=1)
         player.listen_for_event(self, 'renovation')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         use = player.game.get_choices("MiningHammer: build 1 stable for free?")
         if use:
             stable_loc = player.game.get_choices(player, SpaceChoice("Stable location."))
@@ -999,7 +1002,7 @@ class JunkRoom(MinorImprovement):
         player.listen_for_event(self, 'minor improvement')
         player.listen_for_event(self, 'major improvement')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_resources(food=1)
 
 
@@ -1063,7 +1066,7 @@ class LoamPit(MinorImprovement):
     def _apply(self, player):
         player.listen_for_event(self, 'Action: DayLaborer')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_resources(clay=3)
 
 
@@ -1103,7 +1106,7 @@ class Loom(MinorImprovement):
     def _apply(self, player):
         player.listen_for_event(self, 'field phase')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         food = score_mapping(player.sheep, [1, 4, 7], [0, 1, 2, 3])
         player.add_resources(food=food)
 
@@ -1123,7 +1126,7 @@ class MoldboardPlow(MinorImprovement):
         self._fields_remaining = 2
         player.listen_for_event(self, 'Action: Farmland')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         if self._fields_remaining > 0:
             self._fields_remaining -= 1
             player.plow_fields()
@@ -1150,7 +1153,7 @@ class Pitchfork(MinorImprovement):
     def _apply(self, player):
         player.listen_for_event(self, 'Action: GrainSeeds')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         for action in self.player.game.actions_taken:
             if action.name == "Farmland":
                 player.add_resources(food=3)
@@ -1167,7 +1170,7 @@ class Lasso(MinorImprovement):
         player.listen_for_event(self, 'Action: BoarMarket')
         player.listen_for_event(self, 'Action: CattleMarket')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         pass
 
 
@@ -1190,7 +1193,7 @@ class ThreeFieldRotation(MinorImprovement):
     def _apply(self, player):
         player.listen_for_event(self, 'field phase')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         if player.grain_fields >= 1 and player.veg_fields >= 1 and player.empty_fields >= 1:
             player.add_resources(food=3)
 
@@ -1227,7 +1230,7 @@ class ButterChurn(MinorImprovement):
     def _apply(self, player):
         player.listen_for_event(self, 'field phase')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         food = int(player.sheep/3) + int(player.cattle/3)
         player.add_resources(food=food)
 
@@ -1275,7 +1278,7 @@ class CornScoop(MinorImprovement):
     def _apply(self, player):
         player.listen_for_event(self, 'Action: GrainSeeds')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_resources(grain=1)
 
 
@@ -1301,7 +1304,7 @@ class ThreshingBoard(MinorImprovement):
         player.listen_for_event(self, 'Action: Farmland')
         player.listen_for_event(self, 'Action: Cultivation')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         grain = CountChoice(
             player.grain,
             "ThreshingBoard: Number of grain bushels to bake into bread?")
@@ -1317,8 +1320,8 @@ class DutchWindmill(MinorImprovement):
     def _apply(self, player):
         player.listen_for_event(self, 'bake bread')
 
-    def trigger(self, player):
-        sums = np.cumsum([len(s) for s in player.game.action_order[:1]])
+    def trigger(self, player, **kwargs):
+        sums = cumsum([len(s) for s in player.game.action_order[:1]])
         round_idx = player.game.round_idx
         for s in sums:
             if round_idx == s + 1:
@@ -1333,7 +1336,7 @@ class StoneTongs(MinorImprovement):
     def _apply(self, player):
         player.listen_for_event(self, 'stone accumulation')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_resources(stone=1)
 
 
@@ -1360,7 +1363,7 @@ class BreadPaddle(MinorImprovement):
         player.add_resources(food=1)
         player.listen_for_event(self, 'occupation')
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         grain = CountChoice(
             player.grain,
             "BreadPaddle: Number of grain bushels to bake into bread?")
@@ -1383,11 +1386,12 @@ class MilkJug(MinorImprovement):
 
     def _apply(self, player):
         player.game.listen_for_event(self, 'Action: CattleMarket')
+        self.player = player
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         for p in player.game.players:
             p.add_resources(food=1)
-        player.add_resources(food=2)
+        self.player.add_resources(food=2)
 
 
 class Brook(MinorImprovement):
@@ -1406,7 +1410,7 @@ class Brook(MinorImprovement):
         action = player.game.action_order[1][0]
         player.listen_for_event(self, 'Action: {}'.format(action.name))
 
-    def trigger(self, player):
+    def trigger(self, player, **kwargs):
         player.add_resources(food=1)
 
 

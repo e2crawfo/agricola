@@ -299,7 +299,8 @@ class Player(EventGenerator):
 
     # TODO: beggar tokens
     def __init__(
-            self, name, shape=None, house_type='wood', rooms=None, fields=None, stables=None, pastures=None,
+            self, name, shape=None, house_type='wood',
+            rooms=None, fields=None, stables=None, pastures=None,
             food=0, wood=0, clay=0, stone=0, reed=0,
             sheep=0, boar=0, cattle=0, grain=0, veg=0,
             people=2, people_avail=3, fences_avail=15, stables_avail=4,
@@ -318,7 +319,7 @@ class Player(EventGenerator):
 
         self.house_type = house_type
         if rooms is None:
-            rooms = [Room((0, 0)), Room((0, 1))]
+            rooms = [Room((0, 0)), Room((1, 0))]
 
         self._rooms = rooms or []
         self.people = people
@@ -408,9 +409,6 @@ class Player(EventGenerator):
             return self.animals[key]
 
         return self.__getattribute__(key)
-
-    def action_played(self, action):
-        self.trigger_event("Action: {}".format(action.name))
 
     def give_cards(self, attr, cards):
         self.hand[attr].extend(cards)
@@ -549,7 +547,7 @@ class Player(EventGenerator):
         return score
 
     def start_round(self, round_idx):
-        with EventScope('start_round', self):
+        with EventScope(self, 'start_round'):
             resources = self.futures[round_idx]
 
             for resource, amount in resources.items():
@@ -557,7 +555,7 @@ class Player(EventGenerator):
                 pass
 
     def end_round(self):
-        with EventScope('end_round', self):
+        with EventScope(self, 'end_round'):
             pass
 
     def harvest(self):

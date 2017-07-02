@@ -44,22 +44,28 @@ class EventGenerator(with_metaclass(abc.ABCMeta, object)):
         if before:
             event_name += '-before'
 
-        if event_name in self.listeners:
-            for l in self.listeners:
-                l.trigger(self, *args, **kwargs)
+        listeners = self.listeners.get(event_name, [])
+        for l in listeners:
+            l.trigger(*args, **kwargs)
 
 
 class EventScope(object):
-    def __init__(self, event_name, event_generator):
+    def __init__(self, event_generators, event_name, **kwargs):
+        if isinstance(event_generators, EventGenerator):
+            event_generators = [event_generators]
+        self.event_generators = event_generators
+
         self.event_name = event_name
-        self.event_generator = event_generator
+        self.kwargs = kwargs
 
     def __enter__(self):
-        self.event_generator.trigger_event(self.event_name, before=True)
+        for eg in self.event_generators:
+            eg.trigger_event(self.event_name, before=True, **self.kwargs)
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is None:
-            self.event_generator.trigger_event(self.event_name, before=False)
+            for eg in self.event_generators:
+                eg.trigger_event(self.event_name, before=False, **self.kwargs)
 
 
 def score_mapping(value, thresholds, points=None):
@@ -211,8 +217,8 @@ def multiset_weight(a):
 
 def multiset_satisfy(constraints, multiset):
     """
-    Check whether there is (a partition of the multiset
-    whose size is equal to the length of ``constraints``) such that
+    Check whether there exists <a partition of the given multiset
+    whose size is equal to the length of ``constraints``> such that
     the total weight of each component of the partition is at least big
     as its corresponding entry in ``constraints``.
 
@@ -248,3 +254,11 @@ def multiset_satisfy(constraints, multiset):
             return True
 
     return False
+
+
+def cumsum(lst):
+    acc, cs = 0, []
+    for l in lst:
+        acc += l
+        cs.append(acc)
+    return cs

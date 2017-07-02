@@ -1,13 +1,14 @@
 from future.utils import iteritems
 import itertools
 import copy
+import numpy as np
 
 from agricola import (
     Player, TextInterface, AgricolaException)
 from agricola.action import get_actions, get_simple_actions
 from agricola.cards import (
     get_occupations, get_minor_improvements, get_major_improvements)
-from agricola.utils import check_random_state, EventGenerator, EventScope
+from agricola.utils import EventGenerator, EventScope
 from agricola.choice import Choice
 
 # TODO: make sure that certain actions which allow two things to be done have
@@ -15,16 +16,20 @@ from agricola.choice import Choice
 # action if they can't take the first action.
 
 
-class DefaultCardDrawer(object):
-    def __init__(self, cards_per_player=7):
+class Deck(object):
+    def __init__(self, cards, cards_per_player, shuffle=True):
+        self.cards = list(cards)
         self.cards_per_player = cards_per_player
+        self.shuffle = shuffle
 
-    def draw_cards(self, n_players, deck, rng=None):
-        rng = check_random_state(rng)
-
-        cards = rng.choice(deck, n_players * self.cards_per_player, replace=False)
-        rng.shuffle(cards)
-        cards = list(cards)
+    def draw_cards(self, n_players):
+        if self.shuffle:
+            cards = np.random.choice(
+                self.cards, n_players * self.cards_per_player, replace=False)
+            np.random.shuffle(cards)
+            cards = list(cards)
+        else:
+            cards = self.cards + []
 
         hands = []
         for i in range(n_players):
@@ -46,14 +51,14 @@ class AgricolaGame(EventGenerator):
         corresponding stage.
     n_players: int > 0
         Number of players.
-    initial_player: list of Player instance or Player instance (optional)
+    initial_players: Player instance or list thereof (optional)
         If a Player instance, each player is created as a copy of this player.
         If a list, length must be equal to ``n_players`` (allows specifying
         different starting configurations for different players). If not
         supplied, the default starting configuration is used for every player.
-    occupations: list of Occupation instances
+    occupations: instance of Deck
         Pool of occupations to draw from.
-    minor_improvements: list of MinorImprovement instances
+    minor_improvements: instance of Deck
         Pool of minor improvements to draw from.
     major_improvements: list of MajorImprovement instances
         Pool of major improvements to draw from.
@@ -64,36 +69,45 @@ class AgricolaGame(EventGenerator):
 
     """
     def __init__(
-            self, actions, n_players, initial_player=None,
+            self, actions, n_players, initial_players=None,
             occupations=None, minor_improvements=None, major_improvements=None,
-            occ_card_drawer=None, mi_card_drawer=None, randomize=True):
+            randomize=True):
 
         self.actions = actions
         self.n_players = n_players
 
-        if isinstance(initial_player, list):
-            if not len(initial_player) == n_players:
+        if isinstance(initial_players, list):
+            if not len(initial_players) == n_players:
                 raise ValueError(
-                    "Length of list ``initial_player`` must "
+                    "Length of list ``initial_players`` must "
                     "be equal to ``n_players``.")
-            elif not all(isinstance(p, Player) for p in initial_player):
+            elif not all(isinstance(p, Player) for p in initial_players):
                 raise ValueError(
-                    "``initial_player`` must be an agricola.Player instance or "
+                    "``initial_players`` must be an agricola.Player instance or "
                     "a list thereof.")
-        elif initial_player is None:
-            initial_player = Player("0")
-        elif not isinstance(initial_player, Player):
+        elif initial_players is None:
+            initial_players = [Player(str(i)) for i in range(self.n_players)]
+        elif not isinstance(initial_players, Player):
             raise ValueError(
-                "``initial_player`` must be an agricola.Player instance or "
+                "``initial_players`` must be an agricola.Player instance or "
                 "a list thereof.")
-        self.initial_player = initial_player
+        self.initial_players = initial_players
 
+        try:
+            occupations = list(occupations)
+            occupations = Deck(occupations, 7)
+        except:
+            pass
         self.occupations = occupations
-        self.minor_improvements = minor_improvements
-        self.major_improvements = major_improvements or []
 
-        self.occ_card_drawer = occ_card_drawer or DefaultCardDrawer()
-        self.mi_card_drawer = mi_card_drawer or DefaultCardDrawer()
+        try:
+            minor_improvements = list(minor_improvements)
+            minor_improvements = Deck(minor_improvements, 7)
+        except:
+            pass
+        self.minor_improvements = minor_improvements
+
+        self.major_improvements = major_improvements or []
 
         self.randomize = randomize
 
@@ -136,26 +150,20 @@ class AgricolaGame(EventGenerator):
         self.first_player = player
 
     @property
-    def actions_remaining(self):
-        return set(self.actions_avail) - set(self.actions_taken)
-
-    @property
     def rounds_remaining(self):
         """ Complete rounds remaining (i.e. doesn't include current round). """
         return sum([len(s) for s in self.actions[1:]]) - self.round_idx
 
-    def play(self, ui, first_player=None, rng=None):
+    def play(self, ui, first_player=None):
         self.ui = ui
-        rng = check_random_state(rng)
         if self.randomize:
             self.action_order = (
                 [self.actions[0]] +
-                [rng.permutation(l) for l in self.actions[1:]])
+                [np.random.permutation(l) for l in self.actions[1:]])
         else:
             self.action_order = self.actions
 
-        self.players = [
-            copy.deepcopy(self.initial_player) for i in range(self.n_players)]
+        self.players = [copy.deepcopy(ip) for ip in self.initial_players]
         for i, p in enumerate(self.players):
             p.name = str(i)
 
@@ -163,18 +171,18 @@ class AgricolaGame(EventGenerator):
             p.set_game(self)
 
         if self.occupations:
-            occ_hands = self.occ_card_drawer.draw_cards(
-                self.n_players, self.occupations, rng)
-            for hand, player in zip(occ_hands, self.players):
+            hands = self.occupations.draw_cards(self.n_players)
+            for hand, player in zip(hands, self.players):
                 player.give_cards('occupations', hand)
 
         if self.minor_improvements:
-            mi_hands = self.mi_card_drawer.draw_cards(
-                self.n_players, self.minor_improvements, rng)
-            for hand, player in zip(mi_hands, self.players):
+            hands = self.minor_improvements.draw_cards(self.n_players)
+            for hand, player in zip(hands, self.players):
                 player.give_cards('minor_improvements', hand)
 
-        self.set_first_player(first_player or rng.randint(self.n_players))
+        if first_player is None:
+            first_player = np.random.randint(self.n_players)
+        self.set_first_player(first_player)
 
         players = self.players
         ui.start_game(self)
@@ -184,15 +192,16 @@ class AgricolaGame(EventGenerator):
         self.actions_taken = {}
 
         # Main loop
-        actions_avail = self.actions_avail = [a for a in self.action_order[0]]
+        self.active_actions = [a for a in self.action_order[0]]
         for stage_actions in self.action_order[1:]:
             ui.begin_stage(self.stage_idx)
 
             for round_action in stage_actions:
-                actions_avail.append(round_action)
-
-                for action in actions_avail:
+                self.active_actions.append(round_action)
+                for action in self.active_actions:
                     action.turn()
+
+                self.actions_remaining = self.active_actions + []
 
                 ui.begin_round(self.round_idx, round_action)
 
@@ -209,12 +218,15 @@ class AgricolaGame(EventGenerator):
                         player = self.players[i]
                         action = None
                         while action is None:
+                            print("Player's status: ")
+                            print(player)
+
                             action = ui.get_action(player.name, self.actions_remaining)
 
                             if action is None:
                                 ui.action_failed("No action chosen")
                                 continue
-                            elif action not in actions_avail:
+                            elif action not in self.actions_remaining:
                                 ui.action_failed("That action is not available this round")
                                 action = None
                                 continue
@@ -229,7 +241,7 @@ class AgricolaGame(EventGenerator):
                             if choices:
                                 choices = self.get_choices(player, choices)
 
-                            action_event = "Action: {}".format(action.__class__.__name__)
+                            event_name = "Action: {}".format(action.__class__.__name__)
                             try:
                                 # TODO: We currently have no way to roll-back what
                                 # goes on before an action occurs via pre-event triggers
@@ -237,9 +249,8 @@ class AgricolaGame(EventGenerator):
                                 # which in some situations will give players access
                                 # to pre-action effects without taking the action
                                 # (if taking the action fails).
-                                with EventScope(action_event, self):
-                                    with EventScope(action_event, player):
-                                        action.effect(player, choices)
+                                with EventScope([self, player], event_name, player=player, action=action):
+                                    action.effect(player, choices)
 
                             except AgricolaException as e:
                                 ui.action_failed(str(e))
@@ -247,10 +258,11 @@ class AgricolaGame(EventGenerator):
 
                         ui.action_successful()
 
-                        print("Player after action: ")
+                        print("Player's status after action: ")
                         print(player)
 
                         self.actions_taken[action] = i
+                        self.actions_remaining.remove(action)
 
                         player_turns[i] -= 1
                         if player_turns[i] <= 0:
@@ -291,7 +303,7 @@ class SimpleAgricolaGame(AgricolaGame):
     def __init__(self, n_players):
         from agricola.action import Lessons
         actions = get_simple_actions()
-        occupations = get_occupations(n_players)
+        occupations = Deck(get_occupations(n_players), 7)
         actions[0].append(Lessons())
 
         super(SimpleAgricolaGame, self).__init__(
