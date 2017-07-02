@@ -332,7 +332,7 @@ class Player(EventGenerator):
         hand = hand or {'minor_improvements': [], 'occupations': []}
         self.hand = deepcopy(hand)
 
-        self.house_progression = ['wood', 'clay', 'stone']
+        self.house_progression = dict(wood=['clay'], clay=['stone'], stone=[])
         self.room_cost = 5
 
         # The last rate in this list can be applied infinitely
@@ -630,21 +630,17 @@ class Player(EventGenerator):
 
         self._rooms.extend(rooms)
 
-    def upgrade_house(self, material):
-        # TODO: make use of ``material`` arg, for instances where the player
-        # has multiple ways to upgrade their house - eg upgrading directly to stone.
-        try:
-            idx = self.house_progression.index(self.house_type) + 1
-            material_required = self.house_progression[idx]
-        except KeyError:
-            raise
+    def valid_house_upgrades(self):
+        return self.house_progression[self.house_type]
 
-        description = "Upgrading house from {0} to {1}".format(self.house_type, material_required)
+    def upgrade_house(self, material):
+        assert material in self.valid_house_upgrades(), (
+            "Cannot upgrade from {} to {}.".format(self.house_type, material))
+        description = "Upgrading house from {0} to {1}".format(self.house_type, material)
         change = {self.material_required: -self.n_rooms, 'reed': -1}
         state_change = PlayerStateChange(description, change=change)
         state_change.check_and_apply(self)
-
-        self.house_type = material_required
+        self.house_type = material
 
     def build_pastures(self, pastures):
         """ Construct supplied Pastures.

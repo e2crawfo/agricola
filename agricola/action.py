@@ -278,9 +278,10 @@ class FarmExpansion(Action):
 
 class HouseRedevelopment(Action):
     def choices(self, player):
+        house_upgrade_mats = player.valid_house_upgrades()
         imps = player.hand["minor_improvements"] + player.game.major_improvements
         return [
-            DiscreteChoice(["clay", "stone"], "Choose new house material."),
+            DiscreteChoice(house_upgrade_mats, "Choose new house material."),
             DiscreteChoice(imps, "Choose an optional improvement after renovation.")]
 
     def _effect(self, player, choices):
@@ -301,7 +302,7 @@ class HouseRedevelopment(Action):
 class FarmRedevelopment(Action):
     def choices(self, player):
         return [
-            DiscreteChoice(["clay", "stone"], "Choose new house material."),
+            DiscreteChoice(player.house_progression[player.house_type], "Choose new house material."),
             ListChoice(ListChoice(SpaceChoice("Space to pasteurize.")))
         ]
 

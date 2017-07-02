@@ -731,6 +731,9 @@ class Conservator(Occupation):
     min_players = 1
     text = 'You can renovate your wooden house directly to stone without renovating to clay first.'
 
+    def check_and_apply(self, player):
+        player.house_progression['wood'].append('stone')
+
 
 class FrameBuilder(Occupation):
     deck = 'A'
