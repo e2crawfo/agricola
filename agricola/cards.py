@@ -140,7 +140,8 @@ class Harpooner(Occupation):
             if use:
                 player.change_state(
                     "Harpooner effect.",
-                    change=dict(wood=-1, food=player.people, reed=1))
+                    cost=dict(wood=1),
+                    change=dict(food=player.people, reed=1))
 
 
 class CattleFeeder(Occupation):
@@ -537,8 +538,8 @@ class RoofBallaster(Occupation):
 
         if make_exchange:
             player.change_state(
-                prereq=dict(food=1),
-                change=dict(food=-1, stone=player.rooms))
+                cost=dict(food=1),
+                change=dict(stone=player.rooms))
 
 
 class Tutor(Occupation):
@@ -658,7 +659,8 @@ class MushroomCollector(Occupation):
         if use:
             player.change_state(
                 "MushroomCollector effect.",
-                change=dict(wood=-1, food=2))
+                cost=dict(wood=1),
+                change=dict(food=2))
 
 
 class Scholar(Occupation):
@@ -707,8 +709,7 @@ class PlowDriver(Occupation):
             desc = "PlowDriver: Pay 1 food to plow a field?"
             use = player.game.get_choice(player, YesNoChoice(desc))
             if use:
-                player.change_state(
-                    "Plowdriver effect.", prereq=dict(food=1), change=dict(food=-1))
+                player.change_state("Plowdriver effect.", cost=dict(food=1))
                 space_to_plow = player.game.get_choices(
                     player, SpaceChoice("Space to plow."))
                 player.plow_fields(space_to_plow)
@@ -768,8 +769,7 @@ class MinorImprovement(with_metaclass(abc.ABCMeta, Card)):
         print("Applying minor improvement {0}.".format(self.name))
         description = "Playing minor improvement {0}".format(self)
 
-        change = {k: -v for k, v in self.cost.items()}
-        player.change_state(description, change=change)
+        player.change_state(description, cost=self.cost.copy())
         self._check(player)
         self._apply(player)
 
@@ -816,7 +816,7 @@ class Basket(MinorImprovement):
     def trigger(self, player, pasture):
         use = player.game.get_choices(player, YesNoChoice("Basket: exchange 2 wood for 3 food?"))
         if use:
-            player.change_state("Basket effect.", cost=dict(wood=2), change=dict(wood=-2, food=3))
+            player.change_state("Basket effect.", cost=dict(wood=2), change=dict(food=3))
 
 
 class ClayEmbankment(MinorImprovement):
@@ -1427,8 +1427,7 @@ class MajorImprovement(with_metaclass(abc.ABCMeta, Card)):
     def check_and_apply(self, player):
         print("Applying major improvement {0}.".format(self.name))
         description = "Playing major improvement {0}".format(self)
-        change = {k: -v for k, v in self.cost.items()}
-        player.change_state(description, change=change)
+        player.change_state(description, cost=self.cost.copy())
         self._apply(player)
 
     @abc.abstractmethod

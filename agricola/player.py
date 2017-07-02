@@ -205,12 +205,15 @@ class PlayerStateChange(object):
         argument can be omitted, in which case this object simply
         checks that the supplied prereq are satisfied. No resource amounts
         are permitted to go below 0.
-    prereq: dict (str -> int)
-        Dictionary mapping from resource names to integers
+    prereq: dict (str -> int) (optional)
+        Dictionary mapping from resource names to positive integers
         specifying the minimum amount of that resource required
         for applying this state change. This argument can be omitted.
         Some things that seem like prereqs can actually be supplied
         as changes.
+    cost: dict (str -> int) (optional)
+        Similar to prereq, except that the amount required is also subtracted
+        from the players reserves. So more like a combination of a `change` and a `prereq`.
     change_fns: list of fn (player, game)
         List of functions, each accepting a player and a game, and returning None.
         Allowed to make modifications to the player, should not alter the game.
@@ -220,11 +223,12 @@ class PlayerStateChange(object):
         Should not alter the player or the game.
 
     """
-    def __init__(self, description, change=None, prereq=None, change_fns=None, prereq_fns=None):
+    def __init__(self, description, change=None, prereq=None, cost=None, change_fns=None, prereq_fns=None):
         self.description = description
 
         self.change = change or {}
         self.prereq = prereq or {}
+        self.cost = cost or {}
 
         self.change_fns = change_fns or []
         self.prereq_fns = prereq_fns or []
@@ -235,11 +239,12 @@ class PlayerStateChange(object):
                     "Malformed PlayerStateChange object. "
                     "{0} is not a valid resource type.".format(k))
 
-            if v < 0:
-                self.prereq[k] = self.prereq.get(k, 0) - v
-
     def check_and_apply(self, player):
         for k, v in self.prereq.items():
+            if getattr(player, k) < v:
+                raise AgricolaNotEnoughResources(self._error_message(player))
+
+        for k, v in self.cost.items():
             if getattr(player, k) < v:
                 raise AgricolaNotEnoughResources(self._error_message(player))
 
@@ -248,7 +253,10 @@ class PlayerStateChange(object):
                 raise AgricolaException("Prerequisite unsatisfied.")
 
         for k, v in self.change.items():
-            setattr(player, k, v + getattr(player, k))
+            setattr(player, k, getattr(player, k) + v)
+
+        for k, v in self.cost.items():
+            setattr(player, k, getattr(player, k) - v)
 
         for fn in self.change_fns:
             fn(self, self.game)
@@ -256,7 +264,10 @@ class PlayerStateChange(object):
     def _error_message(self, player):
         s = [self.description + ' requires']
 
-        pairs = list(self.prereq.items())
+        prereq = self.prereq.copy()
+        prereq.update(self.cost)
+
+        pairs = list(prereq.items())
 
         _s = []
         for k, v in pairs:
@@ -611,8 +622,8 @@ class Player(EventGenerator):
             self._check_animal_capacity(animal_counts.values(), count, animal)
             self.animals[animal] += count
 
-    def change_state(self, description, change=None, prereq=None):
-        state_change = PlayerStateChange(description, change=change, prereq=prereq)
+    def change_state(self, description, change=None, prereq=None, cost=None):
+        state_change = PlayerStateChange(description, change=change, prereq=prereq, cost=cost)
         state_change.check_and_apply(self)
 
     def build_rooms(self, spaces):
@@ -624,8 +635,8 @@ class Player(EventGenerator):
         n_rooms = len(spaces)
 
         description = "Building {0} rooms".format(n_rooms)
-        change = {self.house_type: -self.room_cost * n_rooms, 'reed': -2 * n_rooms}
-        state_change = PlayerStateChange(description, change=change)
+        cost = {self.house_type: self.room_cost * n_rooms, 'reed': 2 * n_rooms}
+        state_change = PlayerStateChange(description, cost=cost)
         state_change.check_and_apply(self)
 
         self._rooms.extend(rooms)
@@ -637,8 +648,8 @@ class Player(EventGenerator):
         assert material in self.valid_house_upgrades(), (
             "Cannot upgrade from {} to {}.".format(self.house_type, material))
         description = "Upgrading house from {0} to {1}".format(self.house_type, material)
-        change = {self.material_required: -self.n_rooms, 'reed': -1}
-        state_change = PlayerStateChange(description, change=change)
+        cost = {self.material_required: self.n_rooms, 'reed': 1}
+        state_change = PlayerStateChange(description, cost=cost)
         state_change.check_and_apply(self)
         self.house_type = material
 
@@ -665,8 +676,8 @@ class Player(EventGenerator):
 
         description = "Building {0} pastures".format(len(pastures))
         n_fences = len(new_fences)
-        change = dict(wood=-n_fences, fences_avail=-n_fences)
-        state_change = PlayerStateChange(description, change=change)
+        cost = dict(wood=n_fences, fences_avail=n_fences)
+        state_change = PlayerStateChange(description, cost=cost)
         state_change.check_and_apply(self)
 
         self._pastures = self._pastures + pastures
@@ -683,8 +694,8 @@ class Player(EventGenerator):
 
         n_stables = len(spaces)
         description = "Building {0} stables".format(len(spaces))
-        change = dict(wood=-unit_cost*n_stables, stables_avail=-n_stables)
-        state_change = PlayerStateChange(description, change=change)
+        cost = dict(wood=unit_cost*n_stables, stables_avail=n_stables)
+        state_change = PlayerStateChange(description, cost=cost)
         state_change.check_and_apply(self)
 
         self._stables.extend(stables)
@@ -712,9 +723,9 @@ class Player(EventGenerator):
 
     def sow(self, n_grain, n_veg):
         description = "Sowing {0} grain and {1} veg".format(n_grain, n_veg)
-        change = dict(grain=-n_grain, veg=-n_veg)
+        cost = dict(grain=n_grain, veg=n_veg)
         prereq = dict(empty_fields=n_grain+n_veg)
-        state_change = PlayerStateChange(description, change=change, prereq=prereq)
+        state_change = PlayerStateChange(description, cost=cost, prereq=prereq)
         state_change.check_and_apply(self)
 
         empty_fields = (f for f in self._fields if f.is_empty())
@@ -731,11 +742,12 @@ class Player(EventGenerator):
         bread_rates = self.bread_rates[:-1][:n]
         n_left = max(n - len(bread_rates), 0)
         bread_rates.extend([self.bread_rates[-1]] * n_left)
-        food = sum(bread_rates)
+        food_gained = sum(bread_rates)
 
-        description = "Baking bread {0} times for {1} food".format(n, food)
-        change = dict(grain=-n, food=food)
-        state_change = PlayerStateChange(description, change=change)
+        description = "Baking bread {0} times for {1} food".format(n, food_gained)
+        cost = dict(grain=n)
+        change = dict(food=food_gained)
+        state_change = PlayerStateChange(description, cost=cost, change=change)
         state_change.check_and_apply(self)
 
     def cook_food(self, counts):
@@ -746,12 +758,15 @@ class Player(EventGenerator):
 
         """
         description = "Cooking food"
-        change = {'food': 0}
-        for resource, count in counts.items():
-            change[resource] = -count
-            change['food'] += self.cooking_rates[resource]
 
-        state_change = PlayerStateChange(description, change=change)
+        food_gained = 0
+        for resource, count in counts.items():
+            food_gained += self.cooking_rates[resource]
+
+        cost = counts.copy()
+        change = dict(food=food_gained)
+
+        state_change = PlayerStateChange(description, cost=cost, change=change)
         state_change.check_and_apply(self)
 
     def play_occupation(self, occupation, game):

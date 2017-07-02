@@ -357,7 +357,7 @@ class Lessons(Action):
 
     def _effect(self, player, choices):
         if len(player.occupations) > 0:
-            player.change_state("Playing occupation", change={'food': -1})
+            player.change_state("Playing occupation", cost=dict(food=1))
 
         player.play_occupation(choices[0], player.game)
 
@@ -369,7 +369,7 @@ class Lessons3P(Action):
         ]
 
     def _effect(self, player, choices):
-        player.change_state("Playing occupation", change={'food': -2})
+        player.change_state("Playing occupation", cost=dict(food=2))
         player.play_occupation(choices[0], player.game)
 
 
@@ -381,9 +381,9 @@ class Lessons4P(Action):
 
     def _effect(self, player, choices):
         if len(player.occupations) > 1:
-            player.change_state("Playing occupation", change={'food': -2})
+            player.change_state("Playing occupation", cost=dict(food=2))
         else:
-            player.change_state("Playing occupation", change={'food': -1})
+            player.change_state("Playing occupation", cost=dict(food=1))
 
         player.play_occupation(choices[0], player.game)
 
