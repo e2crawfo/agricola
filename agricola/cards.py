@@ -376,26 +376,28 @@ class Pastor(Occupation):
 
     def check_and_apply(self, player):
         self.player = player
-        if player.rooms > 2:
-            return
 
-        other_players = player.game.players[:]
-        other_players.remove(player)
-        applies = all(p.rooms > 2 for p in other_players)
-
-        if applies:
-            player.add_resources(wood=3, clay=2, reed=1, stone=1)
-        else:
+        stop = self.trigger()
+        if not stop:
             player.game.listen_for_event(self, 'build_room')
 
-    def trigger(self, player):
-        other_players = player.game.players[:]
-        other_players.remove(self.player)
-        applies = all(p.rooms > 2 for p in other_players)
+    def trigger(self):
+        player = self.player
+        assert player is not None
 
+        if player.rooms > 2:
+            player.game.stop_listening(self, 'build room')
+            return True
+
+        other_players = player.game.players + []
+        other_players.remove(player)
+        applies = all(p.rooms > 2 for p in other_players)
         if applies:
             player.add_resources(wood=3, clay=2, reed=1, stone=1)
             player.game.stop_listening(self, 'build room')
+            return True
+
+        return False
 
 
 class AssistantTiller(Occupation):
@@ -563,8 +565,10 @@ class OvenFiringBoy(Occupation):
         player.listen_for_event(self, 'Action: Copse')
 
     def trigger(self, player):
-        # TODO: bake bread
-        pass
+        grain = CountChoice(
+            player.grain,
+            "OvenFiringBoy: Number of grain bushels to bake into bread?")
+        player.bake_bread(grain)
 
 
 class OrganicFarmer(Occupation):
