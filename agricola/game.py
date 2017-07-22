@@ -17,6 +17,8 @@ from agricola.choice import Choice
 
 
 class Deck(object):
+    """ A list of cards combined with a method for drawing them. """
+
     def __init__(self, cards, cards_per_player, shuffle=True):
         self.cards = list(cards)
         self.cards_per_player = cards_per_player
@@ -39,15 +41,14 @@ class Deck(object):
 
 
 class AgricolaGame(EventGenerator):
-    """
+    """ An object storing the stage for a game of Agricola.
 
     Parameters
     ----------
     actions: list of list of actions
-        The actions to include in the game. The first sublist
-        corresponds to actions that are available from the
-        beginning of the game. Each subsequent list
-        gives the actions that become available in the
+        The actions to include in the game. The first sublist corresponds
+        to actions that are available from the beginning of the game. Each
+        subsequent list gives the actions that become available in the
         corresponding stage.
     n_players: int > 0
         Number of players.
@@ -63,9 +64,8 @@ class AgricolaGame(EventGenerator):
     major_improvements: list of MajorImprovement instances
         Pool of major improvements to draw from.
     randomize: bool (default: True)
-        If False, respect the within-stage ordering of actions
-        in ``actions``. Otherwise, randomize the order of the
-        actions within a stage.
+        If False, respect the within-stage ordering of actions in ``actions``.
+        Otherwise, randomize the order of the actions within a stage.
 
     """
     def __init__(

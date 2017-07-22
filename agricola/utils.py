@@ -108,6 +108,7 @@ def orthog_adjacent(a, b):
 
 
 def index_check(idx, shape):
+    """ Check that index `idx` is valid for an array with shape `shape`. """
     idx = np.array(idx)
     if any(idx < 0) or any(idx >= shape):
         raise IndexError("idx: {0}, shape: {1}".format(idx, shape))

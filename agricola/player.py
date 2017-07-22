@@ -27,6 +27,7 @@ class SpatialObject(with_metaclass(abc.ABCMeta, object)):
         return str(self)
 
     def index_check(self, shape):
+        """ Check that all of my spaces lie within the confines of a board with given shape. """
         for s in self.spaces:
             index_check(s, shape)
 
@@ -36,8 +37,9 @@ class SpatialObject(with_metaclass(abc.ABCMeta, object)):
     def __contains__(self, space):
         return space in self.spaces
 
+    @property
     def spaces(self):
-        return self.spaces
+        return set(self._spaces)
 
     @staticmethod
     def orthog_graph(objects, require_connected=True):
@@ -62,11 +64,13 @@ class SpatialObject(with_metaclass(abc.ABCMeta, object)):
             if len(G) > 1 and not nx.is_connected(G):
                 s = '{' + ', '.join([str(o) for o in objects]) + '}'
                 raise AgricolaLogicError(
-                    "Group of SpatialObjects {0} does not form a connected region.".format(s))
+                    "Group of SpatialObjects {0} does not form a "
+                    "connected region.".format(s))
         return G
 
     @staticmethod
     def check_connected_group(objects):
+        """ Check that a group of SpatialObjects are connected. """
         SpatialObject.orthog_graph(objects, require_connected=True)
 
 
@@ -125,28 +129,33 @@ class Room(SingleSpaceObject):
     pass
 
 
-class AnimalPen(object):
+class AnimalContainer(object):
     @abc.abstractmethod
     def capacity(self):
         return 0
 
 
-class Stable(SingleSpaceObject, AnimalPen):
+class Stable(SingleSpaceObject, AnimalContainer):
     def capacity(self):
         return 1
 
 
-class Pasture(SpatialObject, AnimalPen):
+class Pasture(SpatialObject, AnimalContainer):
     def __init__(self, spaces):
         if isinstance(spaces[0], int):
             spaces = [spaces]
-        self.spaces = list(set(spaces))
+        self._spaces = spaces = list(set(spaces))
+
+        # Check that the spaces in the pasture are connected.
+        SpatialObject.check_connected_group(
+            [SingleSpaceObject(s) for s in self.spaces])
+
         self.size = len(self.spaces)
 
         self.n_stables = 0
 
         fences = []
-        for s in spaces:
+        for s in self.spaces:
             fences.append(((s[0], s[1]), (s[0], s[1]+1)))  # Top
             fences.append(((s[0], s[1]+1), (s[0]+1, s[1]+1)))  # Right
             fences.append(((s[0]+1, s[1]), (s[0]+1, s[1]+1)))  # Bottom
@@ -308,6 +317,9 @@ class Player(EventGenerator):
         super(Player, self).__init__()
         self.name = name
 
+        self.people = people
+        self.people_avail = people_avail
+
         self.resources = dict(
             food=food, wood=wood, clay=clay, stone=stone, reed=reed,
             grain=grain, veg=veg)
@@ -318,19 +330,21 @@ class Player(EventGenerator):
         self.shape = shape
 
         self.house_type = house_type
+
         if rooms is None:
-            rooms = [Room((0, 0)), Room((1, 0))]
+            rooms = [(0, 0), (1, 0)]
+        self._rooms = rooms = [Room(r) for r in rooms]
 
-        self._rooms = rooms or []
-        self.people = people
-        self.people_avail = people_avail
-
-        self._pastures = pastures or []
+        pastures = pastures or []
+        self._pastures = pastures = [Pasture(p) for p in pastures]
         self.fences_avail = fences_avail
-        self._stables = stables or []
+
+        stables = stables or []
+        self._stables = stables = [Stable(s) for s in stables]
         self.stables_avail = stables_avail
 
-        self._fields = fields or []
+        fields = fields or []
+        self._fields = fields = [Field(f) for f in fields]
 
         # Played cards
         self.occupations = occupations or []
@@ -663,9 +677,9 @@ class Player(EventGenerator):
             Pastures to add.
 
         """
-        pastures = [Pasture(p) for p in pastures]
-        for p in pastures:
-            self._check_spatial_objects(p, 'pasture', omit=['stable'])
+        if isinstance(pastures, Pasture):
+            pastures = [pastures]
+        self._check_spatial_objects(pastures, 'pasture', omit=['stable'])
         Pasture.check_connected_group(self._pastures + pastures)
 
         existing_fences = Pasture.fences_for_pasture_group(self._pastures)
@@ -678,7 +692,7 @@ class Player(EventGenerator):
         state_change = PlayerStateChange(description, cost=cost)
         state_change.check_and_apply(self)
 
-        self._pastures = self._pastures + pastures
+        self._pastures.extend(pastures)
         for p in pastures:
             self.trigger_event('build_pasture', pasture=p)
 

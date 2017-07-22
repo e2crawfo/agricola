@@ -141,7 +141,11 @@ class UserInterface(object):
             raise NotImplementedError()
 
 
-class TestUI(UserInterface):
+class _TestUIFinished(BaseException):
+    pass
+
+
+class _TestUI(UserInterface):
     def __init__(self, user_actions):
         # `user_actions` is a list of objects that is processed in order.
         # If an object is not callable, then it is taken as the response to
@@ -152,11 +156,14 @@ class TestUI(UserInterface):
         self.user_actions = iter(user_actions)
 
     def get_next_response(self):
-        nxt = next(self.user_actions)
-        while callable(nxt):
-            nxt(self.game)
+        try:
             nxt = next(self.user_actions)
-        return nxt
+            while callable(nxt):
+                nxt(self.game)
+                nxt = next(self.user_actions)
+            return nxt
+        except StopIteration:
+            raise _TestUIFinished()
 
 
 class TextInterface(UserInterface):
