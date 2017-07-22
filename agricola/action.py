@@ -243,8 +243,8 @@ class AnimalMarket(ResourceAcquisition):
 class FarmExpansion(Action):
     def choices(self, player):
         return [
-            VariableLengthListChoice(SpaceChoice("Room location.")),
-            VariableLengthListChoice(SpaceChoice("Stable location."))
+            VariableLengthListChoice(SpaceChoice("Room location."), "Number of rooms."),
+            VariableLengthListChoice(SpaceChoice("Stable location."), "Number of stables.")
         ]
 
     def _effect(self, player, choices):

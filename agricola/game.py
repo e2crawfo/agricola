@@ -191,11 +191,13 @@ class AgricolaGame(EventGenerator):
         self.stage_idx = 1
         self.actions_taken = {}
 
+        for p in self.players:
+            print(p)
+
         # Main loop
         self.active_actions = [a for a in self.action_order[0]]
         for stage_actions in self.action_order[1:]:
             ui.begin_stage(self.stage_idx)
-
             for round_action in stage_actions:
                 self.active_actions.append(round_action)
                 for action in self.active_actions:
@@ -218,9 +220,6 @@ class AgricolaGame(EventGenerator):
                         player = self.players[i]
                         action = None
                         while action is None:
-                            print("Player's status: ")
-                            print(player)
-
                             action = ui.get_action(player.name, self.actions_remaining)
 
                             if action is None:
@@ -258,9 +257,6 @@ class AgricolaGame(EventGenerator):
 
                         ui.action_successful()
 
-                        print("Player's status after action: ")
-                        print(player)
-
                         self.actions_taken[action] = i
                         self.actions_remaining.remove(action)
 
@@ -269,6 +265,9 @@ class AgricolaGame(EventGenerator):
                             remaining_players.remove(i)
                             if not remaining_players:
                                 break
+
+                for p in self.players:
+                    print(p)
 
                 ui.end_round()
                 self.round_idx += 1

@@ -501,7 +501,7 @@ class Player(EventGenerator):
         return empty_spaces
 
     def __str__(self):
-        s = ["<Player\n"]
+        s = ["<Player {} \n".format(self.name)]
         grid = np.tile('.', self.shape)
 
         room_spaces = set(self.room_spaces)

@@ -35,9 +35,10 @@ class ListChoice(Choice):
 
 
 class VariableLengthListChoice(Choice):
-    def __init__(self, subchoice, desc=None):
+    def __init__(self, subchoice, desc=None, mx=None):
         super(VariableLengthListChoice, self).__init__(desc)
         self.subchoice = subchoice
+        self.mx = mx
 
 
 class SpaceChoice(Choice):

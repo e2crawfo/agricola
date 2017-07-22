@@ -24,8 +24,6 @@ class UserInterface(object):
         # action = np.random.choice(list(ar))
         action = self.get_user_choice(
             name, DiscreteChoice(actions_remaining, "Take an action."))
-        print("\n" + ("*" * 20))
-        print(self.game)
         print("Player {0} chooses action {1}.".format(name, action))
         return action
 
@@ -48,7 +46,10 @@ class UserInterface(object):
         print("Action failed: {0}.".format(msg))
 
     def action_successful(self):
-        print("Action successful.")
+        print("Action successful. Result: ")
+        print("\n" + ("*" * 20))
+        print(self.game)
+        print("*" * 20 + "\n")
 
     def finish_game(self):
         print("Game finished.")
@@ -108,8 +109,7 @@ class UserInterface(object):
             return responses
 
         elif isinstance(choice_spec, VariableLengthListChoice):
-            desc = "Number of repeats - {}".format(choice_spec.desc)
-            length = self.get_user_choice(name, CountChoice(desc))
+            length = self.get_user_choice(name, CountChoice(choice_spec.mx, desc=choice_spec.desc))
             responses = []
             for i in range(length):
                 response = self.get_user_choice(name, choice_spec.subchoice)
