@@ -187,7 +187,7 @@ class Pasture(SpatialObject, AnimalContainer):
         self.n_stables += n
 
     def capacity(self):
-        return self.n_spaces * 2**(self.n_stables)
+        return self.n_spaces * 2**(self.n_stables+1)
 
 
 RESOURCE_TYPES = ('food wood clay stone reed sheep boar cattle grain veg '
@@ -232,7 +232,9 @@ class PlayerStateChange(object):
         Should not alter the player or the game.
 
     """
-    def __init__(self, description, change=None, prereq=None, cost=None, change_fns=None, prereq_fns=None):
+    def __init__(
+            self, description, change=None, prereq=None, cost=None,
+            change_fns=None, prereq_fns=None):
         self.description = description
 
         self.change = change or {}
@@ -387,6 +389,8 @@ class Player(EventGenerator):
 
         # round_idx -> dictionary of resources
         self.futures = defaultdict(lambda: defaultdict(int))
+
+        self.pasture_capacity_modifier = 0
 
         self.game = None
 
@@ -580,8 +584,11 @@ class Player(EventGenerator):
         if isinstance(objects, SpatialObject):
             objects = [objects]
 
-        for o in objects:
-            o.index_check(self.shape)
+        try:
+            for o in objects:
+                o.index_check(self.shape)
+        except IndexError as e:
+            raise AgricolaLogicError(str(e))
 
         spaces = []
         for o in objects:
@@ -697,7 +704,7 @@ class Player(EventGenerator):
             self.trigger_event('build_pasture', pasture=p)
 
     def build_stables(self, spaces, unit_cost):
-        if isinstance(spaces[0], int):
+        if isinstance(spaces, int):
             spaces = [spaces]
         stables = [Stable(s) for s in spaces]
 
@@ -715,7 +722,11 @@ class Player(EventGenerator):
     def _check_animal_capacity(self, animal_counts, n_added, name):
         animal_counts = sorted(animal_counts)
         capacities = [1] * (self.n_free_stables + 1)
-        capacities.extend(p.capacity() for p in self._pastures)
+
+        pasture_capacities = [
+            p.capacity() + self.pasture_capacity_modifier for p in self._pastures]
+
+        capacities.extend(pasture_capacities)
 
         multiset = Counter(capacities)
         if not multiset_satisfy(sorted(animal_counts), multiset):

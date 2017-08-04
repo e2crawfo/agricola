@@ -91,9 +91,15 @@ class PaperMaker(Occupation):
         player.listen_for_event(self, 'Action: Lessons4P', before=True)
 
     def trigger(self, player, **kwargs):
-        #TODO
-        response = 'clay'
-        player.add_resources(response=1)
+        if player.wood >= 1:
+            desc = ("PaperMaker (before): Pay 1 wood to receive 1 food "
+                    "for each of your people?")
+            use = player.game.get_choice(player, YesNoChoice(desc))
+            if use:
+                player.change_state(
+                    "PaperMaker effect.",
+                    cost=dict(wood=1),
+                    change=dict(food=len(player.occupations)))
 
 
 class Conjurer(Occupation):
@@ -380,9 +386,8 @@ class Pastor(Occupation):
     def check_and_apply(self, player):
         self.player = player
 
-        stop = self.trigger()
-        if not stop:
-            player.game.listen_for_event(self, 'build_room')
+        player.game.listen_for_event(self, 'build_room')
+        self.trigger()
 
     def trigger(self, **kwargs):
         player = self.player
@@ -390,7 +395,6 @@ class Pastor(Occupation):
 
         if player.rooms > 2:
             player.game.stop_listening(self, 'build room')
-            return True
 
         other_players = player.game.players + []
         other_players.remove(player)
@@ -398,9 +402,6 @@ class Pastor(Occupation):
         if applies:
             player.add_resources(wood=3, clay=2, reed=1, stone=1)
             player.game.stop_listening(self, 'build room')
-            return True
-
-        return False
 
 
 class AssistantTiller(Occupation):
@@ -506,7 +507,8 @@ class Cottager(Occupation):
             room_loc = player.game.get_choice(player, choice)
             player.build_rooms(room_loc)
         elif action == choice.options[0]:
-            choice = DiscreteChoice(["clay", "stone"], "Choose new house material."),
+            choice = DiscreteChoice(
+                player.valid_house_upgrades, "Choose new house material."),
             material = player.game.get_choice(player, choice)
             player.upgrade_house(material)
         else:
@@ -522,9 +524,9 @@ class RoughCaster(Occupation):
         player.listen_for_event(self, 'build_room')
         player.listen_for_event(self, 'renovate')
 
-    def trigger(self, event_name):
-        success = event_name == 'build room' and player.house_type == 'stone'
-        success |= event_name == 'renovate' and player.house_type == 'clay'
+    def trigger(self, player, event_name):
+        success = event_name == 'build room' and player.house_type == 'clay'
+        success |= event_name == 'renovate' and player.house_type == 'stone'
 
         if success:
             player.add_resources(food=3)
@@ -536,12 +538,13 @@ class RoofBallaster(Occupation):
     text = 'When you play this card, you can immediately pay 1 food total to receive 1 stone for each room you have.'
 
     def check_and_apply(self, player):
-        make_exchange = player.game.get_choices(
+        use = player.game.get_choices(
             player,
             YesNoChoice(
-                "Pay 1 food total to receive 1 stone for each room you have?"))
+                "RoofBallaster: pay 1 food total to receive "
+                "1 stone for each room you have?"))
 
-        if make_exchange:
+        if use:
             player.change_state(
                 cost=dict(food=1),
                 change=dict(stone=player.rooms))
@@ -1012,8 +1015,7 @@ class DrinkingTrough(MinorImprovement):
     text = 'Each of your pastures (with or without a stable) can hold up to 2 more animals.'
 
     def _apply(self, player):
-        # Give players a base pasture capacity (which is normally 0).
-        pass
+        player.pasture_capacity_modifier += 2
 
 
 class YoungAnimalMarket(MinorImprovement):
@@ -1128,8 +1130,11 @@ class MoldboardPlow(MinorImprovement):
 
     def trigger(self, player, **kwargs):
         if self._fields_remaining > 0:
-            self._fields_remaining -= 1
-            player.plow_fields()
+            use = player.game.get_choices(player, YesNoChoice("MoldboardPlow: plow an extra field?"))
+            if use:
+                self._fields_remaining -= 1
+                space_to_plow = player.game.get_choices(player, SpaceChoice("Space to plow."))
+                player.plow_fields(space_to_plow)
 
 
 class MiniPasture(MinorImprovement):

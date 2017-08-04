@@ -1,4 +1,3 @@
-from future.utils import iteritems
 import itertools
 import copy
 import numpy as np
@@ -116,7 +115,7 @@ class AgricolaGame(EventGenerator):
     def __str__(self):
         s = ["<AgricolaGame \n\n"]
         s.append("Actions taken:\n")
-        for action, player in iteritems(self.actions_taken):
+        for action, player in self.actions_taken.items():
             s.append("{0} -> Player {1}\n".format(action, player))
         s.append("\nActions remaining:\n")
         for action in self.actions_remaining:
@@ -255,8 +254,6 @@ class AgricolaGame(EventGenerator):
                                 ui.action_failed(str(e))
                                 action = None
 
-                        ui.action_successful()
-
                         self.actions_taken[action] = i
                         self.actions_remaining.remove(action)
 
@@ -265,6 +262,8 @@ class AgricolaGame(EventGenerator):
                             remaining_players.remove(i)
                             if not remaining_players:
                                 break
+
+                        ui.action_successful()
 
                 for p in self.players:
                     print(p)
