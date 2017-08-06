@@ -7,8 +7,11 @@ from agricola.action import (
 
 
 class UserInterface(object):
-    def start_game(self, game):
+    def update_game(self, game):
         self.game = game
+
+    def start_game(self, game):
+        self.update_game(game)
         print("Starting game")
 
     def begin_stage(self, stage_idx):

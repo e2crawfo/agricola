@@ -46,7 +46,7 @@ class ResourceAcquisition(Action):
     def __str__(self):
         s = ["<" + self.__class__.__name__ + ":"]
 
-        pairs = list(iteritems(self.resources))
+        pairs = list(self.resources.items())
         for k, v in pairs[:-1]:
             s.append("+{0} {1},".format(v, k))
         s.append("+{0} {1}".format(pairs[-1][1], pairs[-1][0]))
@@ -520,7 +520,7 @@ def core_actions(family):
 def get_actions(family, n_players):
     actions = core_actions(family)
 
-    if n_players == 2:
+    if n_players == 2 or n_players == 1:
         pass
     elif n_players == 3:
         actions[0].extend([

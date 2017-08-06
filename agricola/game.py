@@ -1,6 +1,6 @@
 import itertools
-import copy
 import numpy as np
+import copy
 
 from agricola import (
     Player, TextInterface, AgricolaException)
@@ -143,145 +143,13 @@ class AgricolaGame(EventGenerator):
             'major_improvement'
         ] or event_name.startswith('Action: ')
 
-    def set_first_player(self, player):
-        if isinstance(player, int):
-            player = self.players[player]
-        self.first_player = player
+    def set_first_player(self, idx):
+        self.first_player_idx = idx
 
     @property
     def rounds_remaining(self):
         """ Complete rounds remaining (i.e. doesn't include current round). """
         return sum([len(s) for s in self.actions[1:]]) - self.round_idx
-
-    def play(self, ui, first_player=None):
-        self.ui = ui
-        if self.randomize:
-            self.action_order = (
-                [self.actions[0]] +
-                [np.random.permutation(l) for l in self.actions[1:]])
-        else:
-            self.action_order = self.actions
-
-        self.players = [copy.deepcopy(ip) for ip in self.initial_players]
-        for i, p in enumerate(self.players):
-            p.name = str(i)
-
-        for p in self.players:
-            p.set_game(self)
-
-        if self.occupations:
-            hands = self.occupations.draw_cards(self.n_players)
-            for hand, player in zip(hands, self.players):
-                player.give_cards('occupations', hand)
-
-        if self.minor_improvements:
-            hands = self.minor_improvements.draw_cards(self.n_players)
-            for hand, player in zip(hands, self.players):
-                player.give_cards('minor_improvements', hand)
-
-        if first_player is None:
-            first_player = np.random.randint(self.n_players)
-        self.set_first_player(first_player)
-
-        players = self.players
-        ui.start_game(self)
-
-        self.round_idx = 1
-        self.stage_idx = 1
-        self.actions_taken = {}
-
-        for p in self.players:
-            print(p)
-
-        # Main loop
-        self.active_actions = [a for a in self.action_order[0]]
-        for stage_actions in self.action_order[1:]:
-            ui.begin_stage(self.stage_idx)
-            for round_action in stage_actions:
-                self.active_actions.append(round_action)
-                for action in self.active_actions:
-                    action.turn()
-
-                self.actions_remaining = self.active_actions + []
-
-                ui.begin_round(self.round_idx, round_action)
-
-                player_turns = [p.people for p in players]
-                remaining_players = set(range(len(players)))
-
-                order = list(range(self.n_players))
-                first_player_idx = players.index(self.first_player)
-                order = order[first_player_idx:] + order[:first_player_idx]
-                self.actions_taken = {}
-
-                for i in itertools.cycle(order):
-                    if i in remaining_players:
-                        player = self.players[i]
-                        action = None
-                        while action is None:
-                            action = ui.get_action(player.name, self.actions_remaining)
-
-                            if action is None:
-                                ui.action_failed("No action chosen")
-                                continue
-                            elif action not in self.actions_remaining:
-                                ui.action_failed("That action is not available this round")
-                                action = None
-                                continue
-                            elif action in self.actions_taken:
-                                ui.action_failed(
-                                    "That action has already been taken by "
-                                    "player {0}".format(self.actions_taken[action]))
-                                action = None
-                                continue
-
-                            choices = action.choices(player)
-                            if choices:
-                                choices = self.get_choices(player, choices)
-
-                            event_name = "Action: {}".format(action.__class__.__name__)
-                            try:
-                                # TODO: We currently have no way to roll-back what
-                                # goes on before an action occurs via pre-event triggers
-                                # if the action fails
-                                # which in some situations will give players access
-                                # to pre-action effects without taking the action
-                                # (if taking the action fails).
-                                with EventScope([self, player], event_name, player=player, action=action):
-                                    action.effect(player, choices)
-
-                            except AgricolaException as e:
-                                ui.action_failed(str(e))
-                                action = None
-
-                        self.actions_taken[action] = i
-                        self.actions_remaining.remove(action)
-
-                        player_turns[i] -= 1
-                        if player_turns[i] <= 0:
-                            remaining_players.remove(i)
-                            if not remaining_players:
-                                break
-
-                        ui.action_successful()
-
-                for p in self.players:
-                    print(p)
-
-                ui.end_round()
-                self.round_idx += 1
-
-            ui.harvest()
-            for p in players:
-                p.harvest()
-            ui.end_stage()
-
-            self.stage_idx += 1
-
-        self.score = {}
-        for i, p in enumerate(players):
-            self.score[i] = p.score()
-        self.ui = None
 
     def get_choices(self, player, _choices):
         return_as_list = True
@@ -295,6 +163,130 @@ class AgricolaGame(EventGenerator):
             choices = choices[0]
 
         return choices
+
+
+def play(game, ui, first_player=None):
+    game.ui = ui
+    if game.randomize:
+        game.action_order = (
+            [game.actions[0]] +
+            [np.random.permutation(l) for l in game.actions[1:]])
+    else:
+        game.action_order = game.actions
+
+    game.players = [copy.deepcopy(ip) for ip in game.initial_players]
+    for i, p in enumerate(game.players):
+        p.name = str(i)
+
+    for p in game.players:
+        p.set_game(game)
+
+    if game.occupations:
+        hands = game.occupations.draw_cards(game.n_players)
+        for hand, player in zip(hands, game.players):
+            player.give_cards('occupations', hand)
+
+    if game.minor_improvements:
+        hands = game.minor_improvements.draw_cards(game.n_players)
+        for hand, player in zip(hands, game.players):
+            player.give_cards('minor_improvements', hand)
+
+    if first_player is None:
+        first_player = np.random.randint(game.n_players)
+    game.set_first_player(first_player)
+
+    ui.start_game(game)
+
+    game.round_idx = 1
+    game.stage_idx = 1
+    game.actions_taken = {}
+
+    for p in game.players:
+        print(p)
+
+    # Main loop
+    game.active_actions = [a for a in game.action_order[0]]
+    for stage_actions in game.action_order[1:]:
+        ui.begin_stage(game.stage_idx)
+        for round_action in stage_actions:
+            game.active_actions.append(round_action)
+            for action in game.active_actions:
+                action.turn()
+
+            game.actions_remaining = game.active_actions + []
+
+            ui.begin_round(game.round_idx, round_action)
+
+            player_turns = [p.people for p in game.players]
+            remaining_players = set(range(len(game.players)))
+
+            order = list(range(game.n_players))
+            order = order[game.first_player_idx:] + order[:game.first_player_idx]
+            game.actions_taken = {}
+
+            for i in itertools.cycle(order):
+                if i in remaining_players:
+                    action = None
+                    while action is None:
+                        game_copy = copy.deepcopy(game)
+                        player = game_copy.players[i]
+
+                        try:
+                            action = ui.get_action(player.name, game_copy.actions_remaining)
+
+                            if action is None:
+                                raise AgricolaException("No action chosen")
+                            elif action not in game_copy.actions_remaining:
+                                raise AgricolaException("That action is not available this round")
+                            elif action in game_copy.actions_taken:
+                                raise AgricolaException(
+                                    "That action has already been taken by "
+                                    "player {0}".format(game_copy.actions_taken[action]))
+
+                            choices = action.choices(player)
+                            if choices:
+                                choices = game_copy.get_choices(player, choices)
+
+                            event_name = "Action: {}".format(action.__class__.__name__)
+                            with EventScope([game_copy, player], event_name, player=player, action=action):
+                                action.effect(player, choices)
+
+                            del game
+                            game = game_copy
+
+                        except AgricolaException as e:
+                            ui.action_failed(str(e))
+                            action = None
+                            del game_copy
+
+                    game.actions_taken[action] = i
+                    game.actions_remaining.remove(action)
+                    ui.update_game(game)
+                    ui.action_successful()
+
+                    for p in game.players:
+                        print(p)
+
+                    player_turns[i] -= 1
+                    if player_turns[i] <= 0:
+                        remaining_players.remove(i)
+                        if not remaining_players:
+                            break
+
+            ui.end_round()
+            game.round_idx += 1
+
+        ui.harvest()
+        for p in game.players:
+            p.harvest()
+        ui.end_stage()
+
+        game.stage_idx += 1
+
+    game.score = {}
+    for i, p in enumerate(game.players):
+        game.score[i] = p.score()
+    game.ui = None
 
 
 class SimpleAgricolaGame(AgricolaGame):
@@ -344,6 +336,6 @@ class StandardAgricolaGame(AgricolaGame):
 if __name__ == "__main__":
     # game = LessonsAgricolaGame(2)
     # game = SimpleAgricolaGame(2)
-    game = StandardAgricolaGame(2)
+    game = StandardAgricolaGame(1)
     ui = TextInterface()
-    game.play(ui)
+    play(game, ui)
