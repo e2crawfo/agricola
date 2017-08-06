@@ -62,11 +62,13 @@ class UserInterface(object):
 
     def get_user_choice(self, name, choice_spec):
         if isinstance(choice_spec, DiscreteChoice):
-            while True:
-                print("Player {0} choice: ".format(name))
+            idx = None
+            while idx is None:
+                print("Player {} choice: ".format(name))
                 print(choice_spec.desc)
                 for i, opt in enumerate(choice_spec.options):
-                    print("    {0}: {1}".format(i, opt))
+                    print("    {}: {}".format(i, opt))
+                option_strings = [str(opt).lower() for opt in choice_spec.options]
 
                 response = self.get_next_response()
                 if not response:
@@ -77,12 +79,17 @@ class UserInterface(object):
                     if idx < 0 or idx >= len(choice_spec.options):
                         raise ValueError()
                 except (ValueError, TypeError):
-                    print("x. {0} is not a valid response.".format(response))
-                else:
-                    _response = choice_spec.options[idx]
-                    break
+                    response_lower = response.lower()
+                    selected = [
+                        i for i, s in enumerate(option_strings) if response_lower in s]
+                    if not selected:
+                        print("x. {} is not a valid response.".format(response))
+                    elif len(selected) > 1:
+                        print("x. multiple values match response {}.".format(response))
+                    else:
+                        idx = selected[0]
 
-            return _response
+            return choice_spec.options[idx]
 
         elif isinstance(choice_spec, CountChoice):
             while True:
