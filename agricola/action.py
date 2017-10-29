@@ -153,6 +153,10 @@ class Forest(Accumulating):
     acc_amount = dict(wood=3)
 
 
+# class LargeForest(Accumulating):
+#     acc_amount = dict(wood=4)
+
+
 class ClayPit(Accumulating):
     acc_amount = dict(clay=1)
 
@@ -163,6 +167,10 @@ class Hollow3P(Accumulating):
 
 class Hollow4P(Accumulating):
     acc_amount = dict(clay=2)
+
+
+#class Hollow5P(Accumulating):
+#    acc_amount = dict(clay=3)
 
 
 class EasternQuarry(Accumulating):
@@ -383,6 +391,20 @@ class Lessons4P(Action):
 
         player.play_occupation(choices[0], player.game)
 
+# class Lessons5P(Action):
+#     def choices(self, player):
+#         return [
+#             DiscreteChoice(player.hand['occupations'], 'Choose an occupation from your hand.')
+#         ]
+
+#     def _effect(self, player, choices):
+#         if len(player.occupations) > 0:
+#             player.change_state("Playing occupation", cost=dict(food=1))
+#         else:
+#             player.change_state("Playing occupation", cost=dict(food=0))
+
+#         player.play_occupation(choices[0], player.game)
+
 
 class MeetingPlace(Action):
     def choices(self, player):
@@ -529,6 +551,10 @@ def get_actions(family, n_players):
         actions[0].extend([
             Copse(), Grove(), ResourceMarket4P(), Hollow4P(),
             Lessons4P(), TravelingPlayers()])
+    # elif n_players == 5:
+    #     actions[0].extend([
+    #         Copse(), Grove(), ResourceMarket4P(), Hollow5P(), Hollow3P(),
+    #         Lessons5P(), TravelingPlayers()])
     else:
         raise NotImplementedError(
             "Do not know how to play a player.game with {0} players.".format(n_players))
