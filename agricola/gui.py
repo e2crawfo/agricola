@@ -11,4 +11,5 @@ from kivy.app import App
 
 class GUI(UserInterface):
   def __init__(self):
-    App().run()
+    print("init")
+    #App().run()
