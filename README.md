@@ -17,6 +17,10 @@ This repository is forked from "https://github.com/e2crawfo/agricola".
 * どのような行動を求められているかはcurrent_eventで渡される
   * 家族のアクション、収穫、職業訓練など
 
+* TODO
+* 家畜管理
+* ID to Name
+* major_improvementを他と合わせる
 ```json
 {
   "current_round" : 2,
@@ -40,23 +44,18 @@ This repository is forked from "https://github.com/e2crawfo/agricola".
       "FAMILY_GROWTH_WITHOUT_ROOM",
       "RENOVATION_FENCING"
     ],
-    "remaining_actions": [
+    "actions": [
       {
-        "action_type": "accumulating",
-        "rosource_type": "wood",
-        "accumulate_amount": 4,
-        "current_amount": 4
+        "action_name": "WOOD_4",
+        "resources": [
+          {
+            "resource_type": "wood",
+            "resource_amount": 4
+          }
+        ]
       },
       {
         "action_type": "occupation_5players"
-      }
-    ],
-    "taken_actions": [
-      {
-        "action_type": "accumulating",
-        "rosource_type": "wood",
-        "accumulate_amount": 4,
-        "current_amount": 0
       }
     ],
     "remaining_major_improvements": [
@@ -86,7 +85,12 @@ This repository is forked from "https://github.com/e2crawfo/agricola".
         "grain": 0,
         "vegitable": 0
       },
-       "round_resources": [
+      "animal_placement": [
+        {
+
+        }
+      ],
+      "round_resources": [
         [
           {
             "resource_type": "food",
@@ -112,13 +116,20 @@ This repository is forked from "https://github.com/e2crawfo/agricola".
         [[{ "object_type": "wooden_hut" }],[],[],[],[],[],[]],
         [[],[],[],[],[],[],[]]
       ],
-      "pastures": [[{"x": 1, "y": 1}, {"x": 2, "y": 1}]],
+      "pastures": [
+        
+          [[1,0], [2,0]]
+        
+      ],
       "played_major_improvements": [ "FIREPLACE_2" ],
       "played_minor_improvements": [{ "minor_improvement_id": 50}],
       "hand_minor_improvements": [100,101,102,103,104,105,106],
       "played_occupations": [{ "occupation_id": 50 }],
       "hand_occupations": [100,101,102,103,104,105,106],
-      "families": [{ "family_type": "in_house" }, { "family_type": "in_house" }]
+      "families": [
+        { "family_type": "in_house", "newborn": false }, 
+        { "family_type": "in_house", "newborn": false }
+      ]
     }
   ]
 }
