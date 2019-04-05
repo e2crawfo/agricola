@@ -40,28 +40,6 @@ This repository is forked from "https://github.com/e2crawfo/agricola".
       "FAMILY_GROWTH_WITHOUT_ROOM",
       "RENOVATION_FENCING"
     ],
-    "round_resources": [
-      [
-        {
-          "player": 0,
-          "resource_type": "food",
-          "resource_amount": 2
-        }
-      ],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      []
-    ],
     "remaining_actions": [
       {
         "action_type": "accumulating",
@@ -108,6 +86,27 @@ This repository is forked from "https://github.com/e2crawfo/agricola".
         "grain": 0,
         "vegitable": 0
       },
+       "round_resources": [
+        [
+          {
+            "resource_type": "food",
+            "resource_amount": 2
+          }
+        ],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
       "board": [
         [[{ "object_type": "wooden_hut" }],[],[],[],[],[],[]],
         [[{ "object_type": "wooden_hut" }],[],[],[],[],[],[]],
