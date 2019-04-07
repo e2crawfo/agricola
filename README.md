@@ -2,6 +2,11 @@
 Implementation of agricola board game (revised edition) for training AI.
 This repository is forked from "https://github.com/e2crawfo/agricola".
 
+## Execution
+```shell
+sh run.sh
+```
+
 ## Requirements
 
 
