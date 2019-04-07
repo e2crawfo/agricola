@@ -44,16 +44,18 @@ This repository is forked from "https://github.com/e2crawfo/agricola".
     ],
     "actions": [
       {
-        "action_name": "WOOD_4",
+        "action_id": "WOOD_4",
         "resources": [
           {
             "resource_type": "wood",
             "resource_amount": 4
           }
-        ]
+        ],
+        "is_available": true
       },
       {
-        "action_type": "occupation_5players"
+        "action_id": "occupation_5players",
+        "is_available": false
       }
     ],
     "remaining_major_improvements": [
@@ -177,7 +179,7 @@ This repository is forked from "https://github.com/e2crawfo/agricola".
 * TODO 鋤はどうする？
 ```json
 {
-  "action_id": "FIELD",
+  "action_id": "PLOUGH",
   "position": [3, 0]
 }
 ```

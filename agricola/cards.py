@@ -50,7 +50,7 @@ def get_major_improvements():
             CookingHearth(5),
             Well(),
             ClayOven(),
-            StoneOven,
+            StoneOven(),
             Joinery(),
             Pottery(),
             BasketmakersWorkshop()]
@@ -1487,6 +1487,8 @@ class Fireplace(MajorImprovement):
         cooking_rates['boar'] = max(cooking_rates['boar'], 2)
         cooking_rates['cattle'] = max(cooking_rates['cattle'], 3)
 
+    def get_id(self):
+        return "FIREPLACE_" + str(self._cost["clay"])
 
 class CookingHearth(MajorImprovement):
     _victory_points = 1
@@ -1512,6 +1514,8 @@ class CookingHearth(MajorImprovement):
         cooking_rates['boar'] = max(cooking_rates['boar'], 3)
         cooking_rates['cattle'] = max(cooking_rates['cattle'], 4)
 
+    def get_id(self):
+        return "COOKING_HEARTH_" + str(self._cost["clay"])
 
 class Well(MajorImprovement):
     victory_points = 4
@@ -1519,6 +1523,9 @@ class Well(MajorImprovement):
 
     def _apply(self, player):
         player.add_future(range(1, 6), 'food', 1)
+
+    def get_id(self):
+        return "WELL"
 
 
 class ClayOven(MajorImprovement):
@@ -1531,6 +1538,8 @@ class ClayOven(MajorImprovement):
         bread_rates = sorted(bread_rates, reverse=True)
         player.bread_rates[:] = bread_rates + player.bread_rates[-1:]
 
+    def get_id(self):
+        return "CLAY_OVEN"
 
 class StoneOven(MajorImprovement):
     victory_points = 3
@@ -1542,7 +1551,9 @@ class StoneOven(MajorImprovement):
         bread_rates.append(4)
         bread_rates = sorted(bread_rates, reverse=True)
         player.bread_rates[:] = bread_rates + player.bread_rates[-1:]
-
+    
+    def get_id(self):
+        return "STONE_OVEN"
 
 class Joinery(MajorImprovement):
     _cost = dict(wood=2, stone=2)
@@ -1553,6 +1564,9 @@ class Joinery(MajorImprovement):
     def _apply(self, player):
         player.harvest_rates['wood'].append(2)
 
+    def get_id(self):
+        return "JOINERY"
+
 
 class Pottery(MajorImprovement):
     _cost = dict(clay=2, stone=2)
@@ -1562,6 +1576,9 @@ class Pottery(MajorImprovement):
 
     def _apply(self, player):
         player.harvest_rates['clay'].append(2)
+    
+    def get_id(self):
+        return "POTTERY"
 
 
 class BasketmakersWorkshop(MajorImprovement):
@@ -1572,3 +1589,6 @@ class BasketmakersWorkshop(MajorImprovement):
 
     def _apply(self, player):
         player.harvest_rates['reed'].append(3)
+
+    def get_id(self):
+        return "BASKET_MAKER_WORKSHOP"

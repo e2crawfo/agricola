@@ -1,16 +1,18 @@
 import itertools
 import numpy as np
 import copy
+import json
 
 #from agricola.gui import GUI
 from gui import GUI
 from agricola import (
-  Player, TextInterface, AgricolaException)
-from agricola.action import get_actions, get_simple_actions
-from agricola.cards import (
+   TextInterface, AgricolaException)
+from player import Player
+from action import get_actions, get_simple_actions
+from cards import (
   get_occupations, get_minor_improvements, get_major_improvements)
-from agricola.utils import EventGenerator, EventScope
-from agricola.choice import Choice
+from utils import EventGenerator, EventScope
+from choice import Choice
 
 # TODO: make sure that certain actions which allow two things to be done have
 # the order of the two things respected (and make sure player can't take the
@@ -39,7 +41,6 @@ class Deck(object):
       hand = cards[i*self.cards_per_player:(i+1)*self.cards_per_player]
       hands.append(hand)
     return hands
-
 
 class AgricolaGame(EventGenerator):
   """ An object storing the stage for a game of Agricola.
@@ -123,6 +124,56 @@ class AgricolaGame(EventGenerator):
       s.append("{0}\n".format(action))
     s += ">"
     return ''.join(s)
+
+  def get_state_dict(self):
+    print("action_order")
+    print(self.action_order[1:])
+
+    print("actions_remaining")
+    print(self.actions_remaining)
+    print("actions_taken")
+    print(self.actions_taken)
+
+    print("major_improvements")
+    print(self.major_improvements)
+
+
+    round_action_array = []
+    for stage_action in self.action_order[1:]:
+      for round_action in stage_action:
+        round_action_array.append(round_action.get_id())
+
+    action_array = []
+    for action_taken in self.actions_taken:
+      action_dict = action_taken.get_state_dict()
+      action_dict["is_available"] = False
+      action_array.append(action_dict)
+
+    for action_available in self.actions_remaining:
+      action_dict = action_available.get_state_dict()
+      action_dict["is_available"] = True
+      action_array.append(action_dict)
+
+    remaining_major_improvements = list(map(lambda mi: mi.get_id(), self.major_improvements))
+    
+    player_dicts = list(map(lambda p: p.get_state_dict(), self.players))
+    for p in self.players:
+      print(p)
+
+    state_dict = {
+      "current_round": self.round_idx,
+      "current_player": self.current_player_idx,
+      "current_event": "", # TODO set proper value
+      "start_player": self.first_player_idx,
+      "common_board": {
+        "round_cards": round_action_array,
+        "actions": action_array,
+        "remaining_major_improvements": remaining_major_improvements
+      },
+      "players": player_dicts
+    }
+
+    return state_dict
 
   def _validate_event_name(self, event_name):
     return event_name in [
@@ -230,6 +281,9 @@ def play(game, ui, first_player=None):
           while action is None:
             game_copy = copy.deepcopy(game)
             player = game_copy.players[i]
+            game.current_player_idx = i
+
+            print(json.dumps(game.get_state_dict(), indent=4, sort_keys=True, separators=(',', ': ')))
 
             try:
               action = ui.get_action(player.name, game_copy.actions_remaining)

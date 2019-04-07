@@ -808,3 +808,11 @@ class Player(EventGenerator):
     improvement.check_and_apply(self)
 
     self.major_improvements.append(improvement)
+
+  def get_state_dict(self):
+    resources = {}
+    for key in 'food wood clay stone reed sheep boar cattle grain veg'.split(' '):
+      resources[key] = getattr(self, key)
+    return {
+      "resources": resources
+    }
