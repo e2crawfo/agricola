@@ -813,6 +813,34 @@ class Player(EventGenerator):
     resources = {}
     for key in 'food wood clay stone reed sheep boar cattle grain veg'.split(' '):
       resources[key] = getattr(self, key)
+    
+    board = []
+    room_spaces = set(self.room_spaces)
+    stable_spaces = set(self.stable_spaces)
+    field_spaces = set(self.field_spaces)
+
+    for i in range(self.shape[0]):
+      board_row = []
+      for j in range(self.shape[1]):
+        board_space = []
+        space = i, j
+        if space in room_spaces:
+          board_space.append({
+            "object_type": "wooden_hut"
+          })
+        elif space in stable_spaces:
+          board_space.append({
+            "object_type": "stable"
+          })
+        elif space in field_spaces:
+          board_space.append({
+            "object_type": "field"
+          })
+        board_row.append(board_space)
+      board.append(board_row)
+    
     return {
-      "resources": resources
+      "resources": resources,
+      "round_resources": self.futures,
+      "board": board
     }
