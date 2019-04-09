@@ -838,9 +838,17 @@ class Player(EventGenerator):
           })
         board_row.append(board_space)
       board.append(board_row)
+
+    
     
     return {
       "resources": resources,
       "round_resources": self.futures,
-      "board": board
+      "board": board,
+      "pastures": self._pastures,
+      "played_improvements": self.minor_improvements + self.major_improvements, #TODO convert to ID
+      "hand_improvements": self.hand["minor_improvements"],
+      "played_occupations": self.occupations,
+      "hand_occupations": self.hand["occupations"],
+      "families": [] # TODO families is not in player
     }
