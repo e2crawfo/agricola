@@ -137,6 +137,480 @@ sh run.sh
 }
 ```
 
+## Sample Input
+```json
+{
+    "common_board": {
+        "actions": [
+            {
+                "action_id": "ROOM_STABLE_BUILDINGS",
+                "is_available": true
+            },
+            {
+                "action_id": "STARTING_PLAYER",
+                "is_available": true
+            },
+            {
+                "action_id": "GRAIN",
+                "is_available": true
+            },
+            {
+                "action_id": "PLOUGH",
+                "is_available": true
+            },
+            {
+                "action_id": "DAY_LABORER",
+                "is_available": true
+            },
+            {
+                "action_id": "WOOD_3",
+                "is_available": true,
+                "resources": [
+                    {
+                        "resource_amount": 3,
+                        "resource_type": "wood"
+                    }
+                ]
+            },
+            {
+                "action_id": "CLAY_1",
+                "is_available": true,
+                "resources": [
+                    {
+                        "resource_amount": 1,
+                        "resource_type": "clay"
+                    }
+                ]
+            },
+            {
+                "action_id": "REED_1",
+                "is_available": true,
+                "resources": [
+                    {
+                        "resource_amount": 1,
+                        "resource_type": "reed"
+                    }
+                ]
+            },
+            {
+                "action_id": "FISHING",
+                "is_available": true,
+                "resources": [
+                    {
+                        "resource_amount": 1,
+                        "resource_type": "food"
+                    }
+                ]
+            },
+            {
+                "action_id": "OCCUPATION",
+                "is_available": true
+            },
+            {
+                "action_id": "WOOD_1",
+                "is_available": true,
+                "resources": [
+                    {
+                        "resource_amount": 1,
+                        "resource_type": "wood"
+                    }
+                ]
+            },
+            {
+                "action_id": "WOOD_2",
+                "is_available": true,
+                "resources": [
+                    {
+                        "resource_amount": 2,
+                        "resource_type": "wood"
+                    }
+                ]
+            },
+            {
+                "action_id": "REED_STONE_FOOD",
+                "is_available": true
+            },
+            {
+                "action_id": "CLAY_2",
+                "is_available": true,
+                "resources": [
+                    {
+                        "resource_amount": 2,
+                        "resource_type": "clay"
+                    }
+                ]
+            },
+            {
+                "action_id": "OCCUPATION_4P",
+                "is_available": true
+            },
+            {
+                "action_id": "TRAVELING_PLAYERS",
+                "is_available": true,
+                "resources": [
+                    {
+                        "resource_amount": 1,
+                        "resource_type": "food"
+                    }
+                ]
+            },
+            {
+                "action_id": "SHEEP",
+                "is_available": true,
+                "resources": [
+                    {
+                        "resource_amount": 1,
+                        "resource_type": "sheep"
+                    }
+                ]
+            }
+        ],
+        "remaining_major_improvements": [
+            "FIREPLACE_2",
+            "FIREPLACE_3",
+            "COOKING_HEARTH_4",
+            "COOKING_HEARTH_5",
+            "WELL",
+            "CLAY_OVEN",
+            "STONE_OVEN",
+            "JOINERY",
+            "POTTERY",
+            "BASKET_MAKER_WORKSHOP"
+        ],
+        "round_cards": [
+            "SHEEP",
+            "MAJOR_IMPROVEMENT",
+            "FENCING",
+            "SOWING_BAKING",
+            "FAMILY_GROWTH",
+            "QUARRY_STAGE2",
+            "RENOVATION",
+            "PIG",
+            "VEGITABLE",
+            "CATTLE",
+            "QUARRY_STAGE4",
+            "FAMILY_GROWTH_WITHOUT_ROOM",
+            "PLOGH_SOWING",
+            "RENOVATION_FENCING"
+        ]
+    },
+    "current_event": "",
+    "current_player": 2,
+    "current_round": 1,
+    "players": [
+        {
+            "board": [
+                [
+                    [
+                        {
+                            "object_type": "wooden_hut"
+                        }
+                    ],
+                    [],
+                    [],
+                    [],
+                    []
+                ],
+                [
+                    [
+                        {
+                            "object_type": "wooden_hut"
+                        }
+                    ],
+                    [],
+                    [],
+                    [],
+                    []
+                ],
+                [
+                    [],
+                    [],
+                    [],
+                    [],
+                    []
+                ]
+            ],
+            "families": [
+                {
+                    "family_type": "in_house",
+                    "newbord": false
+                },
+                {
+                    "family_type": "in_house",
+                    "newbord": false
+                }
+            ],
+            "hand_improvements": [
+                "PondHut",
+                "Brook",
+                "ClearingSpade",
+                "ShiftingCultivation",
+                "Lasso",
+                "Caravan",
+                "SackCart"
+            ],
+            "hand_occupations": [
+                "AnimalTamer",
+                "Stonecutter",
+                "OrganicFarmer",
+                "Geologist",
+                "Greengrocer",
+                "AnimalDealer",
+                "FrameBuilder"
+            ],
+            "pastures": [],
+            "played_improvements": [],
+            "played_occupations": [],
+            "resources": {
+                "boar": 0,
+                "cattle": 0,
+                "clay": 0,
+                "food": 0,
+                "grain": 0,
+                "reed": 0,
+                "sheep": 0,
+                "stone": 0,
+                "veg": 0,
+                "wood": 0
+            },
+            "round_resources": {}
+        },
+        {
+            "board": [
+                [
+                    [
+                        {
+                            "object_type": "wooden_hut"
+                        }
+                    ],
+                    [],
+                    [],
+                    [],
+                    []
+                ],
+                [
+                    [
+                        {
+                            "object_type": "wooden_hut"
+                        }
+                    ],
+                    [],
+                    [],
+                    [],
+                    []
+                ],
+                [
+                    [],
+                    [],
+                    [],
+                    [],
+                    []
+                ]
+            ],
+            "families": [
+                {
+                    "family_type": "in_house",
+                    "newbord": false
+                },
+                {
+                    "family_type": "in_house",
+                    "newbord": false
+                }
+            ],
+            "hand_improvements": [
+                "ClayEmbankment",
+                "Loom",
+                "BreadPaddle",
+                "YoungAnimalMarket",
+                "StrawberryPatch",
+                "Claypipe",
+                "Beanfield"
+            ],
+            "hand_occupations": [
+                "Lutenist",
+                "SmallScaleFarmer",
+                "Carpenter",
+                "Conjurer",
+                "FirewoodCollector",
+                "StableArchitect",
+                "Priest"
+            ],
+            "pastures": [],
+            "played_improvements": [],
+            "played_occupations": [],
+            "resources": {
+                "boar": 0,
+                "cattle": 0,
+                "clay": 0,
+                "food": 0,
+                "grain": 0,
+                "reed": 0,
+                "sheep": 0,
+                "stone": 0,
+                "veg": 0,
+                "wood": 0
+            },
+            "round_resources": {}
+        },
+        {
+            "board": [
+                [
+                    [
+                        {
+                            "object_type": "wooden_hut"
+                        }
+                    ],
+                    [],
+                    [],
+                    [],
+                    []
+                ],
+                [
+                    [
+                        {
+                            "object_type": "wooden_hut"
+                        }
+                    ],
+                    [],
+                    [],
+                    [],
+                    []
+                ],
+                [
+                    [],
+                    [],
+                    [],
+                    [],
+                    []
+                ]
+            ],
+            "families": [
+                {
+                    "family_type": "in_house",
+                    "newbord": false
+                },
+                {
+                    "family_type": "in_house",
+                    "newbord": false
+                }
+            ],
+            "hand_improvements": [
+                "JunkRoom",
+                "CarpentersParlor",
+                "MiningHammer",
+                "Basket",
+                "Bottles",
+                "AcornBasket",
+                "SheperdsCrook"
+            ],
+            "hand_occupations": [
+                "Consultant",
+                "SeasonalWorker",
+                "Braggart",
+                "PigBreeder",
+                "PaperMaker",
+                "BrushwoodCollector",
+                "ScytheWorker"
+            ],
+            "pastures": [],
+            "played_improvements": [],
+            "played_occupations": [],
+            "resources": {
+                "boar": 0,
+                "cattle": 0,
+                "clay": 0,
+                "food": 0,
+                "grain": 0,
+                "reed": 0,
+                "sheep": 0,
+                "stone": 0,
+                "veg": 0,
+                "wood": 0
+            },
+            "round_resources": {}
+        },
+        {
+            "board": [
+                [
+                    [
+                        {
+                            "object_type": "wooden_hut"
+                        }
+                    ],
+                    [],
+                    [],
+                    [],
+                    []
+                ],
+                [
+                    [
+                        {
+                            "object_type": "wooden_hut"
+                        }
+                    ],
+                    [],
+                    [],
+                    [],
+                    []
+                ],
+                [
+                    [],
+                    [],
+                    [],
+                    [],
+                    []
+                ]
+            ],
+            "families": [
+                {
+                    "family_type": "in_house",
+                    "newbord": false
+                },
+                {
+                    "family_type": "in_house",
+                    "newbord": false
+                }
+            ],
+            "hand_improvements": [
+                "MilkJug",
+                "Scullery",
+                "DrinkingTrough",
+                "MoldboardPlow",
+                "HardPorcelain",
+                "Manger",
+                "ButterChurn"
+            ],
+            "hand_occupations": [
+                "Harpooner",
+                "Childless",
+                "AssistantTiller",
+                "SheepWhisperer",
+                "MasterBricklayer",
+                "PlowDriver",
+                "HedgeKeeper"
+            ],
+            "pastures": [],
+            "played_improvements": [],
+            "played_occupations": [],
+            "resources": {
+                "boar": 0,
+                "cattle": 0,
+                "clay": 0,
+                "food": 0,
+                "grain": 0,
+                "reed": 0,
+                "sheep": 0,
+                "stone": 0,
+                "veg": 0,
+                "wood": 0
+            },
+            "round_resources": {}
+        }
+    ],
+    "start_player": 2
+}
+```
+
 ## Output format
 ### common
 ```json

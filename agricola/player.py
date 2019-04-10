@@ -839,10 +839,19 @@ class Player(EventGenerator):
         board_row.append(board_space)
       board.append(board_row)
 
-    played_improvements = list(map(lambda card: card.name, self.minor_improvements + self.major_improvements))
+    played_improvements = list(map(lambda card: {"improvement_id": card.name}, self.minor_improvements + self.major_improvements))
     hand_improvements = list(map(lambda card: card.name, self.hand["minor_improvements"]))
-    played_occupations = list(map(lambda card: card.name, self.occupations))
+    played_occupations = list(map(lambda card: {"occupation_id": card.name}, self.occupations))
     hand_occupations = list(map(lambda card: card.name, self.hand["occupations"]))
+
+    # TODO set proper family type
+    # TODO set user family or not
+    families = []
+    for i in range(self.people):
+      families.append({
+        "family_type": "in_house",
+        "newbord": False
+      })
 
     return {
       "resources": resources,
@@ -853,5 +862,5 @@ class Player(EventGenerator):
       "hand_improvements": hand_improvements,
       "played_occupations": played_occupations,
       "hand_occupations": hand_occupations,
-      "families": [] # TODO families is not in player
+      "families": families
     }
