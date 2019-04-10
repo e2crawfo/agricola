@@ -839,16 +839,19 @@ class Player(EventGenerator):
         board_row.append(board_space)
       board.append(board_row)
 
-    
-    
+    played_improvements = list(map(lambda card: card.name, self.minor_improvements + self.major_improvements))
+    hand_improvements = list(map(lambda card: card.name, self.hand["minor_improvements"]))
+    played_occupations = list(map(lambda card: card.name, self.occupations))
+    hand_occupations = list(map(lambda card: card.name, self.hand["occupations"]))
+
     return {
       "resources": resources,
       "round_resources": self.futures,
       "board": board,
       "pastures": self._pastures,
-      "played_improvements": self.minor_improvements + self.major_improvements, #TODO convert to ID
-      "hand_improvements": self.hand["minor_improvements"],
-      "played_occupations": self.occupations,
-      "hand_occupations": self.hand["occupations"],
+      "played_improvements": played_improvements,
+      "hand_improvements": hand_improvements,
+      "played_occupations": played_occupations,
+      "hand_occupations": hand_occupations,
       "families": [] # TODO families is not in player
     }
