@@ -3,13 +3,14 @@ import numpy as np
 import copy
 import json
 import sys, os
+import subprocess
 
 sys.path.append(os.getcwd())
 
 from gui import GUI
 from agricola import TextInterface, AgricolaException
 from player import Player
-from action import get_actions, get_simple_actions
+from action import *
 from cards import (
   get_occupations, get_minor_improvements, get_major_improvements)
 from utils import EventGenerator, EventScope
@@ -127,18 +128,6 @@ class AgricolaGame(EventGenerator):
     return ''.join(s)
 
   def get_state_dict(self):
-    print("action_order")
-    print(self.action_order[1:])
-
-    print("actions_remaining")
-    print(self.actions_remaining)
-    print("actions_taken")
-    print(self.actions_taken)
-
-    print("major_improvements")
-    print(self.major_improvements)
-
-
     round_action_array = []
     for stage_action in self.action_order[1:]:
       for round_action in stage_action:
@@ -158,8 +147,6 @@ class AgricolaGame(EventGenerator):
     remaining_major_improvements = list(map(lambda mi: mi.get_id(), self.major_improvements))
     
     player_dicts = list(map(lambda p: p.get_state_dict(), self.players))
-    for p in self.players:
-      print(p)
 
     state_dict = {
       "current_round": self.round_idx,
@@ -218,7 +205,7 @@ class AgricolaGame(EventGenerator):
     return choices
 
 
-def play(game, ui, first_player=None):
+def play(game, ui, agent_processes, first_player=None):
   game.ui = ui
   if game.randomize:
     game.action_order = (
@@ -280,6 +267,8 @@ def play(game, ui, first_player=None):
         if i in remaining_players:
           action = None
           while action is None:
+            popen = agent_processes[i]
+
             game_copy = copy.deepcopy(game)
             player = game_copy.players[i]
             game.current_player_idx = i
@@ -287,7 +276,30 @@ def play(game, ui, first_player=None):
             print(json.dumps(game.get_state_dict(), indent=4, sort_keys=True, separators=(',', ': ')))
 
             try:
-              action = ui.get_action(player.name, game_copy.actions_remaining)
+              #action = ui.get_action(player.name, game_copy.actions_remaining)
+              
+              # send state to agent
+              popen.stdin.write(json.dumps(game.get_state_dict()) + "\n")
+              popen.stdin.flush()
+              # get action from agent
+              popen.stdout.flush()
+              player_action = popen.stdout.readline()
+              json_action = json.loads(player_action)
+              print(json_action["action_id"])
+
+              print(game_copy.actions_remaining, game_copy.actions_taken)
+
+              # search class from actions_remaining and action taken
+              selected_action = list(filter(lambda x: x.__class__.__name__ == json_action["action_id"], game_copy.actions_remaining + list(game_copy.actions_taken.keys())))
+              if len(selected_action) == 0:
+                action = None
+              else:
+                action = selected_action[0]
+
+              print("action--------")
+              print(action)
+
+              
 
               if action is None:
                 raise AgricolaException("No action chosen")
@@ -389,9 +401,16 @@ class StandardAgricolaGame(AgricolaGame):
 
 
 if __name__ == "__main__":
+
+  args = sys.argv
+
+  print(args[1:])
+
+  agent_processes = list(map(lambda p: subprocess.Popen([p], stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding='utf-8'), args[1:]))
+
   # game = LessonsAgricolaGame(2)
   # game = SimpleAgricolaGame(2)
   game = StandardAgricolaGame(4)
   #ui = TextInterface()
   ui = GUI()
-  play(game, ui)
+  play(game, ui, agent_processes)

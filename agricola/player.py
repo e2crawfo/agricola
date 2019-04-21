@@ -862,5 +862,6 @@ class Player(EventGenerator):
       "hand_improvements": hand_improvements,
       "played_occupations": played_occupations,
       "hand_occupations": hand_occupations,
-      "families": families
+      "families": families,
+      "score": self.score()
     }

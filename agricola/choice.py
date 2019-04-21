@@ -5,6 +5,10 @@ class Choice(object):
     def validate(self, choice):
         pass
 
+class DictChoice(Choice):
+    def __init__(self, choice_dict, desc=None):
+        self.choice_dict = choice_dict
+        super(DictChoice, self).__init__(desc)
 
 class YesNoChoice(Choice):
     def __init__(self, desc=None):

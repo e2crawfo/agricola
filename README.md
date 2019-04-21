@@ -143,27 +143,27 @@ sh run.sh
     "common_board": {
         "actions": [
             {
-                "action_id": "ROOM_STABLE_BUILDINGS",
+                "action_id": "FarmExpansion",
                 "is_available": true
             },
             {
-                "action_id": "STARTING_PLAYER",
+                "action_id": "MeetingPlace",
                 "is_available": true
             },
             {
-                "action_id": "GRAIN",
+                "action_id": "GrainSeeds",
                 "is_available": true
             },
             {
-                "action_id": "PLOUGH",
+                "action_id": "Farmland",
                 "is_available": true
             },
             {
-                "action_id": "DAY_LABORER",
+                "action_id": "DayLaborer",
                 "is_available": true
             },
             {
-                "action_id": "WOOD_3",
+                "action_id": "Forest",
                 "is_available": true,
                 "resources": [
                     {
@@ -173,7 +173,7 @@ sh run.sh
                 ]
             },
             {
-                "action_id": "CLAY_1",
+                "action_id": "ClayPit",
                 "is_available": true,
                 "resources": [
                     {
@@ -183,7 +183,7 @@ sh run.sh
                 ]
             },
             {
-                "action_id": "REED_1",
+                "action_id": "ReedBank",
                 "is_available": true,
                 "resources": [
                     {
@@ -193,7 +193,7 @@ sh run.sh
                 ]
             },
             {
-                "action_id": "FISHING",
+                "action_id": "Fishing",
                 "is_available": true,
                 "resources": [
                     {
@@ -203,11 +203,11 @@ sh run.sh
                 ]
             },
             {
-                "action_id": "OCCUPATION",
+                "action_id": "Lessons",
                 "is_available": true
             },
             {
-                "action_id": "WOOD_1",
+                "action_id": "Copse",
                 "is_available": true,
                 "resources": [
                     {
@@ -217,7 +217,7 @@ sh run.sh
                 ]
             },
             {
-                "action_id": "WOOD_2",
+                "action_id": "Grove",
                 "is_available": true,
                 "resources": [
                     {
@@ -227,11 +227,11 @@ sh run.sh
                 ]
             },
             {
-                "action_id": "REED_STONE_FOOD",
+                "action_id": "ResourceMarket4P",
                 "is_available": true
             },
             {
-                "action_id": "CLAY_2",
+                "action_id": "Hollow4P",
                 "is_available": true,
                 "resources": [
                     {
@@ -241,11 +241,11 @@ sh run.sh
                 ]
             },
             {
-                "action_id": "OCCUPATION_4P",
+                "action_id": "Lessons4P",
                 "is_available": true
             },
             {
-                "action_id": "TRAVELING_PLAYERS",
+                "action_id": "TravelingPlayers",
                 "is_available": true,
                 "resources": [
                     {
@@ -255,14 +255,8 @@ sh run.sh
                 ]
             },
             {
-                "action_id": "SHEEP",
-                "is_available": true,
-                "resources": [
-                    {
-                        "resource_amount": 1,
-                        "resource_type": "sheep"
-                    }
-                ]
+                "action_id": "Fencing",
+                "is_available": true
             }
         ],
         "remaining_major_improvements": [
@@ -278,24 +272,24 @@ sh run.sh
             "BASKET_MAKER_WORKSHOP"
         ],
         "round_cards": [
-            "SHEEP",
-            "MAJOR_IMPROVEMENT",
-            "FENCING",
-            "SOWING_BAKING",
-            "FAMILY_GROWTH",
-            "QUARRY_STAGE2",
-            "RENOVATION",
-            "PIG",
-            "VEGITABLE",
-            "CATTLE",
-            "QUARRY_STAGE4",
-            "FAMILY_GROWTH_WITHOUT_ROOM",
-            "PLOGH_SOWING",
-            "RENOVATION_FENCING"
+            "Fencing",
+            "SheepMarket",
+            "GrainUtilization",
+            "MajorImprovement",
+            "BasicWishForChildren",
+            "WesternQuarry",
+            "HouseRedevelopment",
+            "PigMarket",
+            "VegetableSeeds",
+            "EasternQuarry",
+            "CattleMarket",
+            "Cultivation",
+            "UrgentWishForChildren",
+            "FarmRedevelopment"
         ]
     },
     "current_event": "",
-    "current_player": 2,
+    "current_player": 3,
     "current_round": 1,
     "players": [
         {
@@ -341,22 +335,22 @@ sh run.sh
                 }
             ],
             "hand_improvements": [
-                "PondHut",
-                "Brook",
+                "WoolBlankets",
+                "CarpentersParlor",
+                "ThreeFieldRotation",
+                "MoldboardPlow",
                 "ClearingSpade",
-                "ShiftingCultivation",
-                "Lasso",
-                "Caravan",
+                "DutchWindmill",
                 "SackCart"
             ],
             "hand_occupations": [
-                "AnimalTamer",
-                "Stonecutter",
-                "OrganicFarmer",
-                "Geologist",
+                "FirewoodCollector",
                 "Greengrocer",
-                "AnimalDealer",
-                "FrameBuilder"
+                "RoofBallaster",
+                "CattleFeeder",
+                "Cottager",
+                "Groom",
+                "MasterBricklayer"
             ],
             "pastures": [],
             "played_improvements": [],
@@ -373,7 +367,164 @@ sh run.sh
                 "veg": 0,
                 "wood": 0
             },
-            "round_resources": {}
+            "round_resources": {},
+            "score": -10
+        },
+        {
+            "board": [
+                [
+                    [
+                        {
+                            "object_type": "wooden_hut"
+                        }
+                    ],
+                    [],
+                    [],
+                    [],
+                    []
+                ],
+                [
+                    [
+                        {
+                            "object_type": "wooden_hut"
+                        }
+                    ],
+                    [],
+                    [],
+                    [],
+                    []
+                ],
+                [
+                    [],
+                    [],
+                    [],
+                    [],
+                    []
+                ]
+            ],
+            "families": [
+                {
+                    "family_type": "in_house",
+                    "newbord": false
+                },
+                {
+                    "family_type": "in_house",
+                    "newbord": false
+                }
+            ],
+            "hand_improvements": [
+                "BigCountry",
+                "ButterChurn",
+                "Claypipe",
+                "MiningHammer",
+                "Mantelpiece",
+                "HerringPot",
+                "ThreshingBoard"
+            ],
+            "hand_occupations": [
+                "Stonecutter",
+                "ClayHutBuilder",
+                "Consultant",
+                "OrganicFarmer",
+                "Priest",
+                "AssistantTiller",
+                "Scholar"
+            ],
+            "pastures": [],
+            "played_improvements": [],
+            "played_occupations": [],
+            "resources": {
+                "boar": 0,
+                "cattle": 0,
+                "clay": 0,
+                "food": 0,
+                "grain": 0,
+                "reed": 0,
+                "sheep": 0,
+                "stone": 0,
+                "veg": 0,
+                "wood": 0
+            },
+            "round_resources": {},
+            "score": -10
+        },
+        {
+            "board": [
+                [
+                    [
+                        {
+                            "object_type": "wooden_hut"
+                        }
+                    ],
+                    [],
+                    [],
+                    [],
+                    []
+                ],
+                [
+                    [
+                        {
+                            "object_type": "wooden_hut"
+                        }
+                    ],
+                    [],
+                    [],
+                    [],
+                    []
+                ],
+                [
+                    [],
+                    [],
+                    [],
+                    [],
+                    []
+                ]
+            ],
+            "families": [
+                {
+                    "family_type": "in_house",
+                    "newbord": false
+                },
+                {
+                    "family_type": "in_house",
+                    "newbord": false
+                }
+            ],
+            "hand_improvements": [
+                "ThickForest",
+                "SheperdsCrook",
+                "PondHut",
+                "RammedClay",
+                "CornScoop",
+                "Beanfield",
+                "Handplow"
+            ],
+            "hand_occupations": [
+                "SmallScaleFarmer",
+                "HedgeKeeper",
+                "Grocer",
+                "Manservant",
+                "Harpooner",
+                "SheepWalker",
+                "AnimalTamer"
+            ],
+            "pastures": [],
+            "played_improvements": [],
+            "played_occupations": [],
+            "resources": {
+                "boar": 0,
+                "cattle": 0,
+                "clay": 0,
+                "food": 0,
+                "grain": 0,
+                "reed": 0,
+                "sheep": 0,
+                "stone": 0,
+                "veg": 0,
+                "wood": 0
+            },
+            "round_resources": {},
+            "score": -10
         },
         {
             "board": [
@@ -419,175 +570,21 @@ sh run.sh
             ],
             "hand_improvements": [
                 "ClayEmbankment",
-                "Loom",
-                "BreadPaddle",
-                "YoungAnimalMarket",
-                "StrawberryPatch",
-                "Claypipe",
-                "Beanfield"
-            ],
-            "hand_occupations": [
-                "Lutenist",
-                "SmallScaleFarmer",
-                "Carpenter",
-                "Conjurer",
-                "FirewoodCollector",
-                "StableArchitect",
-                "Priest"
-            ],
-            "pastures": [],
-            "played_improvements": [],
-            "played_occupations": [],
-            "resources": {
-                "boar": 0,
-                "cattle": 0,
-                "clay": 0,
-                "food": 0,
-                "grain": 0,
-                "reed": 0,
-                "sheep": 0,
-                "stone": 0,
-                "veg": 0,
-                "wood": 0
-            },
-            "round_resources": {}
-        },
-        {
-            "board": [
-                [
-                    [
-                        {
-                            "object_type": "wooden_hut"
-                        }
-                    ],
-                    [],
-                    [],
-                    [],
-                    []
-                ],
-                [
-                    [
-                        {
-                            "object_type": "wooden_hut"
-                        }
-                    ],
-                    [],
-                    [],
-                    [],
-                    []
-                ],
-                [
-                    [],
-                    [],
-                    [],
-                    [],
-                    []
-                ]
-            ],
-            "families": [
-                {
-                    "family_type": "in_house",
-                    "newbord": false
-                },
-                {
-                    "family_type": "in_house",
-                    "newbord": false
-                }
-            ],
-            "hand_improvements": [
-                "JunkRoom",
-                "CarpentersParlor",
-                "MiningHammer",
-                "Basket",
-                "Bottles",
-                "AcornBasket",
-                "SheperdsCrook"
-            ],
-            "hand_occupations": [
-                "Consultant",
-                "SeasonalWorker",
-                "Braggart",
-                "PigBreeder",
-                "PaperMaker",
-                "BrushwoodCollector",
-                "ScytheWorker"
-            ],
-            "pastures": [],
-            "played_improvements": [],
-            "played_occupations": [],
-            "resources": {
-                "boar": 0,
-                "cattle": 0,
-                "clay": 0,
-                "food": 0,
-                "grain": 0,
-                "reed": 0,
-                "sheep": 0,
-                "stone": 0,
-                "veg": 0,
-                "wood": 0
-            },
-            "round_resources": {}
-        },
-        {
-            "board": [
-                [
-                    [
-                        {
-                            "object_type": "wooden_hut"
-                        }
-                    ],
-                    [],
-                    [],
-                    [],
-                    []
-                ],
-                [
-                    [
-                        {
-                            "object_type": "wooden_hut"
-                        }
-                    ],
-                    [],
-                    [],
-                    [],
-                    []
-                ],
-                [
-                    [],
-                    [],
-                    [],
-                    [],
-                    []
-                ]
-            ],
-            "families": [
-                {
-                    "family_type": "in_house",
-                    "newbord": false
-                },
-                {
-                    "family_type": "in_house",
-                    "newbord": false
-                }
-            ],
-            "hand_improvements": [
-                "MilkJug",
+                "Pitchfork",
+                "MarketStall",
+                "MiniPasture",
+                "LargeGreenhouse",
                 "Scullery",
-                "DrinkingTrough",
-                "MoldboardPlow",
-                "HardPorcelain",
-                "Manger",
-                "ButterChurn"
+                "Bottles"
             ],
             "hand_occupations": [
-                "Harpooner",
-                "Childless",
-                "AssistantTiller",
                 "SheepWhisperer",
-                "MasterBricklayer",
-                "PlowDriver",
-                "HedgeKeeper"
+                "StorehouseKeeper",
+                "Geologist",
+                "SeasonalWorker",
+                "Conjurer",
+                "OvenFiringBoy",
+                "Lutenist"
             ],
             "pastures": [],
             "played_improvements": [],
@@ -604,10 +601,11 @@ sh run.sh
                 "veg": 0,
                 "wood": 0
             },
-            "round_resources": {}
+            "round_resources": {},
+            "score": -10
         }
     ],
-    "start_player": 2
+    "start_player": 3
 }
 ```
 
@@ -747,11 +745,24 @@ sh run.sh
 ```
 
 ### 種パン
+
+```json
+{
+  "action_id": "GrainUtilization",
+  "plant_grain_count": 1,
+  "plant_vegitable_count": 1,
+  "bake_grain_count": 1
+}
+```
+
+↑現在の実装
+⬇️は理想案
+
 * sowingは畑のある位置を指定
 * bakingは焼くのに使う進歩を指定
 ```json
 {
-  "action_id": "SOWING_BAKING",
+  "action_id": "GrainUtilization",
   "sowing": [
     {
       "position": [0,3],
@@ -828,16 +839,29 @@ sh run.sh
 ```
 
 ### 畑種
+
+```json
+{
+  "actoin_id": "Cultivation",
+  "ploughing_space" : [3,0],
+  "plant_grain_count": 1,
+  "plant_vegitable_count": 1
+}
+```
+
+↑現在の実装
+⬇️は理想案
+
 ``` json
 {
-  "actoin_id": "PLOGH_SOWING",
-  "plogh" : [3,0],
+  "actoin_id": "Cultivation",
+  "ploughing_space" : [3,0],
   "sowing": [
     {
       "position": [0, 3],
       "seed": "VEGITABLE"
     }
-  ],
+  ]
 }
 ```
 

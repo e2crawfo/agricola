@@ -3,7 +3,7 @@ import re
 
 from agricola.action import (
   DiscreteChoice, CountChoice, ListChoice,
-  VariableLengthListChoice, SpaceChoice)
+  VariableLengthListChoice, SpaceChoice, DictChoice)
 
 
 class UserInterface(object):
@@ -61,7 +61,8 @@ class UserInterface(object):
     return input()
 
   def get_user_choice(self, name, choice_spec):
-    if isinstance(choice_spec, DiscreteChoice):
+    if isinstance(choice_spec, DictChoice):
+    elif isinstance(choice_spec, DiscreteChoice):
       idx = None
       while idx is None:
         print("Player {} choice: ".format(name))

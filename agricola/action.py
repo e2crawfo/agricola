@@ -27,6 +27,10 @@ class Action(with_metaclass(abc.ABCMeta, object)):
     def choices(self, player):
         return []
 
+    def effect_with_dict(self, player, action_dict):
+        choices = self._convert_action_dict(player, action_dict)
+        self._effect(player, choices)
+
     def effect(self, player, choices):
         self._check_choices(player, choices)
         self._effect(player, choices)
@@ -35,9 +39,11 @@ class Action(with_metaclass(abc.ABCMeta, object)):
     def _effect(self, player, choices):
         pass
 
-    @abc.abstractmethod
+    def _convert_action_dict(self, player, action_dict):
+        return []
+
     def get_id(self):
-        pass
+        return self.__class__.__name__
 
     def get_state_dict(self):
         return {
@@ -136,9 +142,6 @@ class BasicWishForChildren(Action):
         if choices[0] is not None:
             player.play_minor_improvement(choices[0], player.game)
 
-    def get_id(self):
-        return "FAMILY_GROWTH"
-
 class ModestWishForChildren(Action):
     def _effect(self, player, choices):
         if player.game.round_idx < 5:
@@ -148,56 +151,32 @@ class ModestWishForChildren(Action):
 
         player.add_people(1)
 
-    def get_id(self):
-        return "MODEST"
-
 
 class UrgentWishForChildren(Action):
     def _effect(self, player, choices):
         player.add_people(1)
 
-    def get_id(self):
-        return "FAMILY_GROWTH_WITHOUT_ROOM"
-
 
 class DayLaborer(ResourceAcquisition):
     resources = dict(food=2)
-
-    def get_id(self):
-        return "DAY_LABORER"
 
 
 class Fishing(Accumulating):
     acc_amount = dict(food=1)
 
-    def get_id(self):
-        return "FISHING"
-
 class TravelingPlayers(Fishing):
-    
-    def get_id(self):
-        return "TRAVELING_PLAYERS"
-
+    pass
 
 class Copse(Accumulating):
     acc_amount = dict(wood=1)
-
-    def get_id(self):
-        return "WOOD_1"
 
 
 class Grove(Accumulating):
     acc_amount = dict(wood=2)
 
-    def get_id(self):
-        return "WOOD_2"
-
 
 class Forest(Accumulating):
     acc_amount = dict(wood=3)
-
-    def get_id(self):
-        return "WOOD_3"
 
 
 # class LargeForest(Accumulating):
@@ -207,20 +186,13 @@ class Forest(Accumulating):
 class ClayPit(Accumulating):
     acc_amount = dict(clay=1)
 
-    def get_id(self):
-        return "CLAY_1"
-
 
 class Hollow3P(Accumulating):
     acc_amount = dict(clay=1)
-    def get_id(self):
-        return "CLAY_1_3P"
 
 
 class Hollow4P(Accumulating):
     acc_amount = dict(clay=2)
-    def get_id(self):
-        return "CLAY_2"
 
 
 #class Hollow5P(Accumulating):
@@ -230,14 +202,9 @@ class Hollow4P(Accumulating):
 class EasternQuarry(Accumulating):
     acc_amount = dict(stone=1)
 
-    def get_id(self):
-        return "QUARRY_STAGE4"
-
 
 class WesternQuarry(EasternQuarry):
-    def get_id(self):
-        return "QUARRY_STAGE2"
-
+    pass
 
 class ResourceMarket2P(ResourceAcquisition):
     resources = dict(food=1, stone=1)
@@ -267,35 +234,20 @@ class ResourceMarket3P(ResourceAcquisition):
 class ResourceMarket4P(ResourceAcquisition):
     resources = dict(food=1, stone=1, reed=1)
 
-    def get_id(self):
-        return "REED_STONE_FOOD"
-
 class ReedBank(Accumulating):
     acc_amount = dict(reed=1)
-
-    def get_id(self):
-        return "REED_1"
 
 
 class SheepMarket(Accumulating):
     acc_amount = dict(sheep=1)
 
-    def get_id(self):
-        return "SHEEP"
-
 
 class PigMarket(Accumulating):
     acc_amount = dict(boar=1)
 
-    def get_id(self):
-        return "PIG"
-
 
 class CattleMarket(Accumulating):
     acc_amount = dict(cattle=1)
-
-    def get_id(self):
-        return "CATTLE"
 
 class AnimalMarket(ResourceAcquisition):
     resources = dict()
@@ -350,9 +302,6 @@ class FarmExpansion(Action):
             raise AgricolaInvalidChoice(
                 "Stables have to be specified as a list of spaces.")
 
-    def get_id(self):
-        return "ROOM_STABLE_BUILDINGS"
-
 class HouseRedevelopment(Action):
     def choices(self, player):
         house_upgrade_mats = player.valid_house_upgrades()
@@ -375,8 +324,6 @@ class HouseRedevelopment(Action):
                 raise AgricolaPoorlyFormed(
                     "Received {0}, but a major/minor improvement was expected.")
     
-    def get_id(self):
-        return "RENOVATION"
 
 class FarmRedevelopment(Action):
     def choices(self, player):
@@ -390,8 +337,6 @@ class FarmRedevelopment(Action):
         if choices[1] is not None:
             player.build_pastures(choices[1])
 
-    def get_id(self):
-        return "RENOVATION_FENCING"
 
 class MajorImprovement(Action):
     def choices(self, player):
@@ -411,9 +356,6 @@ class MajorImprovement(Action):
             raise AgricolaPoorlyFormed(
                 "Received {0}, but a major/minor improvement was expected.")
 
-    def get_id(self):
-        return "MAJOR_IMPROVEMENT"
-
 class Fencing(Action):
     def choices(self, player):
         return [
@@ -431,9 +373,6 @@ class Fencing(Action):
             raise AgricolaInvalidChoice(
                 "Pastures have to be specified as a list of list of spaces.")
 
-    def get_id(self):
-        return "FENCING"
-
 class Lessons(Action):
     def choices(self, player):
         return [
@@ -445,9 +384,6 @@ class Lessons(Action):
             player.change_state("Playing occupation", cost=dict(food=1))
 
         player.play_occupation(choices[0], player.game)
-
-    def get_id(self):
-        return "OCCUPATION"
 
 class Lessons3P(Action):
     def choices(self, player):
@@ -474,8 +410,6 @@ class Lessons4P(Action):
 
         player.play_occupation(choices[0], player.game)
 
-    def get_id(self):
-        return "OCCUPATION_4P"
 # class Lessons5P(Action):
 #     def choices(self, player):
 #         return [
@@ -502,9 +436,6 @@ class MeetingPlace(Action):
         player.game.set_first_player(player)
         if choices[0] is not None:
             player.play_minor_improvement(choices[0], player.game)
-    
-    def get_id(self):
-        return "STARTING_PLAYER"
 
 class MeetingPlaceFamily(Accumulating):
     acc_amount = dict(food=1)
@@ -513,8 +444,9 @@ class MeetingPlaceFamily(Accumulating):
         player.game.set_first_player(player)
         super(MeetingPlaceFamily, self)._effect(player, choices)
 
-    def get_id(self):
-        return "STARTING_PLAYER_FAMILY"
+    def _convert_action_dict(self, player, action_dict):
+        return [(action_dict["ploughing_space"][0], action_dict["ploughing_space"][1])]
+
 
 class Farmland(Action):
     def choices(self, player):
@@ -523,8 +455,8 @@ class Farmland(Action):
     def _effect(self, player, choices):
         player.plow_fields(choices[0])
 
-    def get_id(self):
-        return "PLOUGH"
+    def _convert_action_dict(self, player, action_dict):
+        return [(action_dict["ploughing_space"][0], action_dict["ploughing_space"][1])]
 
 class Cultivation(Action):
     def choices(self, player):
@@ -545,9 +477,12 @@ class Cultivation(Action):
             grain = choices[1] or 0
             veg = choices[2] or 0
             player.sow(grain, veg)
-    
-    def get_id(self):
-        return "PLOGH_SOWING"
+
+    def _convert_action_dict(self, player, action_dict):
+        # TODO choose grain plant field
+        # TODO choose vegitable plant field
+        return [(action_dict["ploughing_space"][0], action_dict["ploughing_space"][1]), action_dict["plant_grain_count"], action_dict["plant_vegitable_count"]]
+
 
 class GrainUtilization(Action):
     def choices(self, player):
@@ -567,22 +502,21 @@ class GrainUtilization(Action):
 
         if choices[2] is not None:
             player.bake_bread(choices[2])
-    def get_id(self):
-        return "SOWING_BAKING"
+
+    def _convert_action_dict(self, player, action_dict):
+        # TODO choose grain plant field
+        # TODO choose vegitable plant field
+        # TODO choose baking improvement
+        return [action_dict["plant_grain_count"], action_dict["plant_vegitable_count"], action_dict["bake_grain_count"]]
+
 
 
 class GrainSeeds(ResourceAcquisition):
     resources = dict(grain=1)
 
-    def get_id(self):
-        return "GRAIN"
-
 
 class VegetableSeeds(ResourceAcquisition):
     resources = dict(veg=1)
-
-    def get_id(self):
-        return "VEGITABLE"
 
 class SideJob(Action):
     def choices(self, player):
