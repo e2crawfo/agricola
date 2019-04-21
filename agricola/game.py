@@ -273,6 +273,7 @@ def play(game, ui, agent_processes, first_player=None):
             player = game_copy.players[i]
             game.current_player_idx = i
 
+            print(game.get_state_dict())
             print(json.dumps(game.get_state_dict(), indent=4, sort_keys=True, separators=(',', ': ')))
 
             try:
@@ -310,14 +311,14 @@ def play(game, ui, agent_processes, first_player=None):
                   "That action has already been taken by "
                   "player {0}".format(game_copy.actions_taken[action]))
 
-              choices = action.choices(player)
-              if choices:
-                choices = game_copy.get_choices(player, choices)
+              #choices = action.choices(player)
+              #if choices:
+              #  choices = game_copy.get_choices(player, choices)
 
               event_name = "Action: {}".format(action.__class__.__name__)
               with EventScope([game_copy, player], event_name, player=player, action=action):
-                action.effect(player, choices)
-
+                #action.effect(player, choices)
+                action.effect_with_dict(player, json_action)
               del game
               game = game_copy
 

@@ -467,9 +467,14 @@ class MeetingPlace(Action):
         ]
 
     def _effect(self, player, choices):
-        player.game.set_first_player(player)
+        player.game.set_first_player(int(player.name))
         if choices[0] is not None:
             player.play_minor_improvement(choices[0], player.game)
+
+    def _convert_action_dict(self, player, action_dict):
+        if "improvement" in action_dict:
+            return [action_dict["improvement"]["id"]]
+        return [None]
 
 class MeetingPlaceFamily(Accumulating):
     acc_amount = dict(food=1)

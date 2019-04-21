@@ -620,7 +620,7 @@ sh run.sh
 * スタプレ取らずの場合はdont_take_starting_playerをtrueとする
 ```json
 {
-  "aciton_id": "STARTING_PLAYER",
+  "aciton_id": "MeetingPlace",
   "dont_take_starting_player": true,
   "improvement": {
     "id": "FIELD",
@@ -811,18 +811,6 @@ sh run.sh
   }
 }
 ```
-
-### 増員進歩
-```json
-{
-  "action_id": "FAMILY_GROWTH",
-  "improvement": {
-    "id": "FIELD",
-    "position": [3, 0]
-  }
-}
-```
-
 
 ### 家なし増員
 ```json
