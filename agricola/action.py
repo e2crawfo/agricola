@@ -142,6 +142,9 @@ class BasicWishForChildren(Action):
         if choices[0] is not None:
             player.play_minor_improvement(choices[0], player.game)
 
+    def _convert_action_dict(self, player, action_dict):
+        return [action_dict["improvement"]["id"]]
+
 class ModestWishForChildren(Action):
     def _effect(self, player, choices):
         if player.game.round_idx < 5:
@@ -230,6 +233,9 @@ class ResourceMarket3P(ResourceAcquisition):
         resources["food"] = 1
         player.add_resources(resources)
 
+    def _convert_action_dict(self, player, action_dict):
+        return [action_dict["resource_type"]]
+
 
 class ResourceMarket4P(ResourceAcquisition):
     resources = dict(food=1, stone=1, reed=1)
@@ -270,6 +276,8 @@ class AnimalMarket(ResourceAcquisition):
         else:
             raise AgricolaInvalidChoice()
 
+    def _convert_action_dict(self, player, action_dict):
+        return [action_dict["animal_type"]]
 
 class FarmExpansion(Action):
     def choices(self, player):
@@ -302,6 +310,11 @@ class FarmExpansion(Action):
             raise AgricolaInvalidChoice(
                 "Stables have to be specified as a list of spaces.")
 
+    def _convert_action_dict(self, player, action_dict):
+        return [action_dict["rooms"], action_dict["stables"]]
+
+    
+
 class HouseRedevelopment(Action):
     def choices(self, player):
         house_upgrade_mats = player.valid_house_upgrades()
@@ -324,6 +337,8 @@ class HouseRedevelopment(Action):
                 raise AgricolaPoorlyFormed(
                     "Received {0}, but a major/minor improvement was expected.")
     
+    def _convert_action_dict(self, player, action_dict):
+        return [action_dict["material"], action_dict["improvement"]["id"]]
 
 class FarmRedevelopment(Action):
     def choices(self, player):
@@ -336,6 +351,9 @@ class FarmRedevelopment(Action):
         player.upgrade_house(choices[0])
         if choices[1] is not None:
             player.build_pastures(choices[1])
+
+    def _convert_action_dict(self, player, action_dict):
+        return [action_dict["material"], action_dict["pastures"]]
 
 
 class MajorImprovement(Action):
@@ -356,6 +374,10 @@ class MajorImprovement(Action):
             raise AgricolaPoorlyFormed(
                 "Received {0}, but a major/minor improvement was expected.")
 
+    def _convert_action_dict(self, player, action_dict):
+        # TODO read additional props when needed ex: field
+        return [action_dict["id"]]
+
 class Fencing(Action):
     def choices(self, player):
         return [
@@ -373,6 +395,9 @@ class Fencing(Action):
             raise AgricolaInvalidChoice(
                 "Pastures have to be specified as a list of list of spaces.")
 
+    def _convert_action_dict(self, player, action_dict):
+        return [action_dict["pastures"]]
+
 class Lessons(Action):
     def choices(self, player):
         return [
@@ -385,6 +410,9 @@ class Lessons(Action):
 
         player.play_occupation(choices[0], player.game)
 
+    def _convert_action_dict(self, player, action_dict):
+        return [action_dict["occupation_id"]]
+
 class Lessons3P(Action):
     def choices(self, player):
         return [
@@ -395,6 +423,8 @@ class Lessons3P(Action):
         player.change_state("Playing occupation", cost=dict(food=2))
         player.play_occupation(choices[0], player.game)
 
+    def _convert_action_dict(self, player, action_dict):
+        return [action_dict["occupation_id"]]
 
 class Lessons4P(Action):
     def choices(self, player):
@@ -409,6 +439,10 @@ class Lessons4P(Action):
             player.change_state("Playing occupation", cost=dict(food=1))
 
         player.play_occupation(choices[0], player.game)
+
+    def _convert_action_dict(self, player, action_dict):
+        return [action_dict["occupation_id"]]
+
 
 # class Lessons5P(Action):
 #     def choices(self, player):

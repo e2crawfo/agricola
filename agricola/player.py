@@ -822,20 +822,20 @@ class Player(EventGenerator):
     for i in range(self.shape[0]):
       board_row = []
       for j in range(self.shape[1]):
-        board_space = []
+        board_space = {}
         space = i, j
         if space in room_spaces:
-          board_space.append({
+          board_space = {
             "object_type": "wooden_hut"
-          })
+          }
         elif space in stable_spaces:
-          board_space.append({
+          board_space = {
             "object_type": "stable"
-          })
+          }
         elif space in field_spaces:
-          board_space.append({
+          board_space = {
             "object_type": "field"
-          })
+          }
         board_row.append(board_space)
       board.append(board_row)
 
