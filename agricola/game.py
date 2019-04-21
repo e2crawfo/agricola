@@ -2,11 +2,12 @@ import itertools
 import numpy as np
 import copy
 import json
+import sys, os
 
-#from agricola.gui import GUI
+sys.path.append(os.getcwd())
+
 from gui import GUI
-from agricola import (
-   TextInterface, AgricolaException)
+from agricola import TextInterface, AgricolaException
 from player import Player
 from action import get_actions, get_simple_actions
 from cards import (
