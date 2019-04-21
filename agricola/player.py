@@ -850,7 +850,7 @@ class Player(EventGenerator):
     for i in range(self.people):
       families.append({
         "family_type": "in_house",
-        "newbord": False
+        "newborn": False
       })
 
     return {
