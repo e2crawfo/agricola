@@ -845,11 +845,16 @@ class Player(EventGenerator):
     hand_occupations = list(map(lambda card: card.name, self.hand["occupations"]))
 
     # TODO set proper family type
-    # TODO set user family or not
+    # TODO set newborn
     families = []
-    for i in range(self.people):
+    for i in range(self.turn_left):
       families.append({
         "family_type": "in_house",
+        "newborn": False
+      })
+    for i in range(self.people - self.turn_left):
+      families.append({
+        "family_type": "used",
         "newborn": False
       })
 

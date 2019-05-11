@@ -261,7 +261,8 @@ def play(game, ui, agent_processes, logdir, first_player=None):
 
       ui.begin_round(game.round_idx, round_action)
 
-      player_turns = [p.people for p in game.players]
+      for p in game.players:
+        p.turn_left = p.people
       remaining_players = set(range(len(game.players)))
       order = list(range(game.n_players))
       order = order[game.first_player_idx:] + order[:game.first_player_idx]
@@ -282,13 +283,8 @@ def play(game, ui, agent_processes, logdir, first_player=None):
 
             try:
               #action = ui.get_action(player.name, game_copy.actions_remaining)
-              
+
               state_json = json.dumps(game.get_state_dict())
-
-              # write to log file
-              with open(logdir + "/state" + str(log_idx) + ".json", mode='w') as f:
-                f.write(state_json)
-
               # send state to agent
               popen.stdin.write(state_json + "\n")
               popen.stdin.flush()
@@ -296,6 +292,11 @@ def play(game, ui, agent_processes, logdir, first_player=None):
               popen.stdout.flush()
               player_action = popen.stdout.readline()
               json_action = json.loads(player_action)
+
+              state_json = json.dumps(game.get_state_dict())
+              # write to log file
+              with open(logdir + "/state" + str(log_idx) + ".json", mode='w') as f:
+                f.write(state_json)
 
               # write to log file
               with open(logdir + "/action" + str(log_idx) + ".json", mode='w') as f:
@@ -316,8 +317,6 @@ def play(game, ui, agent_processes, logdir, first_player=None):
 
               print("action--------")
               print(action)
-
-              
 
               if action is None:
                 raise AgricolaException("No action chosen")
@@ -352,8 +351,8 @@ def play(game, ui, agent_processes, logdir, first_player=None):
           for p in game.players:
             print(p)
 
-          player_turns[i] -= 1
-          if player_turns[i] <= 0:
+          game.players[i].turn_left -= 1
+          if game.players[i].turn_left <= 0:
             remaining_players.remove(i)
             if not remaining_players:
               break
