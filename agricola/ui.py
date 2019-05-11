@@ -62,6 +62,7 @@ class UserInterface(object):
 
   def get_user_choice(self, name, choice_spec):
     if isinstance(choice_spec, DictChoice):
+      pass
     elif isinstance(choice_spec, DiscreteChoice):
       idx = None
       while idx is None:
