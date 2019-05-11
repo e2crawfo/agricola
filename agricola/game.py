@@ -146,7 +146,7 @@ class AgricolaGame(EventGenerator):
       action_dict["is_available"] = True
       action_array.append(action_dict)
 
-    remaining_major_improvements = list(map(lambda mi: mi.get_id(), self.major_improvements))
+    remaining_major_improvements = list(map(lambda mi: mi.name, self.major_improvements))
     
     player_dicts = list(map(lambda p: p.get_state_dict(), self.players))
 
