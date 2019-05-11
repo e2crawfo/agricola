@@ -854,6 +854,7 @@ class Player(EventGenerator):
       })
 
     return {
+      "id": int(self.name),
       "resources": resources,
       "round_resources": self.futures,
       "board": board,
