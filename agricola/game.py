@@ -84,6 +84,10 @@ class AgricolaGame(EventGenerator):
     self.game_id = game_id
     self.actions = actions
     self.n_players = n_players
+
+    # 0 is always first player
+    self.set_first_player(0)
+
     if isinstance(initial_players, list):
       if not len(initial_players) == n_players:
         raise ValueError(
@@ -94,7 +98,7 @@ class AgricolaGame(EventGenerator):
           "``initial_players`` must be an agricola.Player instance or "
           "a list thereof.")
     elif initial_players is None:
-      initial_players = [Player(str(i)) for i in range(self.n_players)]
+      initial_players = [Player(str(i), food = 2 if i == 0 else 3 ) for i in range(self.n_players)]
     elif not isinstance(initial_players, Player):
       raise ValueError(
         "``initial_players`` must be an agricola.Player instance or "
@@ -212,7 +216,7 @@ class AgricolaGame(EventGenerator):
     return choices
 
 
-def play(game, ui, agent_processes, logdir, first_player=None):
+def play(game, ui, agent_processes, logdir):
   game.ui = ui
   if game.randomize:
     game.action_order = (
@@ -237,10 +241,6 @@ def play(game, ui, agent_processes, logdir, first_player=None):
     hands = game.minor_improvements.draw_cards(game.n_players)
     for hand, player in zip(hands, game.players):
       player.give_cards('minor_improvements', hand)
-
-  if first_player is None:
-    first_player = np.random.randint(game.n_players)
-  game.set_first_player(first_player)
 
   ui.start_game(game)
 
@@ -417,24 +417,3 @@ class StandardAgricolaGame(AgricolaGame):
       minor_improvements=minor_improvements,
       major_improvements=major_improvements)
 
-
-if __name__ == "__main__":
-
-  now = datetime.datetime.now()
-
-  parser = argparse.ArgumentParser(description='Agricola Simulator')
-
-  parser.add_argument('--agents', nargs=4)
-  parser.add_argument('--logdir', default=str(now))
-  args = parser.parse_args()
-
-  agent_processes = list(map(lambda p: subprocess.Popen([p], stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding='utf-8'), args.agents))
-
-  os.makedirs(args.logdir, exist_ok=True)
-
-  # game = LessonsAgricolaGame(2)
-  # game = SimpleAgricolaGame(2)
-  game = StandardAgricolaGame(5, str(uuid.uuid4()))
-  ui = TextInterface()
-  #ui = GUI()
-  play(game, ui, agent_processes, args.logdir)

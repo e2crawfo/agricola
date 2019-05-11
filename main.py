@@ -1,5 +1,5 @@
 # coding: utf-8
-import os, argparse, datetime
+import os, argparse, datetime, subprocess, uuid
 from agricola.game import StandardAgricolaGame, TextInterface, play
 
 if __name__ == "__main__":
