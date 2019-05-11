@@ -3,7 +3,8 @@ import re
 
 from agricola.action import (
   DiscreteChoice, CountChoice, ListChoice,
-  VariableLengthListChoice, SpaceChoice, DictChoice)
+  VariableLengthListChoice, SpaceChoice)
+  #VariableLengthListChoice, SpaceChoice, DictChoice)
 
 
 class UserInterface(object):
