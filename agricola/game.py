@@ -6,6 +6,7 @@ import sys, os
 import subprocess
 import argparse
 import datetime
+import uuid
 
 sys.path.append(os.getcwd())
 
@@ -74,10 +75,11 @@ class AgricolaGame(EventGenerator):
 
   """
   def __init__(
-      self, actions, n_players, initial_players=None,
+      self, actions, n_players, game_id, initial_players=None,
       occupations=None, minor_improvements=None, major_improvements=None,
       randomize=True):
 
+    self.game_id = game_id
     self.actions = actions
     self.n_players = n_players
     if isinstance(initial_players, list):
@@ -243,8 +245,6 @@ def play(game, ui, agent_processes, logdir, first_player=None):
   game.stage_idx = 1
   game.actions_taken = {}
 
-  log_idx = 1
-
   for p in game.players:
     print(p)
 
@@ -295,14 +295,12 @@ def play(game, ui, agent_processes, logdir, first_player=None):
 
               state_json = json.dumps(game.get_state_dict())
               # write to log file
-              with open(logdir + "/state" + str(log_idx) + ".json", mode='w') as f:
-                f.write(state_json)
+              with open(logdir + "/" + game.game_id + "_state.json", mode='a') as f:
+                f.write(state_json + "\n")
 
               # write to log file
-              with open(logdir + "/action" + str(log_idx) + ".json", mode='w') as f:
-                f.write(player_action)
-
-              log_idx += 1
+              with open(logdir + "/" + game.game_id + "_action.json", mode='a') as f:
+                f.write(player_action + "\n")
 
               print(json_action["action_id"])
 
@@ -399,7 +397,7 @@ class LessonsAgricolaGame(AgricolaGame):
 
 
 class StandardAgricolaGame(AgricolaGame):
-  def __init__(self, n_players, family=False):
+  def __init__(self, n_players, game_id, family=False):
     actions = get_actions(family, n_players)
 
     if family:
@@ -411,7 +409,7 @@ class StandardAgricolaGame(AgricolaGame):
     major_improvements = get_major_improvements()
 
     super(StandardAgricolaGame, self).__init__(
-      actions, n_players,
+      actions, n_players, game_id,
       occupations=occupations,
       minor_improvements=minor_improvements,
       major_improvements=major_improvements)
@@ -433,7 +431,7 @@ if __name__ == "__main__":
 
   # game = LessonsAgricolaGame(2)
   # game = SimpleAgricolaGame(2)
-  game = StandardAgricolaGame(4)
+  game = StandardAgricolaGame(4, uuid.uuid4())
   ui = TextInterface()
   #ui = GUI()
   play(game, ui, agent_processes, args.logdir)

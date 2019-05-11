@@ -1,6 +1,9 @@
 import json
 import random
 
+#def search_field_space():
+
+
 while True:
     state_string = input()
 
