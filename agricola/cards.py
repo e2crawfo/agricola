@@ -1465,7 +1465,7 @@ class MajorImprovement(with_metaclass(abc.ABCMeta, Card)):
     def victory_points(self, player):
         return self._victory_points
 
-class Fireplace(MajorImprovement):
+class Fireplace(with_metaclass(abc.ABCMeta, MajorImprovement)):
     _victory_points = 1
 
     def _apply(self, player):
@@ -1484,7 +1484,7 @@ class Fireplace2(Fireplace):
 class Fireplace3(Fireplace):
     _cost = {'clay': 3}
 
-class CookingHearth(MajorImprovement):
+class CookingHearth(with_metaclass(abc.ABCMeta, MajorImprovement)):
     _victory_points = 1
 
     def upgrade_of(self):
