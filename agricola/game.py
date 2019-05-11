@@ -300,7 +300,7 @@ def play(game, ui, agent_processes, logdir, first_player=None):
 
               # write to log file
               with open(logdir + "/" + game.game_id + "_action.json", mode='a') as f:
-                f.write(player_action + "\n")
+                f.write(player_action)
 
               print(json_action["action_id"])
 
@@ -431,7 +431,7 @@ if __name__ == "__main__":
 
   # game = LessonsAgricolaGame(2)
   # game = SimpleAgricolaGame(2)
-  game = StandardAgricolaGame(4, uuid.uuid4())
+  game = StandardAgricolaGame(4, str(uuid.uuid4()))
   ui = TextInterface()
   #ui = GUI()
   play(game, ui, agent_processes, args.logdir)
