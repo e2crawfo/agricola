@@ -4,10 +4,11 @@ import copy
 import json
 import sys, os
 import subprocess
+import argparse
+import datetime
 
 sys.path.append(os.getcwd())
 
-from gui import GUI
 from agricola import TextInterface, AgricolaException
 from player import Player
 from action import *
@@ -137,6 +138,7 @@ class AgricolaGame(EventGenerator):
     for action_taken in self.actions_taken:
       action_dict = action_taken.get_state_dict()
       action_dict["is_available"] = False
+      action_dict["taken_by"] = self.actions_taken[action_taken]
       action_array.append(action_dict)
 
     for action_available in self.actions_remaining:
@@ -205,7 +207,7 @@ class AgricolaGame(EventGenerator):
     return choices
 
 
-def play(game, ui, agent_processes, first_player=None):
+def play(game, ui, agent_processes, logdir, first_player=None):
   game.ui = ui
   if game.randomize:
     game.action_order = (
@@ -240,6 +242,8 @@ def play(game, ui, agent_processes, first_player=None):
   game.round_idx = 1
   game.stage_idx = 1
   game.actions_taken = {}
+
+  log_idx = 1
 
   for p in game.players:
     print(p)
@@ -279,13 +283,26 @@ def play(game, ui, agent_processes, first_player=None):
             try:
               #action = ui.get_action(player.name, game_copy.actions_remaining)
               
+              state_json = json.dumps(game.get_state_dict())
+
+              # write to log file
+              with open(logdir + "/state" + str(log_idx) + ".json", mode='w') as f:
+                f.write(state_json)
+
               # send state to agent
-              popen.stdin.write(json.dumps(game.get_state_dict()) + "\n")
+              popen.stdin.write(state_json + "\n")
               popen.stdin.flush()
               # get action from agent
               popen.stdout.flush()
               player_action = popen.stdout.readline()
               json_action = json.loads(player_action)
+
+              # write to log file
+              with open(logdir + "/action" + str(log_idx) + ".json", mode='w') as f:
+                f.write(player_action)
+
+              log_idx += 1
+
               print(json_action["action_id"])
 
               print(game_copy.actions_remaining, game_copy.actions_taken)
@@ -403,15 +420,21 @@ class StandardAgricolaGame(AgricolaGame):
 
 if __name__ == "__main__":
 
-  args = sys.argv
+  now = datetime.datetime.now()
 
-  print(args[1:])
+  parser = argparse.ArgumentParser(description='Agricola Simulator')
 
-  agent_processes = list(map(lambda p: subprocess.Popen([p], stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding='utf-8'), args[1:]))
+  parser.add_argument('--agents', nargs=4)
+  parser.add_argument('--logdir', default=str(now))
+  args = parser.parse_args()
+
+  agent_processes = list(map(lambda p: subprocess.Popen([p], stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding='utf-8'), args.agents))
+
+  os.makedirs(args.logdir, exist_ok=True)
 
   # game = LessonsAgricolaGame(2)
   # game = SimpleAgricolaGame(2)
   game = StandardAgricolaGame(4)
-  #ui = TextInterface()
-  ui = GUI()
-  play(game, ui, agent_processes)
+  ui = TextInterface()
+  #ui = GUI()
+  play(game, ui, agent_processes, args.logdir)
