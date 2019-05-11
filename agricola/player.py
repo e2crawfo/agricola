@@ -584,8 +584,16 @@ class Player(EventGenerator):
       pass
 
   def harvest(self):
+    # harvest from field
+    for field in self._fields:
+      kind = field.kind
+      if field.harvest():
+        self.add_resources(**{kind: 1})
+
+    # pay foods
     state_change = PlayerStateChange("harvest", cost={"food": 2 * self.people})
     state_change.check_and_apply(self)
+
 
   def _check_spatial_objects(self, objects, name, omit=None):
     omit = omit or []
@@ -768,7 +776,7 @@ class Player(EventGenerator):
       next(empty_fields).plant_veg()
 
   def bake_bread(self, n):
-    if n > len(self.bread_rates-1) and self.bread_rates[-1] == 0:
+    if n > len(self.bread_rates) - 1 and self.bread_rates[-1] == 0:
       raise AgricolaPoorlyFormed()
     bread_rates = self.bread_rates[:-1][:n]
     n_left = max(n - len(bread_rates), 0)
@@ -843,7 +851,13 @@ class Player(EventGenerator):
         elif space in field_spaces:
           board_space = {
             "object_type": "field"
-          }
+          }          
+          for field in self._fields:
+            if field.space == space:
+              if field.n_items >= 1:
+                board_space["item_count"] = field.n_items
+                board_space["kind"] = field.kind
+                break
         board_row.append(board_space)
       board.append(board_row)
 
