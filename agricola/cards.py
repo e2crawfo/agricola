@@ -1,9 +1,8 @@
 import abc
 from future.utils import with_metaclass
 
-
-from agricola.utils import score_mapping, cumsum
-from agricola.choice import (
+from .utils import score_mapping, cumsum
+from .choice import (
     YesNoChoice, DiscreteChoice, CountChoice, ListChoice, SpaceChoice)
 
 
