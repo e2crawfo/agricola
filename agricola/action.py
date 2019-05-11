@@ -7,7 +7,7 @@ from agricola.choice import (
     VariableLengthListChoice, SpaceChoice)
 from agricola.cards import MinorImprovement as MinorImprovementCard
 from agricola.cards import MajorImprovement as MajorImprovementCard
-
+from agricola.player import Pasture
 
 class Action(with_metaclass(abc.ABCMeta, object)):
     def __str__(self):
@@ -396,7 +396,8 @@ class Fencing(Action):
                 "Pastures have to be specified as a list of list of spaces.")
 
     def _convert_action_dict(self, player, action_dict):
-        return [action_dict["pastures"]]
+        pasture_array = list(map(lambda p_array: Pasture(list(map(lambda pasture: (pasture[1], pasture[0]) ,p_array))), action_dict["pastures"]))
+        return [pasture_array]
 
 class Lessons(Action):
     def choices(self, player):
@@ -484,7 +485,7 @@ class MeetingPlaceFamily(Accumulating):
         super(MeetingPlaceFamily, self)._effect(player, choices)
 
     def _convert_action_dict(self, player, action_dict):
-        return [(action_dict["ploughing_space"][0], action_dict["ploughing_space"][1])]
+        return [(action_dict["ploughing_space"][1], action_dict["ploughing_space"][0])]
 
 
 class Farmland(Action):
@@ -495,7 +496,7 @@ class Farmland(Action):
         player.plow_fields(choices[0])
 
     def _convert_action_dict(self, player, action_dict):
-        return [(action_dict["ploughing_space"][0], action_dict["ploughing_space"][1])]
+        return [(action_dict["ploughing_space"][1], action_dict["ploughing_space"][0])]
 
 class Cultivation(Action):
     def choices(self, player):

@@ -188,8 +188,7 @@ class Pasture(SpatialObject, AnimalContainer):
 
   def capacity(self):
     return self.n_spaces * 2**(self.n_stables+1)
-
-
+  
 RESOURCE_TYPES = ('food wood clay stone reed sheep boar cattle grain veg '
           'pastures fences fences_avail stables fenced_stables free_stables stables_avail '
           'rooms people people_avail grain_fields veg_fields empty_fields fields '
@@ -858,16 +857,25 @@ class Player(EventGenerator):
         "newborn": False
       })
 
+    print(self._pastures)
+    pasture_state = list(map(lambda pasture: list(map(lambda space: (space[1], space[0]), pasture.spaces)), self._pastures))
+
+    fences_state = list(map(lambda fence: list(map(lambda point: (point[1], point[0]), fence)), self.fences))
+
+    print("=--=--=--=-=-=--=-=-=--=")
+    print(pasture_state)
+
     return {
       "player_id": int(self.name),
       "resources": resources,
       "round_resources": self.futures,
       "board": board,
-      "pastures": self._pastures,
+      "pastures": pasture_state,
       "played_improvements": played_improvements,
       "hand_improvements": hand_improvements,
       "played_occupations": played_occupations,
       "hand_occupations": hand_occupations,
       "families": families,
-      "score": self.score()
+      "score": self.score(),
+      "fences": fences_state
     }
