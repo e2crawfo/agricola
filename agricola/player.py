@@ -8,6 +8,8 @@ from pprint import pformat
 import numpy as np
 import networkx as nx
 
+import pdb
+
 from agricola.utils import (
   EventGenerator, EventScope, multiset_satisfy, draw_grid,
   index_check, orthog_adjacent, score_mapping)
@@ -256,7 +258,12 @@ class PlayerStateChange(object):
 
     for k, v in self.cost.items():
       if getattr(player, k) < v:
-        raise AgricolaNotEnoughResources(self._error_message(player))
+        # begging card
+        if k == "food":
+          player.begging_cards += v - getattr(player, k)
+          player.add_resources(food= v - getattr(player, k))
+        else:
+          raise AgricolaNotEnoughResources(self._error_message(player))
 
     for fn in self.prereq_fns:
       if not fn(self, self.game):
@@ -317,6 +324,7 @@ class Player(EventGenerator):
       occupations=None, minor_improvements=None, major_improvements=None, hand=None):
     super(Player, self).__init__()
     self.name = name
+    self.begging_cards = 0
 
     self.people = people
     self.people_avail = people_avail
@@ -561,6 +569,8 @@ class Player(EventGenerator):
     score += sum([imp.victory_points(self) for imp in self.minor_improvements])
     score += sum([imp.victory_points(self) for imp in self.major_improvements])
 
+    score -= 3 * self.begging_cards
+
     return score
 
   def start_round(self, round_idx):
@@ -576,7 +586,8 @@ class Player(EventGenerator):
       pass
 
   def harvest(self):
-    pass
+    state_change = PlayerStateChange("harvest", cost={"food": 2 * self.people})
+    state_change.check_and_apply(self)
 
   def _check_spatial_objects(self, objects, name, omit=None):
     omit = omit or []
@@ -846,6 +857,7 @@ class Player(EventGenerator):
     # TODO set proper family type
     # TODO set newborn
     families = []
+    
     for i in range(self.turn_left):
       families.append({
         "family_type": "in_house",
@@ -877,5 +889,6 @@ class Player(EventGenerator):
       "hand_occupations": hand_occupations,
       "families": families,
       "score": self.score(),
-      "fences": fences_state
+      "fences": fences_state,
+      "begging_cards": self.begging_cards
     }

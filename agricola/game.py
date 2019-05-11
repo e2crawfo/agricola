@@ -153,6 +153,7 @@ class AgricolaGame(EventGenerator):
     player_dicts = list(map(lambda p: p.get_state_dict(), self.players))
 
     state_dict = {
+      "current_stage": self.stage_idx,
       "current_round": self.round_idx,
       "current_player": self.current_player_idx,
       "current_event": "", # TODO set proper value
@@ -431,7 +432,7 @@ if __name__ == "__main__":
 
   # game = LessonsAgricolaGame(2)
   # game = SimpleAgricolaGame(2)
-  game = StandardAgricolaGame(4, str(uuid.uuid4()))
+  game = StandardAgricolaGame(5, str(uuid.uuid4()))
   ui = TextInterface()
   #ui = GUI()
   play(game, ui, agent_processes, args.logdir)
