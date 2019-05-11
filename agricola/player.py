@@ -8,10 +8,10 @@ from pprint import pformat
 import numpy as np
 import networkx as nx
 
-from agricola.utils import (
+from .utils import (
   EventGenerator, EventScope, multiset_satisfy, draw_grid,
   index_check, orthog_adjacent, score_mapping)
-from agricola import (
+from .errors import (
   AgricolaException, AgricolaNotEnoughResources, AgricolaLogicError,
   AgricolaPoorlyFormed, AgricolaImpossible)
 

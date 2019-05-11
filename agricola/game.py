@@ -10,13 +10,15 @@ import uuid
 
 sys.path.append(os.getcwd())
 
-from agricola import TextInterface, AgricolaException
-from player import Player
-from action import *
-from cards import (
+#from agricola import TextInterface, AgricolaException
+from .errors import AgricolaException
+from .ui import TextInterface
+from .player import Player
+from .action import *
+from .cards import (
   get_occupations, get_minor_improvements, get_major_improvements)
-from utils import EventGenerator, EventScope
-from choice import Choice
+from .utils import EventGenerator, EventScope
+from .choice import Choice
 
 # TODO: make sure that certain actions which allow two things to be done have
 # the order of the two things respected (and make sure player can't take the

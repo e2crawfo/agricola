@@ -1,7 +1,7 @@
 from future.builtins.misc import input
 import re
 
-from agricola.action import (
+from .action import (
   DiscreteChoice, CountChoice, ListChoice,
   VariableLengthListChoice, SpaceChoice)
   #VariableLengthListChoice, SpaceChoice, DictChoice)

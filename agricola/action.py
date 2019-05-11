@@ -1,13 +1,14 @@
 import abc
 from future.utils import iteritems, with_metaclass
 
-from agricola import AgricolaInvalidChoice, AgricolaImpossible, AgricolaPoorlyFormed
-from agricola.choice import (
+#from agricola import AgricolaInvalidChoice, AgricolaImpossible, AgricolaPoorlyFormed
+from .errors import AgricolaInvalidChoice, AgricolaImpossible, AgricolaPoorlyFormed
+from .choice import (
     DiscreteChoice, CountChoice, ListChoice,
     VariableLengthListChoice, SpaceChoice)
-from agricola.cards import MinorImprovement as MinorImprovementCard
-from agricola.cards import MajorImprovement as MajorImprovementCard
-from agricola.player import Pasture
+from .cards import MinorImprovement as MinorImprovementCard
+from .cards import MajorImprovement as MajorImprovementCard
+from .player import Pasture
 
 class Action(with_metaclass(abc.ABCMeta, object)):
     def __str__(self):
