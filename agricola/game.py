@@ -227,6 +227,7 @@ def play(game, ui, agent_processes, logdir):
 
   game.players = [copy.deepcopy(ip) for ip in game.initial_players]
   for i, p in enumerate(game.players):
+    p.index = i
     p.name = str(i)
 
   for p in game.players:
@@ -332,10 +333,31 @@ def play(game, ui, agent_processes, logdir):
               #if choices:
               #  choices = game_copy.get_choices(player, choices)
 
+              json_choices = []
+              choices = []
+              while True:
+                choices, next_choice = action.choices(player, json_choices)
+                if not next_choice:
+                  break
+                # get next choice for player
+                state_dict = game.get_state_dict()
+                state_dict["current_event"] = next_choice["class"].__name__
+                state_dict["event_source"] = next_choice["source"]
+                state_json = json.dumps(state_dict)
+                print(state_json)
+                # send state to agent
+                popen.stdin.write(state_json + "\n")
+                popen.stdin.flush()
+                # get action from agent
+                popen.stdout.flush()
+                player_action = popen.stdout.readline()
+                json_choices.append(json.loads(player_action))
+
+
               event_name = "Action: {}".format(action.__class__.__name__)
               with EventScope([game_copy, player], event_name, player=player, action=action):
-                #action.effect(player, choices)
-                action.effect_with_dict(player, json_action)
+                action.effect(player, choices)
+                #action.effect_with_dict(player, json_action)
               del game
               game = game_copy
 

@@ -1,9 +1,80 @@
-class Choice(object):
-    def __init__(self, desc=None):
-        self.desc = desc
+import abc
 
-    def validate(self, choice):
+class Choice(object):
+    def __init__(self, player, choice_dict, desc=None):
+        self.desc = desc
+        self.player = player
+        self.validate()
+
+    @property
+    def name(self):
+        return self.__class__.__name__
+
+    @abc.abstractmethod
+    def validate(self):
         pass
+
+    # returns next required choice class
+    @property
+    def next_choices(self):
+        return []
+
+class OccupationChoice(Choice):
+    def validate(self):
+        pass
+
+class AnimalMarketchoice(Choice):
+    def validate(self):
+        pass
+
+class Expansionchoice(Choice):
+    def validate(self):
+        pass
+
+class Stablechoice(Choice):
+    def validate(self):
+        pass
+
+class MinorImprovementchoice(Choice):
+    def __init__(self, player, choice_dict, desc=None, mx=None):
+        super(MinorImprovementchoice, self).__init__(desc, choice_dict)
+        if "minor_improvement_id" in choice_dict:
+            target_improvement = [minor_improvement for minor_improvement in player.hand["minor_improvements"] if minor_improvement.name == choice_dict["minor_improvement_id"]]
+            # TODO think about error
+            self.choice_value = target_improvement[0]
+        else:
+            self.choice_value = None
+
+    @property
+    def next_choices(self):
+        if self.choice_value:
+            return self.choice_value.next_choices
+        return None
+
+    def validate(self):
+        pass
+
+class MajorImprovementchoice(Choice):
+    def validate(self):
+        pass
+
+class FarmlandChoice(Choice):
+    def validate(self):
+        pass
+
+class Bakingchoice(Choice):
+    def validate(self):
+        pass
+
+class Sowingchoice(Choice):
+    def validate(self):
+        pass
+
+class Fencingchoice(Choice):
+    def validate(self):
+        pass
+
+# old choices
 
 class DictChoice(Choice):
     def __init__(self, choice_dict, desc=None):
@@ -46,5 +117,6 @@ class VariableLengthListChoice(Choice):
 
 
 class SpaceChoice(Choice):
-    def __init__(self, desc=None):
-        super(SpaceChoice, self).__init__(desc)
+    def __init__(self, player, choice_dict, desc=None, mx=None):
+        super(SpaceChoice, self).__init__(desc, choice_dict)
+        self.choice_value = [(choice_dict["space"][1], choice_dict["space"][0])]

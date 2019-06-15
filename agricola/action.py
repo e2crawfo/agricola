@@ -5,12 +5,14 @@ from future.utils import iteritems, with_metaclass
 from .errors import AgricolaInvalidChoice, AgricolaImpossible, AgricolaPoorlyFormed
 from .choice import (
     DiscreteChoice, CountChoice, ListChoice,
-    VariableLengthListChoice, SpaceChoice)
+    VariableLengthListChoice, SpaceChoice, MinorImprovementchoice)
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
 from .player import Pasture
 
 class Action(with_metaclass(abc.ABCMeta, object)):
+    choice_classes = []
+
     def __str__(self):
         return "<" + self.__class__.__name__ + ">"
 
@@ -19,14 +21,30 @@ class Action(with_metaclass(abc.ABCMeta, object)):
         return self.__class__.__name__
 
     def _check_choices(self, player, choices):
-        _choices = self.choices(player)
-        if len(choices) != len(_choices):
-            raise AgricolaInvalidChoice(
-                "Expected {0} choices, but received {1} choices.".format(
-                    len(_choices), len(choices)))
+        pass
 
-    def choices(self, player):
-        return []
+    # returns next required choice
+    def choices(self, player, current_choices):
+        index = 0
+        choice_array = []
+        for choice_class in self.choice_classes:
+            if len(current_choices) <= index:
+                return choice_array, choice_class
+            choice = choice_class["class"](player, current_choices[index])
+            choice_array.append(choice)
+            index += 1
+            while not choice.next_choices == None and not len(choice.next_choices) == 0:
+                for next_choice in choice.next_choices:
+                    print("next_choice")
+                    print(next_choice)
+                    if len(current_choices) <= index:
+                        return choice_array, next_choice
+                    print(current_choices[index])
+                    choice = next_choice["class"](player, current_choices[index]) 
+                    choice_array.append(choice)
+                    index += 1              
+            
+        return choice_array, None
 
     def effect_with_dict(self, player, action_dict):
         choices = self._convert_action_dict(player, action_dict)
@@ -462,16 +480,15 @@ class Lessons4P(Action):
 
 
 class MeetingPlace(Action):
-    def choices(self, player):
-        return [
-            DiscreteChoice(
-               player.hand['minor_improvements'], "Choose an optional minor improvement.")
-        ]
+    choice_classes = [{
+        "class": MinorImprovementchoice,
+        "source": ""
+    }]
 
     def _effect(self, player, choices):
         player.game.set_first_player(int(player.name))
-        if choices[0] is not None:
-            player.play_minor_improvement(choices[0], player.game)
+        if choices[0].choice_value is not None:
+            player.play_minor_improvement(choices[0].choice_value, choices[1:], player.game)
 
     def _convert_action_dict(self, player, action_dict):
         if "improvement" in action_dict:
@@ -490,14 +507,13 @@ class MeetingPlaceFamily(Accumulating):
 
 
 class Farmland(Action):
-    def choices(self, player):
-        return [SpaceChoice("Space to plow.")]
+    choice_classes = [{
+        "class": SpaceChoice,
+        "source": "plough"
+    }]
 
     def _effect(self, player, choices):
-        player.plow_fields(choices[0])
-
-    def _convert_action_dict(self, player, action_dict):
-        return [(action_dict["ploughing_space"][1], action_dict["ploughing_space"][0])]
+        player.plow_fields(choices[0].choice_value)
 
 class Cultivation(Action):
     def choices(self, player):

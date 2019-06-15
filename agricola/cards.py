@@ -39,7 +39,11 @@ def get_occupations(n_players):
 
 def get_minor_improvements():
     mi_classes = all_subclasses(MinorImprovement)
+    #improvements = []
+    #for i in range(0, 100):
+    #    improvements.append(ShiftingCultivation())
     return [m() for m in mi_classes]
+    #return improvements
 
 
 def get_major_improvements():
@@ -56,7 +60,7 @@ def get_major_improvements():
 
 
 class Occupation(with_metaclass(abc.ABCMeta, Card)):
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         print("Applying occupation {0}.".format(self.name))
 
     @property
@@ -84,7 +88,7 @@ class PaperMaker(Occupation):
     min_players = 1
     text = 'Immediately before playing each occupation after this one, you can pay 1 wood total to get 1 food for each occupation you have in front of you.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: Lessons', before=True)
         player.listen_for_event(self, 'Action: Lessons3P', before=True)
         player.listen_for_event(self, 'Action: Lessons4P', before=True)
@@ -106,7 +110,7 @@ class Conjurer(Occupation):
     min_players = 4
     text = 'Each time you use the "Traveling Players" accumulation space, you get an additional 1 wood and 1 grain.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: TravelingPlayers')
 
     def trigger(self, player, **kwargs):
@@ -118,7 +122,7 @@ class StorehouseKeeper(Occupation):
     min_players = 4
     text = 'Each time you use the "Resource Market" action space, you also get your choice of 1 clay or 1 grain.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: ResourceMarket2P')
         player.listen_for_event(self, 'Action: ResourceMarket3P')
         player.listen_for_event(self, 'Action: ResourceMarket4P')
@@ -135,7 +139,7 @@ class Harpooner(Occupation):
     min_players = 3
     text = 'Each time you use the "Fishing" accumulation space, you can also pay 1 wood to get 1 food for each person you have, and 1 reed.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: Fishing')
 
     def trigger(self, player, **kwargs):
@@ -155,7 +159,7 @@ class CattleFeeder(Occupation):
     min_players = 4
     text = 'Each time you use the "Grain Seeds" action space, you can also buy 1 cattle for 1 food.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: GrainSeeds')
 
     def trigger(self, player, action):
@@ -172,7 +176,7 @@ class AnimalDealer(Occupation):
     min_players = 3
     text = 'Each time you use the "Sheep Market", "Pig Market", or "Cattle Market" accumulation space, you can buy 1 additional animal of the respective type for 1 food.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: SheepMarket')
         player.listen_for_event(self, 'Action: BoarMarket')
         player.listen_for_event(self, 'Action: CattleMarket')
@@ -196,7 +200,7 @@ class Greengrocer(Occupation):
     min_players = 3
     text = 'Each time you use the "Grain Seeds" action space, you also get 1 vegetable.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: GrainSeeds')
 
     def trigger(self, player, **kwargs):
@@ -208,7 +212,7 @@ class Lutenist(Occupation):
     min_players = 4
     text = 'Each time another player uses the "Traveling Players" accumulation space, you get 1 food and 1 wood. Immediately after, you can buy exactly 1 vegetable for 2 food.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.game.listen_for_event(self, 'Action: TravelingPlayers')
         self.player = player
 
@@ -237,7 +241,7 @@ class PigBreeder(Occupation):
     min_players = 4
     text = 'When you play this card, you immediately get 1 wild boar. Your wild boar breed at the end of round 12 (if there is room for new wild boar).'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.add_resources(boar=1)
 
     def trigger(self, player, **kwargs):
@@ -249,7 +253,7 @@ class BrushwoodCollector(Occupation):
     min_players = 3
     text = 'Each time you renovate or build a room, you can replace the required 1 or 2 reed with a total of 1 wood.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'build_room')
         player.listen_for_event(self, 'renovate')
 
@@ -264,7 +268,7 @@ class Consultant(Occupation):
     min_players = 1
     text = 'When you play this card in a 1-/2-/3-/4-player game, you immediately get 2 grain/3 clay/2 reed/2 sheep.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         n_players = player.game.n_players
         if n_players == 1:
             player.add_resources(grain=2)
@@ -281,7 +285,7 @@ class WoodCutter(Occupation):
     min_players = 1
     text = 'Each time you use a wood accumulation space, you get 1 additional wood.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: Forest')
         player.listen_for_event(self, 'Action: Grove')
         player.listen_for_event(self, 'Action: Copse')
@@ -295,7 +299,7 @@ class HouseSteward(Occupation):
     min_players = 3
     text = 'If there are still 1/3/6/9 complete rounds left to play, you immediately get 1/2/3/4 wood. During scoring, each player with the most rooms gets 3 bonus points.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         wood = score_mapping(player.game.rounds_remaining, [1, 3, 6, 9], [0, 1, 2, 3, 4])
         player.add_resources(wood=wood)
 
@@ -305,7 +309,7 @@ class SheepWhisperer(Occupation):
     min_players = 4
     text = 'Add 2, 5, 8, and 10 to the current round and place 1 sheep on each corresponding round space. At the start of these rounds, you get the sheep.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.add_future([2, 5, 8, 10], 'sheep', 1)
 
 
@@ -320,7 +324,7 @@ class FirewoodCollector(Occupation):
     min_players = 1
     text = 'Each time you use the "Farmland", "Grain Seeds", "Grain Utilization", or "Cultivation" action space, at the end of that turn, you get 1 wood.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: Farmland')
         player.listen_for_event(self, 'Action: GrainSeeds')
         player.listen_for_event(self, 'Action: GrainUtilization')
@@ -335,7 +339,7 @@ class ScytheWorker(Occupation):
     min_players = 1
     text = 'When you play this card, you immediately get 1 grain. In the field phase of each harvest, you can harvest 1 additional grain from each of your grain fields.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.add_resources(grain=1)
         player.listen_for_event(self, 'Action: TravelingPlayers')
 
@@ -345,7 +349,7 @@ class SeasonalWorker(Occupation):
     min_players = 1
     text = 'Each time you use the "Day Laborer" action space, you get 1 additional grain. From round 6 on, you can choose to get 1 vegetable instead.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: DayLaborer')
 
     def trigger(self, player, **kwargs):
@@ -358,7 +362,7 @@ class ClayHutBuilder(Occupation):
     min_players = 1
     text = 'Once you no longer live in a wooden house, place 2 clay on each of the next 5 round spaces. At the start of these rounds, you get that clay.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         if player.house_type != 'wood':
             player.add_future(range(1, 6), 'clay', 2)
         else:
@@ -382,7 +386,7 @@ class Pastor(Occupation):
     text = 'Once you are the only player to live in a house with only 2 rooms, you immediately get 3 wood, 2 clay, 1 reed, and 1 stone (only once).'
     player = None
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         self.player = player
 
         player.game.listen_for_event(self, 'build_room')
@@ -408,7 +412,7 @@ class AssistantTiller(Occupation):
     min_players = 1
     text = 'Each time you use the "Day Laborer" action space, you can also plow 1 field.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: DayLaborer')
 
     def trigger(self, player, **kwargs):
@@ -424,7 +428,7 @@ class Groom(Occupation):
     min_players = 1
     text = 'When you play this card, you immediately get 1 wood. Once you live in a stone house, at the start of each round, you can build exactly 1 stable for 1 wood.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.add_resources(wood=1)
         player.listen_for_event(self, 'start_round')
 
@@ -442,7 +446,7 @@ class MasterBricklayer(Occupation):
     min_players = 1
     text = 'Each time you build a major improvement, reduce the stone cost by the number of rooms you have built onto your initial house.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         # TODO
         pass
 
@@ -467,7 +471,7 @@ class SmallScaleFarmer(Occupation):
     min_players = 1
     text = 'As long as you live in a house with exactly 2 rooms, at the start of each round, you get 1 wood.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'start_round')
 
     def trigger(self, player, **kwargs):
@@ -480,7 +484,7 @@ class WallBuilder(Occupation):
     min_players = 1
     text = 'Each time you build at least 1 room, you can place 1 food on each of the next 4 round spaces. At the start of these rounds, you get that food.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'build_room')
 
     def trigger(self, player, **kwargs):
@@ -492,7 +496,7 @@ class Cottager(Occupation):
     min_players = 1
     text = 'Each time you use the "Day Laborer" action space, you can also either build exactly 1 room or renovate your house. Either way, you have to pay the cost.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: DayLaborer')
 
     def trigger(self, player, **kwargs):
@@ -519,7 +523,7 @@ class RoughCaster(Occupation):
     min_players = 1
     text = 'Each time you build at least 1 clay room or renovate your house from clay to stone, you also get 3 food.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'build_room')
         player.listen_for_event(self, 'renovate')
 
@@ -536,7 +540,7 @@ class RoofBallaster(Occupation):
     min_players = 1
     text = 'When you play this card, you can immediately pay 1 food total to receive 1 stone for each room you have.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         use = player.game.get_choices(
             player,
             YesNoChoice(
@@ -564,7 +568,7 @@ class OvenFiringBoy(Occupation):
     min_players = 1
     text = 'Each time you use a wood accumulation space, you get an additional "Bake Bread" action.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: Forest')
         player.listen_for_event(self, 'Action: Grove')
         player.listen_for_event(self, 'Action: Copse')
@@ -590,7 +594,7 @@ class Manservant(Occupation):
     min_players = 1
     text = 'Once you live in a stone house, place 3 food on each remaining round space. At the start of these rounds, you get the food.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         if player.house_type == 'stone':
             player.add_future(range(1, 4), 'food', 1)
         else:
@@ -607,7 +611,7 @@ class AdoptiveParents(Occupation):
     min_players = 1
     text = 'For 1 food, you can take an action with offspring in the same round you get it. If you do, the offspring does not count as "newborn".'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'birth')
 
     def trigger(self, player, **kwargs):
@@ -620,7 +624,7 @@ class Childless(Occupation):
     min_players = 1
     text = 'At the start of each round, if you have at least 3 rooms but only 2 people, you get 1 food and 1 crop of your choice (grain or vegetable).'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'start_round')
 
     def trigger(self, player, **kwargs):
@@ -642,7 +646,7 @@ class Geologist(Occupation):
     min_players = 1
     text = 'Each time you use the "Forest" or "Reed Bank" accumulation space, you also get 1 clay. In games with 3 or more players, this also applies to the "Clay Pit".'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: Forest')
         player.listen_for_event(self, 'Action: ReedBank')
         if player.game.n_players >= 3:
@@ -657,7 +661,7 @@ class MushroomCollector(Occupation):
     min_players = 1
     text = 'Immediately after each time you use a wood accumulation space, you can exchange 1 wood for 2 food. If you do, place the wood on the accumulation space.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'Action: Forest')
         player.listen_for_event(self, 'Action: Grove')
         player.listen_for_event(self, 'Action: Copse')
@@ -677,7 +681,7 @@ class Scholar(Occupation):
     min_players = 1
     text = 'Once you live in a stone house, at the start of each round, you can play an occupation for an occupation cost of 1 food or a minor improvement (by paying its cost).'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'start_round')
 
     def trigger(self, player, **kwargs):
@@ -710,7 +714,7 @@ class PlowDriver(Occupation):
     min_players = 1
     text = 'Once you live in a stone house, at the start of each round, you can pay 1 food to plow 1 field.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.listen_for_event(self, 'start_round')
 
     def trigger(self, player, **kwargs):
@@ -741,7 +745,7 @@ class Conservator(Occupation):
     min_players = 1
     text = 'You can renovate your wooden house directly to stone without renovating to clay first.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         player.house_progression['wood'].append('stone')
 
 
@@ -762,7 +766,7 @@ class Priest(Occupation):
     min_players = 1
     text = 'When you play this card, if you live in a clay house with exactly 2 rooms, you immediately get 3 clay, 2 reed and 2 stone.'
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         if player.house_type == 'clay' and player.rooms == 2:
             player.add_resources(clay=3, reed=2, stone=2)
 
@@ -774,18 +778,18 @@ class MinorImprovement(with_metaclass(abc.ABCMeta, Card)):
     def __init__(self):
         pass
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choice):
         print("Applying minor improvement {0}.".format(self.name))
         description = "Playing minor improvement {0}".format(self)
 
         player.change_state(description, cost=self.cost.copy())
         self._check(player)
-        self._apply(player)
+        self._apply(player, choice)
 
     def _check(self, player):
         pass
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         pass
 
     @property
@@ -799,6 +803,10 @@ class MinorImprovement(with_metaclass(abc.ABCMeta, Card)):
     @property
     def cost(self):
         return self._cost.copy()
+
+    @property
+    def next_choices(self):
+        return []
 
     def victory_points(self, player):
         return self._victory_points
@@ -817,7 +825,7 @@ class Basket(MinorImprovement):
     deck = 'A'
     text = "Immediately after each time you use a wood accumulation space, you can exchange 2 wood for 3 food. If you do, place those 2 wood on the accumulation space."
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.listen_for_event(self, 'Action: Forest')
         player.listen_for_event(self, 'Action: Grove')
         player.listen_for_event(self, 'Action: Copse')
@@ -834,7 +842,7 @@ class ClayEmbankment(MinorImprovement):
     text = "You immediately get 1 clay for every 2 clay you already have in your supply."
     traveling = True
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_resources(clay=int(player.clay / 2))
 
 
@@ -846,7 +854,7 @@ class LargeGreenhouse(MinorImprovement):
     def _check(self, player):
         return len(player.occupations) >= 2
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_future([4, 7, 9], 'veg', 1)
 
 
@@ -855,7 +863,7 @@ class SheperdsCrook(MinorImprovement):
     deck = 'A'
     text = "Each time you fence a new pasture covering at least 4 farmyard spaces, you immediately get 2 sheep on this pasture."
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.listen_for_event(self, 'build_pasture')
 
     def trigger(self, player, pasture):
@@ -864,12 +872,12 @@ class SheperdsCrook(MinorImprovement):
 
 
 class Manger(MinorImprovement):
-    _cost = dict(food=2)
+    _cost = dict(wood=2)
     deck = 'A'
     text = "During scoring, if your pastures cover at least 6/7/8/10 farmyard spaces, you get 1/2/3/4 bonus points."
 
     def victory_points(self, player):
-        n_pasture_spaces = len(set(self.pasture_spaces))
+        n_pasture_spaces = len(set(player.pasture_spaces))
         return score_mapping(n_pasture_spaces, [6, 7, 8, 10], [0, 1, 2, 3, 4])
 
 
@@ -881,7 +889,7 @@ class Mantelpiece(MinorImprovement):
     def _check(self, player):
         return player.house_type in ['clay', 'stone']
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         self._rounds_remaining = player.game.rounds_remaining
 
     def victory_points(self, player):
@@ -893,7 +901,7 @@ class HerringPot(MinorImprovement):
     deck = 'B'
     text = 'Each time you use the "Fishing" accumulation space, place 1 food on each of the next 3 round spaces. At the start of these rounds, you get the food.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.listen_for_event(self, 'Action: Fishing')
 
     def trigger(self, player, **kwargs):
@@ -933,7 +941,7 @@ class Scullery(MinorImprovement):
     deck = 'B'
     text = 'At the start of each round, if you live in a wooden house, you get 1 food.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.listen_for_event(self, 'start_round')
 
     def trigger(self, player, **kwargs):
@@ -950,7 +958,7 @@ class Canoe(MinorImprovement):
     def _check(self, player):
         return len(player.occupations) >= 1
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.listen_for_event(self, 'Action: Fishing')
 
     def trigger(self, player, **kwargs):
@@ -962,7 +970,7 @@ class MiningHammer(MinorImprovement):
     deck = 'B'
     text = 'When you play this card, you immediately get 1 food. Each time you renovate, you can also build a stable without paying wood.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_resources(food=1)
         player.listen_for_event(self, 'renovation')
 
@@ -981,7 +989,7 @@ class BigCountry(MinorImprovement):
     def _check(self, player):
         return not player.empty_spaces
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         self._rounds_remaining = player.game.rounds_remaining
         player.add_resources(food=2*self._rounds_remaining)
 
@@ -1000,9 +1008,9 @@ class JunkRoom(MinorImprovement):
     deck = 'A'
     text = 'Each time after you build an improvement, including this one, you get 1 food.'
 
-    def _apply(self, player):
-        player.listen_for_event(self, 'minor improvement')
-        player.listen_for_event(self, 'major improvement')
+    def _apply(self, player, choices):
+        player.listen_for_event(self, 'minor_improvement')
+        player.listen_for_event(self, 'major_improvement')
 
     def trigger(self, player, **kwargs):
         player.add_resources(food=1)
@@ -1013,7 +1021,7 @@ class DrinkingTrough(MinorImprovement):
     deck = 'A'
     text = 'Each of your pastures (with or without a stable) can hold up to 2 more animals.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.pasture_capacity_modifier += 2
 
 
@@ -1023,7 +1031,7 @@ class YoungAnimalMarket(MinorImprovement):
     text = 'You immediately get 1 cattle. (Effectively, you are exchanging 1 sheep for 1 cattle.)'
     traveling = True
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_animals(cattle=1)
 
 
@@ -1032,7 +1040,7 @@ class Caravan(MinorImprovement):
     deck = 'B'
     text = 'This card provides room for 1 person.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.room_for_people += 1
 
 
@@ -1041,8 +1049,8 @@ class Claypipe(MinorImprovement):
     deck = 'A'
     text = 'In the returning home phase of each round, if you gained at least 7 building resources in the preceding work phase, you get 2 food.'
 
-    def _apply(self, player):
-        player.listen_for_event(self, 'return home')
+    def _apply(self, player, choices):
+        player.listen_for_event(self, 'return_home')
 
 
 class LumberMill(MinorImprovement):
@@ -1064,7 +1072,7 @@ class LoamPit(MinorImprovement):
     def _check(self, player):
         return len(player.occupations) >= 3
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.listen_for_event(self, 'Action: DayLaborer')
 
     def trigger(self, player, **kwargs):
@@ -1077,9 +1085,15 @@ class ShiftingCultivation(MinorImprovement):
     text = 'Immediately plow 1 field.'
     traveling = True
 
-    def _apply(self, player):
-        space_to_plow = player.game.get_choices(player, SpaceChoice("Space to plow."))
-        player.plow_fields(space_to_plow)
+    @property
+    def next_choices(self):
+        return [{
+            "class": SpaceChoice,
+            "source": "plough"
+        }]
+
+    def _apply(self, player, choices):
+        player.plow_fields(choices[0].choice_value)
 
 
 class PondHut(MinorImprovement):
@@ -1091,7 +1105,7 @@ class PondHut(MinorImprovement):
     def _check(self, player):
         return len(player.occupations) == 2
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_future(range(1, 4), 'food', 1)
 
 
@@ -1104,8 +1118,8 @@ class Loom(MinorImprovement):
     def _check(self, player):
         return len(player.occupations) >= 2
 
-    def _apply(self, player):
-        player.listen_for_event(self, 'field phase')
+    def _apply(self, player, choices):
+        player.listen_for_event(self, 'field_phase')
 
     def trigger(self, player, **kwargs):
         food = score_mapping(player.sheep, [1, 4, 7], [0, 1, 2, 3])
@@ -1123,7 +1137,7 @@ class MoldboardPlow(MinorImprovement):
     def _check(self, player):
         return len(player.occupations) >= 1
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         self._fields_remaining = 2
         player.listen_for_event(self, 'Action: Farmland')
 
@@ -1142,7 +1156,7 @@ class MiniPasture(MinorImprovement):
     text = 'Immediately fence a farmyard space, without paying wood for the fences. (If you already have pastures, the new one must be adjacent to an existing one.)'
     traveling = True
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
 
         space_to_pasteurize = player.game.get_choices(
             player, SpaceChoice("Space to pasteurize."))
@@ -1154,11 +1168,11 @@ class Pitchfork(MinorImprovement):
     deck = 'B'
     text = 'Each time you use the "Grain Seeds" action space, if the "Farmland" action space is occupied, you also get 3 food.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.listen_for_event(self, 'Action: GrainSeeds')
 
     def trigger(self, player, **kwargs):
-        for action in self.player.game.actions_taken:
+        for action in player.game.actions_taken:
             if action.name == "Farmland":
                 player.add_resources(food=3)
                 return
@@ -1169,7 +1183,7 @@ class Lasso(MinorImprovement):
     deck = 'B'
     text = 'You can place exactly two people immediately after one another if at least one of them use the "Sheep Market", "Pig Market", or "Cattle Market" accumulation space.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.listen_for_event(self, 'Action: SheepMarket')
         player.listen_for_event(self, 'Action: BoarMarket')
         player.listen_for_event(self, 'Action: CattleMarket')
@@ -1194,8 +1208,8 @@ class ThreeFieldRotation(MinorImprovement):
     def _check(self, player):
         return len(player.occupations) >= 3
 
-    def _apply(self, player):
-        player.listen_for_event(self, 'field phase')
+    def _apply(self, player, choices):
+        player.listen_for_event(self, 'field_phase')
 
     def trigger(self, player, **kwargs):
         if player.grain_fields >= 1 and player.veg_fields >= 1 and player.empty_fields >= 1:
@@ -1208,7 +1222,7 @@ class MarketStall(MinorImprovement):
     text = 'You immediately get 1 vegetable. (Effectively, you are exchanging 1 grain for 1 vegetable.)'
     traveling = True
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_resources(veg=1)
 
 
@@ -1223,7 +1237,7 @@ class Beanfield(MinorImprovement):
 
 
 class ButterChurn(MinorImprovement):
-    _cost = dict(food=1)
+    _cost = dict(wood=1)
     deck = 'B'
     text = 'In the field phase of each harvest, you get 1 food for every 3 sheep and 1 food for every 2 cattle you have.'
     _victory_points = 1
@@ -1231,8 +1245,8 @@ class ButterChurn(MinorImprovement):
     def _check(self, player):
         return len(player.occupations) <= 3
 
-    def _apply(self, player):
-        player.listen_for_event(self, 'field phase')
+    def _apply(self, player, choices):
+        player.listen_for_event(self, 'field_phase')
 
     def trigger(self, player, **kwargs):
         food = int(player.sheep/3) + int(player.cattle/3)
@@ -1244,9 +1258,9 @@ class CarpentersParlor(MinorImprovement):
     deck = 'B'
     text = 'Wooden rooms only cost you 2 wood and 2 reed each.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         # TODO
-        player.listen_for_event(self, 'field phase')
+        player.listen_for_event(self, 'field_phase')
 
 
 class AcornBasket(MinorImprovement):
@@ -1257,7 +1271,7 @@ class AcornBasket(MinorImprovement):
     def _check(self, player):
         return len(player.occupations) >= 3
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_future(range(1, 3), 'boar', 1)
 
 
@@ -1270,7 +1284,7 @@ class StrawberryPatch(MinorImprovement):
     def _check(self, player):
         return player.veg_fields >= 2
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_future(range(1, 4), 'food', 1)
 
 
@@ -1279,7 +1293,7 @@ class CornScoop(MinorImprovement):
     deck = 'A'
     text = 'Each time you use the "Grain Seeds" action space, you get 1 additional grain.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.listen_for_event(self, 'Action: GrainSeeds')
 
     def trigger(self, player, **kwargs):
@@ -1291,7 +1305,7 @@ class RammedClay(MinorImprovement):
     deck = 'A'
     text = 'When you play this card, you immediately get 1 clay. You can use clay instead of wood to build fences.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_resources(clay=1)
 
 
@@ -1304,7 +1318,7 @@ class ThreshingBoard(MinorImprovement):
     def _check(self, player):
         return len(player.occupations) >= 2
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.listen_for_event(self, 'Action: Farmland')
         player.listen_for_event(self, 'Action: Cultivation')
 
@@ -1321,8 +1335,8 @@ class DutchWindmill(MinorImprovement):
     text = 'Each time you take a "Bake Bread" action in a round immediately following a harvest, you get 3 additional food.'
     _victory_points = 2
 
-    def _apply(self, player):
-        player.listen_for_event(self, 'bake bread')
+    def _apply(self, player, choices):
+        player.listen_for_event(self, 'bake_bread')
 
     def trigger(self, player, **kwargs):
         sums = cumsum([len(s) for s in player.game.action_order[:1]])
@@ -1337,7 +1351,7 @@ class StoneTongs(MinorImprovement):
     deck = 'A'
     text = 'Each time you use a stone accumulation space, you get 1 additional stone.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.listen_for_event(self, 'stone accumulation')
 
     def trigger(self, player, **kwargs):
@@ -1352,7 +1366,7 @@ class ThickForest(MinorImprovement):
     def _check(self, player):
         return player.clay >= 5
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         n_rounds = len(player.game.action_order) - 1
         rounds = [r for r in range(player.game.round_idx+1, n_rounds+1) if r % 2 == 0]
         player.add_future(rounds, 'wood', 1, absolute=True)
@@ -1363,7 +1377,7 @@ class BreadPaddle(MinorImprovement):
     deck = 'B'
     text = 'When you play this card, you immediately get 1 food. For each occupation you play, you get an additional "Bake Bread" action.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_resources(food=1)
         player.listen_for_event(self, 'occupation')
 
@@ -1379,7 +1393,7 @@ class Handplow(MinorImprovement):
     deck = 'A'
     text = 'Add 5 to the current round and place 1 field tile on the corresponding round space. At the start of that round, you can plow the field.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_future([5], 'field', 1)
 
 
@@ -1388,7 +1402,7 @@ class MilkJug(MinorImprovement):
     deck = 'A'
     text = 'Each time any player (including you) uses the "Cattle Market" accumulation space, you get 3 food, and each other player gets 1 food.'
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.game.listen_for_event(self, 'Action: CattleMarket')
         self.player = player
 
@@ -1407,7 +1421,7 @@ class Brook(MinorImprovement):
         # TODO: one of your people have to be on the fishing action space
         pass
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.listen_for_event(self, 'Action: Forest')
         player.listen_for_event(self, 'Action: ReedBank')
         player.listen_for_event(self, 'Action: ClayPit')
@@ -1426,7 +1440,7 @@ class SackCart(MinorImprovement):
     def _check(self, player):
         return len(player.occupations) >= 2
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_future([5, 8, 11, 14], 'grain', 1, absolute=True)
 
 
@@ -1436,14 +1450,14 @@ class MajorImprovement(with_metaclass(abc.ABCMeta, Card)):
     def __init__(self):
         pass
 
-    def check_and_apply(self, player):
+    def check_and_apply(self, player, choices):
         print("Applying major improvement {0}.".format(self.name))
         description = "Playing major improvement {0}".format(self)
         player.change_state(description, cost=self.cost.copy())
-        self._apply(player)
+        self._apply(player, choices)
 
     @abc.abstractmethod
-    def _apply(self, player):
+    def _apply(self, player, choices):
         raise NotImplementedError()
 
     @property
@@ -1467,7 +1481,7 @@ class MajorImprovement(with_metaclass(abc.ABCMeta, Card)):
 class Fireplace(with_metaclass(abc.ABCMeta, MajorImprovement)):
     _victory_points = 1
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.bread_rates[-1] = max(player.bread_rates[-1], 2)
 
         cooking_rates = player.cooking_rates
@@ -1489,7 +1503,7 @@ class CookingHearth(with_metaclass(abc.ABCMeta, MajorImprovement)):
     def upgrade_of(self):
         return [Fireplace]
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.bread_rates[-1] = max(player.bread_rates[-1], 3)
 
         cooking_rates = player.cooking_rates
@@ -1510,7 +1524,7 @@ class Well(MajorImprovement):
     victory_points = 4
     _cost = dict(wood=1, stone=3)
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.add_future(range(1, 6), 'food', 1)
 
 
@@ -1518,7 +1532,7 @@ class ClayOven(MajorImprovement):
     victory_points = 2
     _cost = dict(clay=3, stone=1)
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         bread_rates = player.bread_rates[:-1]
         bread_rates.append(5)
         bread_rates = sorted(bread_rates, reverse=True)
@@ -1528,7 +1542,7 @@ class StoneOven(MajorImprovement):
     victory_points = 3
     _cost = dict(clay=1, stone=3)
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         bread_rates = player.bread_rates[:-1]
         bread_rates.append(4)
         bread_rates.append(4)
@@ -1541,7 +1555,7 @@ class Joinery(MajorImprovement):
     def victory_points(self, player):
         return score_mapping(player.wood, [3, 5, 7], [2, 3, 4, 5])
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.harvest_rates['wood'].append(2)
 
 class Pottery(MajorImprovement):
@@ -1550,7 +1564,7 @@ class Pottery(MajorImprovement):
     def victory_points(self, player):
         return score_mapping(player.clay, [3, 5, 7], [2, 3, 4, 5])
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.harvest_rates['clay'].append(2)
 
 class BasketmakersWorkshop(MajorImprovement):
@@ -1559,6 +1573,6 @@ class BasketmakersWorkshop(MajorImprovement):
     def victory_points(self, player):
         return score_mapping(player.reed, [1, 3, 5], [2, 3, 4, 5])
 
-    def _apply(self, player):
+    def _apply(self, player, choices):
         player.harvest_rates['reed'].append(3)
 

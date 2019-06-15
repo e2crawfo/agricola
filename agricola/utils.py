@@ -46,6 +46,7 @@ class EventGenerator(with_metaclass(abc.ABCMeta, object)):
 
     listeners = self.listeners.get(event_name, [])
     for l in listeners:
+      print(l)
       l.trigger(*args, **kwargs)
 
 
