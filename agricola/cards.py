@@ -1018,15 +1018,7 @@ class Beehive(MinorImprovement):
         pass
 
     def _apply(self, player, choices):
-<<<<<<< HEAD
-        player.listen_for_event(self, 'stone_accumulation')
-
-    def trigger(self, player, **kwargs):
-        player.add_resources(stone=1)
-
-=======
         pass
->>>>>>> feature/oda_stanmi
 
 # TODO implement
 class WoodCart(MinorImprovement):
