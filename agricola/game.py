@@ -341,6 +341,8 @@ def play(game, ui, agent_processes, logdir):
                   break
                 # get next choice for player
                 state_dict = game.get_state_dict()
+
+                # send the context of current choice
                 state_dict["current_event"] = next_choice["class"].__name__
                 state_dict["event_source"] = next_choice["source"]
                 state_json = json.dumps(state_dict)
