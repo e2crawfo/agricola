@@ -264,3 +264,51 @@ def cumsum(lst):
     acc += l
     cs.append(acc)
   return cs
+
+
+#######################################
+##     Custom Dictionaries
+#######################################
+
+class dotDict(dict):
+  __getattr__ = dict.__getitem__
+  __setattr__ = dict.__setitem__
+  __delattr__ = dict.__delitem__
+
+  def __getattr__(self, key):
+    if key in self:
+      return self[key]
+    raise AttributeError("\'%s\' is not in %s" % (str(key), str(self.keys())))
+
+class recDotDict(dict):
+  __getattr__ = dict.__getitem__
+  __setattr__ = dict.__setitem__
+  __delattr__ = dict.__delitem__
+  def __init__(self, _dict={}):
+    for k in _dict:
+      if isinstance(_dict[k], dict):
+        _dict[k] = recDotDict(_dict[k])
+      if isinstance(_dict[k], list):
+        for i, x in enumerate(_dict[k]):
+          if isinstance(x, dict):
+            _dict[k][i] = recDotDict(x)
+    super(recDotDict, self).__init__(_dict)
+
+  def __getattr__(self, key):
+    if key in self:
+      return self[key]
+    # else:
+    #   return None
+    raise AttributeError("\'%s\' is not in %s" % (str(key), str(self.keys())))
+
+class rec_defaultdict(defaultdict):
+  def __init__(self):
+    self.default_factory = type(self)
+
+class recDotDefaultDict(defaultdict):
+  __getattr__ = defaultdict.__getitem__
+  __setattr__ = defaultdict.__setitem__
+  __delattr__ = defaultdict.__delitem__
+  def __init__(self, _=None):
+    super(recDotDefaultDict, self).__init__(recDotDefaultDict)
+

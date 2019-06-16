@@ -9,6 +9,7 @@ from .choice import (
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
 from .player import Pasture
+from . import const
 
 class Action(with_metaclass(abc.ABCMeta, object)):
     choice_classes = []
@@ -33,7 +34,8 @@ class Action(with_metaclass(abc.ABCMeta, object)):
             choice = choice_class["class"](player, current_choices[index])
             choice_array.append(choice)
             index += 1
-            while not choice.next_choices == None and not len(choice.next_choices) == 0:
+            while not choice.next_choices == None and \
+                  not len(choice.next_choices) == 0:
                 for next_choice in choice.next_choices:
                     print("next_choice")
                     print(next_choice)
@@ -42,8 +44,8 @@ class Action(with_metaclass(abc.ABCMeta, object)):
                     print(current_choices[index])
                     choice = next_choice["class"](player, current_choices[index]) 
                     choice_array.append(choice)
-                    index += 1              
-            
+                    index += 1
+
         return choice_array, None
 
     def effect_with_dict(self, player, action_dict):
@@ -509,7 +511,7 @@ class MeetingPlaceFamily(Accumulating):
 class Farmland(Action):
     choice_classes = [{
         "class": SpaceChoice,
-        "source": "plough"
+        "source": const.event_sources.plough
     }]
 
     def _effect(self, player, choices):

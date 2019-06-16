@@ -5,8 +5,10 @@ fence_taken = False
 grain_planted = False
 
 while True:
-    state_string = input()
-
+    try:
+      state_string = input()
+    except:
+      break
     state_json = json.loads(state_string)
     player_json = state_json["players"][state_json["current_player"]]
 

@@ -39,11 +39,15 @@ def get_occupations(n_players):
 
 def get_minor_improvements():
     mi_classes = all_subclasses(MinorImprovement)
-    #improvements = []
-    #for i in range(0, 100):
-    #    improvements.append(ShiftingCultivation())
+
+    # DEBUG
+    improvements = []
+    for i in range(0, 100):
+       improvements.append(ShiftingCultivation())
+    return improvements
+    ####################
+
     return [m() for m in mi_classes]
-    #return improvements
 
 
 def get_major_improvements():
@@ -1352,7 +1356,7 @@ class StoneTongs(MinorImprovement):
     text = 'Each time you use a stone accumulation space, you get 1 additional stone.'
 
     def _apply(self, player, choices):
-        player.listen_for_event(self, 'stone accumulation')
+        player.listen_for_event(self, 'stone_accumulation')
 
     def trigger(self, player, **kwargs):
         player.add_resources(stone=1)

@@ -19,7 +19,7 @@ from .cards import (
   get_occupations, get_minor_improvements, get_major_improvements)
 from .utils import EventGenerator, EventScope
 from .choice import Choice
-
+from . import const
 # TODO: make sure that certain actions which allow two things to be done have
 # the order of the two things respected (and make sure player can't take the
 # action if they can't take the first action.
@@ -136,7 +136,7 @@ class AgricolaGame(EventGenerator):
     s += ">"
     return ''.join(s)
 
-  def get_state_dict(self):
+  def get_state_dict(self, current_event, event_source):
     round_action_array = []
     for stage_action in self.action_order[1:]:
       for round_action in stage_action:
@@ -162,7 +162,8 @@ class AgricolaGame(EventGenerator):
       "current_stage": self.stage_idx,
       "current_round": self.round_idx,
       "current_player": self.current_player_idx,
-      "current_event": "", # TODO set proper value
+      "current_event": current_event,
+      "event_source": event_source,
       "start_player": self.first_player_idx,
       "common_board": {
         "round_cards": round_action_array,
@@ -282,43 +283,34 @@ def play(game, ui, agent_processes, logdir):
             player = game_copy.players[i]
             game.current_player_idx = i
 
-            print(game.get_state_dict())
-            print(json.dumps(game.get_state_dict(), indent=4, sort_keys=True, separators=(',', ': ')))
-
             try:
-              #action = ui.get_action(player.name, game_copy.actions_remaining)
+              state_json = json.dumps(game.get_state_dict(
+                'ActionChoice',
+                const.event_sources.game,
+              ))
 
-              state_json = json.dumps(game.get_state_dict())
               # send state to agent
               popen.stdin.write(state_json + "\n")
               popen.stdin.flush()
+
               # get action from agent
               popen.stdout.flush()
               player_action = popen.stdout.readline()
               json_action = json.loads(player_action)
 
-              state_json = json.dumps(game.get_state_dict())
               # write to log file
-              with open(logdir + "/" + game.game_id + "_state.json", mode='a') as f:
+              state_log_path = logdir + "/" + game.game_id + "_state.json"
+              with open(state_log_path, mode='a') as f:
                 f.write(state_json + "\n")
 
               # write to log file
-              with open(logdir + "/" + game.game_id + "_action.json", mode='a') as f:
+              action_log_path = logdir + "/" + game.game_id + "_action.json"
+              with open(action_log_path, mode='a') as f:
                 f.write(player_action)
-
-              print(json_action["action_id"])
-
-              print(game_copy.actions_remaining, game_copy.actions_taken)
 
               # search class from actions_remaining and action taken
               selected_action = list(filter(lambda x: x.__class__.__name__ == json_action["action_id"], game_copy.actions_remaining + list(game_copy.actions_taken.keys())))
-              if len(selected_action) == 0:
-                action = None
-              else:
-                action = selected_action[0]
-
-              print("action--------")
-              print(action)
+              action = selected_action[0] if len(selected_action) else None
 
               if action is None:
                 raise AgricolaException("No action chosen")
@@ -329,37 +321,36 @@ def play(game, ui, agent_processes, logdir):
                   "That action has already been taken by "
                   "player {0}".format(game_copy.actions_taken[action]))
 
-              #choices = action.choices(player)
-              #if choices:
-              #  choices = game_copy.get_choices(player, choices)
-
               json_choices = []
               choices = []
+
               while True:
                 choices, next_choice = action.choices(player, json_choices)
                 if not next_choice:
                   break
+
                 # get next choice for player
-                state_dict = game.get_state_dict()
+                state_dict = game.get_state_dict(next_choice["class"].__name__,
+                                                 next_choice["source"])
 
                 # send the context of current choice
-                state_dict["current_event"] = next_choice["class"].__name__
-                state_dict["event_source"] = next_choice["source"]
                 state_json = json.dumps(state_dict)
-                print(state_json)
+
                 # send state to agent
                 popen.stdin.write(state_json + "\n")
                 popen.stdin.flush()
+
                 # get action from agent
                 popen.stdout.flush()
                 player_action = popen.stdout.readline()
                 json_choices.append(json.loads(player_action))
 
-
               event_name = "Action: {}".format(action.__class__.__name__)
-              with EventScope([game_copy, player], event_name, player=player, action=action):
+              with EventScope([game_copy, player], event_name, 
+                              player=player, action=action):
+                print('choices:', choices)
                 action.effect(player, choices)
-                #action.effect_with_dict(player, json_action)
+                #exit(1)
               del game
               game = game_copy
 
