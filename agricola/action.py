@@ -4,7 +4,7 @@ from future.utils import iteritems, with_metaclass
 #from agricola import AgricolaInvalidChoice, AgricolaImpossible, AgricolaPoorlyFormed
 from .errors import AgricolaInvalidChoice, AgricolaImpossible, AgricolaPoorlyFormed
 from .choice import (
-    DiscreteChoice, CountChoice, ListChoice,
+    OccupationChoice, DiscreteChoice, CountChoice, ListChoice,
     VariableLengthListChoice, SpaceChoice, MinorImprovementchoice)
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
@@ -421,19 +421,17 @@ class Fencing(Action):
         return [pasture_array]
 
 class Lessons(Action):
-    def choices(self, player):
-        return [
-            DiscreteChoice(player.hand['occupations'], 'Choose an occupation from your hand.')
-        ]
+    choice_classes = [{
+        "class": OccupationChoice,
+        "source": ""
+    }]
 
     def _effect(self, player, choices):
         if len(player.occupations) > 0:
             player.change_state("Playing occupation", cost=dict(food=1))
 
-        player.play_occupation(choices[0], player.game)
-
-    def _convert_action_dict(self, player, action_dict):
-        return [action_dict["occupation_id"]]
+        if choices[0].choice_value is not None:
+            player.play_occupation(choices[0].choice_value, choices[1:], player.game)
 
 class Lessons3P(Action):
     def choices(self, player):
@@ -491,11 +489,6 @@ class MeetingPlace(Action):
         player.game.set_first_player(int(player.name))
         if choices[0].choice_value is not None:
             player.play_minor_improvement(choices[0].choice_value, choices[1:], player.game)
-
-    def _convert_action_dict(self, player, action_dict):
-        if "improvement" in action_dict:
-            return [action_dict["improvement"]["id"]]
-        return [None]
 
 class MeetingPlaceFamily(Accumulating):
     acc_amount = dict(food=1)

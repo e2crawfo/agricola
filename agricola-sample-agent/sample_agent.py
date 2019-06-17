@@ -26,6 +26,13 @@ while True:
                 "minor_improvement_id": player_json["hand_improvements"][0]
             }
             break
+        if state_json["current_event"] == "OccupationChoice":
+            output_json = {
+                "occupation_id": player_json["hand_occupations"][0]
+            }
+            break
+
+        # choose action
         chosen_action = random.choice(available_action)
         if chosen_action["action_id"] == "FarmExpansion":
             pass
@@ -36,7 +43,11 @@ while True:
                 }
                 break
         elif chosen_action["action_id"] == "Lessons":
-            pass
+            if len(player_json["hand_occupations"]) > 0:
+                output_json = {
+                    "action_id": "Lessons"
+                }
+                break
         elif chosen_action["action_id"] == "Lessons4P":
             pass
         elif chosen_action["action_id"] == "GrainUtilization":

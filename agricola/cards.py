@@ -83,6 +83,10 @@ class Occupation(with_metaclass(abc.ABCMeta, Card)):
     def text(self):
         pass
 
+    @property
+    def next_choices(self):
+        return []
+
     def victory_points(self, player):
         return 0
 

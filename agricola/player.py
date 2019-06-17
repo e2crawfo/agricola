@@ -808,8 +808,8 @@ class Player(EventGenerator):
     state_change = PlayerStateChange(description, cost=cost, change=change)
     state_change.check_and_apply(self)
 
-  def play_occupation(self, occupation, game):
-    occupation.check_and_apply(self)
+  def play_occupation(self, occupation, choices, game):
+    occupation.check_and_apply(self, choices)
 
     self.hand['occupations'].remove(occupation)
     self.occupations.append(occupation)
@@ -818,7 +818,6 @@ class Player(EventGenerator):
     improvement.check_and_apply(self, choices)
 
     self.hand['minor_improvements'].remove(improvement)
-    print(improvement.traveling)
     if improvement.traveling:
       target_index = self.index + 1
       if game.n_players == target_index:
