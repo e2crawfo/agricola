@@ -1,5 +1,5 @@
 
-from agricola.utils import dotDict, recDotDict
+from .utils import dotDict, recDotDict
 
 event_sources = dotDict({
   'game': 'game',
