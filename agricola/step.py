@@ -17,7 +17,7 @@ class Step(with_metaclass(abc.ABCMeta, object)):
     def effect(self, choice):
         return None
 
-class ActionStep(Step):
+class ActionSelectionStep(Step):
     @property
     def required_choice_and_source(self):
         return ActionChoice, const.event_sources.game
@@ -28,4 +28,38 @@ class ActionStep(Step):
         self.game.players[self.player.index].turn_left -= 1
         return choise.choice_value.effect(self.player)
         
+class PlayOccupationStep(Step):
+    pass
 
+class PlayMajorImprovementStep(Step):
+    pass
+
+class PlayMinorImprovementStep(Step):
+    pass
+
+class ResourcePayingStep(Step):
+    pass
+
+class RenovatingStep(Step):
+    pass
+
+class PlowingStep(Step):
+    pass
+
+class HouseBuildingStep(Step):
+    pass
+
+class StableBuildingStep(Step):
+    pass
+
+class SowingStep(Step):
+    pass
+
+class BakingStep(Step):
+    pass
+
+class FencingStep(Step):
+    pass
+
+class AnimalMarketStep(Step):
+    pass
