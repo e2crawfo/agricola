@@ -298,7 +298,7 @@ def play(game, ui, agent_processes, logdir):
               next_choice_class, next_source_name = next_step.required_choice_and_source
               choice = None
               
-              if next_step.required_choice:
+              if next_choice_class:
                 # get player choice
                 state_dict = game_copy.get_state_dict(
                   next_choice_class.__name__,
