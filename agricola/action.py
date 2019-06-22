@@ -5,9 +5,10 @@ from future.utils import iteritems, with_metaclass
 from .errors import AgricolaInvalidChoice, AgricolaImpossible, AgricolaPoorlyFormed
 from .choice import (
     OccupationChoice, DiscreteChoice, CountChoice, ListChoice,
-    VariableLengthListChoice, SpaceChoice, MinorImprovementchoice)
+    VariableLengthListChoice, SpaceChoice, MinorImprovementChoice)
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
+from .step import PlayMinorImprovementStep
 from .player import Pasture
 from . import const
 
@@ -449,15 +450,9 @@ class Lessons4P(Action):
 
 
 class MeetingPlace(Action):
-    choice_classes = [{
-        "class": MinorImprovementchoice,
-        "source": ""
-    }]
-
-    def _effect(self, player, choices):
+    def effect(self, player):
         player.game.set_first_player(int(player.name))
-        if choices[0].choice_value is not None:
-            player.play_minor_improvement(choices[0].choice_value, choices[1:], player.game)
+        return [PlayMinorImprovementStep]
 
 class MeetingPlaceFamily(Accumulating):
     acc_amount = dict(food=1)

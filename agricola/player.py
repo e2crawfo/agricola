@@ -814,9 +814,7 @@ class Player(EventGenerator):
     self.hand['occupations'].remove(occupation)
     self.occupations.append(occupation)
 
-  def play_minor_improvement(self, improvement, choices, game):
-    improvement.check_and_apply(self, choices)
-
+  def play_minor_improvement(self, improvement, game):
     self.hand['minor_improvements'].remove(improvement)
     if improvement.traveling:
       target_index = self.index + 1

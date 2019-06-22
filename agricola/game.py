@@ -286,16 +286,16 @@ def play(game, ui, agent_processes, logdir):
           game_copy.current_player_idx = i
 
           # initialize step stack
-          step_stack = [ActionSelectionStep(game_copy, player)]
+          step_stack = [ActionSelectionStep]
 
           try:
 
             while len(step_stack) > 0:
               dbgprint(step_stack)
-              next_step = step_stack.pop()
+              next_step = step_stack.pop()(game_copy, player)
               dbgprint(step_stack)
               dbgprint(next_step)
-              next_choice_class, next_source_name = next_step.required_choice_and_source
+              next_choice_class, next_source_name = next_step.get_required_choice_and_source()
               choice = None
               
               if next_choice_class:

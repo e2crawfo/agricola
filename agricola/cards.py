@@ -4,7 +4,7 @@ from future.utils import with_metaclass
 from .utils import score_mapping, cumsum
 from .choice import (
     YesNoChoice, DiscreteChoice, CountChoice, ListChoice, SpaceChoice)
-
+from .step import PlowingStep
 
 class Card(with_metaclass(abc.ABCMeta, object)):
     @abc.abstractproperty
@@ -552,18 +552,19 @@ class MinorImprovement(with_metaclass(abc.ABCMeta, Card)):
     def __init__(self):
         pass
 
-    def check_and_apply(self, player, choice):
+    # returns steps
+    def check_and_apply(self, player):
         print("Applying minor improvement {0}.".format(self.name))
         description = "Playing minor improvement {0}".format(self)
 
         player.change_state(description, cost=self.cost.copy())
         self._check(player)
-        self._apply(player, choice)
+        return self._apply(player)
 
     def _check(self, player):
         pass
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         pass
 
     @property
@@ -577,10 +578,6 @@ class MinorImprovement(with_metaclass(abc.ABCMeta, Card)):
     @property
     def cost(self):
         return self._cost.copy()
-
-    @property
-    def next_choices(self):
-        return []
 
     def victory_points(self, player):
         return self._victory_points
@@ -977,8 +974,8 @@ class Field(MinorImprovement):
             "source": "plough"
         }]
 
-    def _apply(self, player, choices):
-        player.plow_fields(choices[0].choice_value)
+    def _apply(self, player):
+        return [PlowingStep]
 
 # TODO implement
 class Dovecote(MinorImprovement):

@@ -60,9 +60,9 @@ class Stablechoice(Choice):
     def validate(self):
         pass
 
-class MinorImprovementchoice(Choice):
+class MinorImprovementChoice(Choice):
     def __init__(self, game, player, choice_dict, desc=None, mx=None):
-        super(MinorImprovementchoice, self).__init__(desc, choice_dict)
+        super(MinorImprovementChoice, self).__init__(desc, game, player, choice_dict)
         if "minor_improvement_id" in choice_dict:
             target_improvement = [minor_improvement for minor_improvement in player.hand["minor_improvements"] if minor_improvement.name == choice_dict["minor_improvement_id"]]
             # TODO think about error
@@ -79,7 +79,7 @@ class MinorImprovementchoice(Choice):
     def validate(self):
         pass
 
-class MajorImprovementchoice(Choice):
+class MajorImprovementChoice(Choice):
     def validate(self):
         pass
 
@@ -87,15 +87,15 @@ class FarmlandChoice(Choice):
     def validate(self):
         pass
 
-class Bakingchoice(Choice):
+class BakingChoice(Choice):
     def validate(self):
         pass
 
-class Sowingchoice(Choice):
+class SowingChoice(Choice):
     def validate(self):
         pass
 
-class Fencingchoice(Choice):
+class FencingChoice(Choice):
     def validate(self):
         pass
 
@@ -143,5 +143,5 @@ class VariableLengthListChoice(Choice):
 
 class SpaceChoice(Choice):
     def __init__(self, game, player, choice_dict, desc=None, mx=None):
-        super(SpaceChoice, self).__init__(desc, choice_dict)
+        super(SpaceChoice, self).__init__(game, player, choice_dict)
         self.choice_value = [(choice_dict["space"][1], choice_dict["space"][0])]

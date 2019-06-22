@@ -16,12 +16,12 @@ while True:
 
 
     while True:
-        if state_json["current_event"] == "SpaceChoice" and state_json["event_source"] == "plough":
+        if state_json["current_event"] == "SpaceChoice" and state_json["event_source"] == "plowing":
             output_json = {
                 "space": [4, 0]
             }
             break
-        if state_json["current_event"] == "MinorImprovementchoice":
+        if state_json["current_event"] == "MinorImprovementChoice":
             output_json = {
                 "minor_improvement_id": player_json["hand_improvements"][0]
             }
