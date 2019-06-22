@@ -967,13 +967,6 @@ class Field(MinorImprovement):
     text = ''
     traveling = True
 
-    @property
-    def next_choices(self):
-        return [{
-            "class": SpaceChoice,
-            "source": "plough"
-        }]
-
     def _apply(self, player):
         return [PlowingStep]
 
