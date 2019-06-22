@@ -968,7 +968,7 @@ class Field(MinorImprovement):
     traveling = True
 
     def _apply(self, player):
-        return [PlowingStep]
+        return [PlowingStep()]
 
 # TODO implement
 class Dovecote(MinorImprovement):

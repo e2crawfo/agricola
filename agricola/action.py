@@ -452,7 +452,7 @@ class Lessons4P(Action):
 class MeetingPlace(Action):
     def effect(self, player):
         player.game.set_first_player(int(player.name))
-        return [PlayMinorImprovementStep]
+        return [PlayMinorImprovementStep()]
 
 class MeetingPlaceFamily(Accumulating):
     acc_amount = dict(food=1)

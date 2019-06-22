@@ -5,26 +5,25 @@ from .choice import (ActionChoice, MinorImprovementChoice, SpaceChoice)
 from . import const
 
 class Step(with_metaclass(abc.ABCMeta, object)):
-    def __init__(self, game, player):
-        self.game = game
-        self.player = player
+    def __init__(self):
+        pass
 
     def get_required_choice_and_source(self):
         return None, None
 
     # returns next stack items
-    def effect(self, choice):
+    def effect(self, game, player, choice):
         return None
 
 class ActionSelectionStep(Step):
     def get_required_choice_and_source(self):
         return ActionChoice, const.event_sources.game
 
-    def effect(self, choise):
-        self.game.actions_taken[choise.choice_value] = self.player.index
-        self.game.actions_remaining.remove(choise.choice_value)
-        self.game.players[self.player.index].turn_left -= 1
-        return choise.choice_value.effect(self.player)
+    def effect(self, game, player, choise):
+        game.actions_taken[choise.choice_value] = player.index
+        game.actions_remaining.remove(choise.choice_value)
+        game.players[player.index].turn_left -= 1
+        return choise.choice_value.effect(player)
         
 class PlayOccupationStep(Step):
     pass
@@ -37,9 +36,9 @@ class PlayMinorImprovementStep(Step):
         # TODO set source
         return MinorImprovementChoice, "minor_improvement"
 
-    def effect(self, choice):
-        self.player.play_minor_improvement(choice.choice_value, self.game)
-        return choice.choice_value.check_and_apply(self.player)
+    def effect(self, game, player, choice):
+        player.play_minor_improvement(choice.choice_value, game)
+        return choice.choice_value.check_and_apply(player)
 
 class ResourcePayingStep(Step):
     pass
@@ -53,8 +52,8 @@ class PlowingStep(Step):
         # TODO set source
         return SpaceChoice, "plowing"
 
-    def effect(self, choice):
-        self.player.plow_fields(choice.choice_value)
+    def effect(self, game, player, choice):
+        player.plow_fields(choice.choice_value)
 
 class HouseBuildingStep(Step):
     pass

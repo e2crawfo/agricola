@@ -286,13 +286,13 @@ def play(game, ui, agent_processes, logdir):
           game_copy.current_player_idx = i
 
           # initialize step stack
-          step_stack = [ActionSelectionStep]
+          step_stack = [ActionSelectionStep()]
 
           try:
 
             while len(step_stack) > 0:
               dbgprint(step_stack)
-              next_step = step_stack.pop()(game_copy, player)
+              next_step = step_stack.pop()
               dbgprint(step_stack)
               dbgprint(next_step)
               next_choice_class, next_source_name = next_step.get_required_choice_and_source()
@@ -326,7 +326,7 @@ def play(game, ui, agent_processes, logdir):
                 with open(state_log_path, mode='a') as f:
                   f.write(log_state_json + "\n")
 
-              additional_steps = next_step.effect(choice)
+              additional_steps = next_step.effect(game_copy, player ,choice)
               if additional_steps:
                 step_stack = additional_steps + step_stack
                 dbgprint(step_stack)
