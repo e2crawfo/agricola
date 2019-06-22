@@ -21,44 +21,13 @@ class Action(with_metaclass(abc.ABCMeta, object)):
     def name(self):
         return self.__class__.__name__
 
-    def _check_choices(self, player, choices):
-        pass
-
-    # returns next required choice
-    def choices(self, player, current_choices):
-        index = 0
-        choice_array = []
-        for choice_class in self.choice_classes:
-            if len(current_choices) <= index:
-                return choice_array, choice_class
-            choice = choice_class["class"](player, current_choices[index])
-            choice_array.append(choice)
-            index += 1
-            while not choice.next_choices == None and \
-                  not len(choice.next_choices) == 0:
-                for next_choice in choice.next_choices:
-                    print("next_choice")
-                    print(next_choice)
-                    if len(current_choices) <= index:
-                        return choice_array, next_choice
-                    print(current_choices[index])
-                    choice = next_choice["class"](player, current_choices[index]) 
-                    choice_array.append(choice)
-                    index += 1
-
-        return choice_array, None
-
     def effect_with_dict(self, player, action_dict):
         choices = self._convert_action_dict(player, action_dict)
         self._effect(player, choices)
 
-    def effect(self, player, choices):
-        self._check_choices(player, choices)
-        self._effect(player, choices)
-
-    @abc.abstractmethod
-    def _effect(self, player, choices):
-        pass
+    # returns next stack items
+    def effect(self, player):
+        return None
 
     def _convert_action_dict(self, player, action_dict):
         return []
@@ -89,7 +58,7 @@ class ResourceAcquisition(Action):
 
         return ' '.join(s) + '>'
 
-    def _effect(self, player, choices):
+    def effect(self, player):
         for resource, amount in iteritems(self.resources):
             setattr(player, resource, getattr(player, resource) + amount)
 
@@ -126,8 +95,8 @@ class Accumulating(ResourceAcquisition):
 
         return ' '.join(s) + '>'
 
-    def _effect(self, player, choices):
-        super(Accumulating, self)._effect(player, choices)
+    def effect(self, player):
+        super(Accumulating, self).effect(player)
         for resource in self.acc_amount:
             self.resources[resource] = 0
 

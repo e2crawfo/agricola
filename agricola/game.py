@@ -17,7 +17,8 @@ from .player import Player
 from .action import *
 from .cards import (
   get_occupations, get_minor_improvements, get_major_improvements)
-from .utils import EventGenerator, EventScope
+from .utils import EventGenerator, EventScope, dbgprint
+from .step import ActionStep
 from .choice import Choice
 from . import const
 # TODO: make sure that certain actions which allow two things to be done have
@@ -277,62 +278,31 @@ def play(game, ui, agent_processes, logdir):
         if i in remaining_players:
           action = None
           is_previous_action_failed = False
-          while action is None:
-            popen = agent_processes[i]
 
-            game_copy = copy.deepcopy(game)
-            player = game_copy.players[i]
-            game.current_player_idx = i
+          popen = agent_processes[i]
 
-            try:
-              state_dict = game.get_state_dict(
-                'ActionChoice',
-                const.event_sources.game,
-              )
-              state_dict["is_previous_action_failed"] = is_previous_action_failed
-              state_json = json.dumps(state_dict)
-              is_previous_action_failed = False
+          game_copy = copy.deepcopy(game)
+          player = game_copy.players[i]
+          game_copy.current_player_idx = i
 
-              # send state to agent
-              popen.stdin.write(state_json + "\n")
-              popen.stdin.flush()
+          # initialize step stack
+          step_stack = [ActionStep(game_copy, player)]
 
-              # get action from agent
-              popen.stdout.flush()
-              player_action = popen.stdout.readline()
-              json_action = json.loads(player_action)
-              state_dict["player_output"] = json_action
-              log_state_json = json.dumps(state_dict)
+          try:
 
-              # write to log file
-              state_log_path = logdir + "/" + game.game_id + "_state.json"
-              with open(state_log_path, mode='a') as f:
-                f.write(log_state_json + "\n")
-
-              # search class from actions_remaining and action taken
-              selected_action = list(filter(lambda x: x.__class__.__name__ == json_action["action_id"], game_copy.actions_remaining + list(game_copy.actions_taken.keys())))
-              action = selected_action[0] if len(selected_action) else None
-
-              if action is None:
-                raise AgricolaException("No action chosen")
-              elif action not in game_copy.actions_remaining:
-                raise AgricolaException("That action is not available this round")
-              elif action in game_copy.actions_taken:
-                raise AgricolaException(
-                  "That action has already been taken by "
-                  "player {0}".format(game_copy.actions_taken[action]))
-
-              json_choices = []
-              choices = []
-
-              while True:
-                choices, next_choice = action.choices(player, json_choices)
-                if not next_choice:
-                  break
-
-                # get next choice for player
-                state_dict = game.get_state_dict(next_choice["class"].__name__,
-                                                 next_choice["source"])
+            while len(step_stack) > 0:
+              dbgprint(step_stack)
+              next_step = step_stack.pop()
+              dbgprint(step_stack)
+              dbgprint(next_step)
+              next_choice_class, next_source_name = next_step.required_choice_and_source
+              choice = None
+              
+              if next_step.required_choice:
+                # get player choice
+                state_dict = game_copy.get_state_dict(
+                  next_choice_class.__name__,
+                  next_source_name)
 
                 # send the context of current choice
                 state_json = json.dumps(state_dict)
@@ -344,9 +314,11 @@ def play(game, ui, agent_processes, logdir):
                 # get action from agent
                 popen.stdout.flush()
                 player_action = popen.stdout.readline()
-                json_action = json.loads(player_action)
-                json_choices.append(json_action)
-                state_dict["player_output"] = json_action
+                choice_dict = json.loads(player_action)
+                dbgprint(next_choice_class)
+                choice = next_choice_class(game_copy, player, choice_dict)
+
+                state_dict["player_output"] = choice_dict
                 log_state_json = json.dumps(state_dict)
 
                 # write to log file
@@ -354,30 +326,104 @@ def play(game, ui, agent_processes, logdir):
                 with open(state_log_path, mode='a') as f:
                   f.write(log_state_json + "\n")
 
-              event_name = "Action: {}".format(action.__class__.__name__)
-              with EventScope([game_copy, player], event_name, 
-                              player=player, action=action):
-                print('choices:', choices)
-                action.effect(player, choices)
-                #exit(1)
-              del game
-              game = game_copy
+              additional_steps = next_step.effect(choice)
+              if additional_steps:
+                step_stack = additional_steps + step_stack
+                dbgprint(step_stack)
+                dbgprint(additional_steps)
+            
 
-            except AgricolaException as e:
-              ui.action_failed(str(e))
-              action = None
-              is_previous_action_failed = True
-              del game_copy
+            # state_dict = game.get_state_dict(
+            #   'ActionChoice',
+            #   const.event_sources.game,
+            # )
+            # state_dict["is_previous_action_failed"] = is_previous_action_failed
+            # state_json = json.dumps(state_dict)
+            # is_previous_action_failed = False
 
-          game.actions_taken[action] = i
-          game.actions_remaining.remove(action)
+            # # send state to agent
+            # popen.stdin.write(state_json + "\n")
+            # popen.stdin.flush()
+
+            # # get action from agent
+            # popen.stdout.flush()
+            # player_action = popen.stdout.readline()
+            # json_action = json.loads(player_action)
+            # state_dict["player_output"] = json_action
+            # log_state_json = json.dumps(state_dict)
+
+            # # write to log file
+            # state_log_path = logdir + "/" + game.game_id + "_state.json"
+            # with open(state_log_path, mode='a') as f:
+            #   f.write(log_state_json + "\n")
+
+            # # search class from actions_remaining and action taken
+            # selected_action = list(filter(lambda x: x.__class__.__name__ == json_action["action_id"], game_copy.actions_remaining + list(game_copy.actions_taken.keys())))
+            # action = selected_action[0] if len(selected_action) else None
+
+            # if action is None:
+            #   raise AgricolaException("No action chosen")
+            # elif action not in game_copy.actions_remaining:
+            #   raise AgricolaException("That action is not available this round")
+            # elif action in game_copy.actions_taken:
+            #   raise AgricolaException(
+            #     "That action has already been taken by "
+            #     "player {0}".format(game_copy.actions_taken[action]))
+
+            # json_choices = []
+            # choices = []
+
+            # while True:
+            #   choices, next_choice = action.choices(player, json_choices)
+            #   if not next_choice:
+            #     break
+
+            #   # get next choice for player
+            #   state_dict = game.get_state_dict(next_choice["class"].__name__,
+            #                                    next_choice["source"])
+
+            #   # send the context of current choice
+            #   state_json = json.dumps(state_dict)
+
+            #   # send state to agent
+            #   popen.stdin.write(state_json + "\n")
+            #   popen.stdin.flush()
+
+            #   # get action from agent
+            #   popen.stdout.flush()
+            #   player_action = popen.stdout.readline()
+            #   json_action = json.loads(player_action)
+            #   json_choices.append(json_action)
+            #   state_dict["player_output"] = json_action
+            #   log_state_json = json.dumps(state_dict)
+
+            #   # write to log file
+            #   state_log_path = logdir + "/" + game.game_id + "_state.json"
+            #   with open(state_log_path, mode='a') as f:
+            #     f.write(log_state_json + "\n")
+
+            # event_name = "Action: {}".format(action.__class__.__name__)
+            # with EventScope([game_copy, player], event_name, 
+            #                 player=player, action=action):
+            #   print('choices:', choices)
+            #   action.effect(player, choices)
+            #   #exit(1)
+            del game
+            game = game_copy
+
+          except AgricolaException as e:
+            print(e)
+            ui.action_failed(str(e))
+            action = None
+            is_previous_action_failed = True
+            del game_copy
+
           ui.update_game(game)
           ui.action_successful()
 
           for p in game.players:
             print(p)
 
-          game.players[i].turn_left -= 1
           if game.players[i].turn_left <= 0:
             remaining_players.remove(i)
             if not remaining_players:

@@ -1,7 +1,7 @@
 import abc
 
 class Choice(object):
-    def __init__(self, player, choice_dict, desc=None):
+    def __init__(self, game, player, choice_dict, desc=None):
         self.desc = desc
         self.player = player
         self.validate()
@@ -19,8 +19,18 @@ class Choice(object):
     def next_choices(self):
         return []
 
+class ActionChoice(Choice):
+    def __init__(self, game, player, choice_dict, desc=None, mx=None):
+        super(ActionChoice, self).__init__(game, player, choice_dict)
+        if "action_id" in choice_dict:
+            target_action = [action for action in game.actions_remaining if action.name == choice_dict["action_id"]]
+            # TODO think about error
+            self.choice_value = target_action[0]
+        else:
+            self.choice_value = None
+
 class OccupationChoice(Choice):
-    def __init__(self, player, choice_dict, desc=None, mx=None):
+    def __init__(self, game, player, choice_dict, desc=None, mx=None):
         super(OccupationChoice, self).__init__(desc, choice_dict)
         if "occupation_id" in choice_dict:
             target_occupation = [occupation for occupation in player.hand["occupations"] if occupation.name == choice_dict["occupation_id"]]
@@ -51,7 +61,7 @@ class Stablechoice(Choice):
         pass
 
 class MinorImprovementchoice(Choice):
-    def __init__(self, player, choice_dict, desc=None, mx=None):
+    def __init__(self, game, player, choice_dict, desc=None, mx=None):
         super(MinorImprovementchoice, self).__init__(desc, choice_dict)
         if "minor_improvement_id" in choice_dict:
             target_improvement = [minor_improvement for minor_improvement in player.hand["minor_improvements"] if minor_improvement.name == choice_dict["minor_improvement_id"]]
@@ -132,6 +142,6 @@ class VariableLengthListChoice(Choice):
 
 
 class SpaceChoice(Choice):
-    def __init__(self, player, choice_dict, desc=None, mx=None):
+    def __init__(self, game, player, choice_dict, desc=None, mx=None):
         super(SpaceChoice, self).__init__(desc, choice_dict)
         self.choice_value = [(choice_dict["space"][1], choice_dict["space"][0])]
