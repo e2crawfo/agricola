@@ -10,7 +10,7 @@ class Step(with_metaclass(abc.ABCMeta, object)):
         self.player = player
 
     @property
-    def required_choice(self):
+    def required_choice_and_source(self):
         return None, None
 
     # returns next stack items
