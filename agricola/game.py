@@ -18,7 +18,7 @@ from .action import *
 from .cards import (
   get_occupations, get_minor_improvements, get_major_improvements)
 from .utils import EventGenerator, EventScope, dbgprint
-from .step import ActionStep
+from .step import ActionSelectionStep
 from .choice import Choice
 from . import const
 # TODO: make sure that certain actions which allow two things to be done have
@@ -286,7 +286,7 @@ def play(game, ui, agent_processes, logdir):
           game_copy.current_player_idx = i
 
           # initialize step stack
-          step_stack = [ActionStep(game_copy, player)]
+          step_stack = [ActionSelectionStep(game_copy, player)]
 
           try:
 
