@@ -43,14 +43,17 @@ while True:
                 }
                 break
         elif chosen_action["action_id"] == "Lessons":
-            continue
             if len(player_json["hand_occupations"]) > 0:
                 output_json = {
                     "action_id": "Lessons"
                 }
                 break
         elif chosen_action["action_id"] == "Lessons4P":
-            pass
+            if len(player_json["hand_occupations"]) > 0:
+                output_json = {
+                    "action_id": "Lessons4P"
+                }
+                break
         elif chosen_action["action_id"] == "GrainUtilization":
             continue
             if player_json["resources"]["grain"] >= 1 and "object_type" in player_json["board"][0][4] and not grain_planted:

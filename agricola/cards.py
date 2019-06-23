@@ -64,8 +64,18 @@ def get_major_improvements():
 
 
 class Occupation(with_metaclass(abc.ABCMeta, Card)):
-    def check_and_apply(self, player, choices):
+     # returns steps
+    def check_and_apply(self, player):
         print("Applying occupation {0}.".format(self.name))
+
+        self._check(player)
+        return self._apply(player)
+
+    def _check(self, player):
+        pass
+
+    def _apply(self, player):
+        pass
 
     @property
     def card_type(self):
@@ -97,7 +107,7 @@ class Lover(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -110,7 +120,7 @@ class ReedCollector(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -123,7 +133,7 @@ class PigWhisperer(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -136,7 +146,7 @@ class BerryPicker(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -149,7 +159,7 @@ class CattleWhisperer(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -162,7 +172,7 @@ class Cowhead(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -175,7 +185,7 @@ class Dancer(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -188,7 +198,7 @@ class StreetMusician(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -201,7 +211,7 @@ class Tutor(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -214,7 +224,7 @@ class Wodcutter(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -227,7 +237,7 @@ class Conjurer(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -240,7 +250,7 @@ class SeasonalWorker(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -253,7 +263,7 @@ class ChurchWarden(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -266,7 +276,7 @@ class LordOfTheManor(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -279,7 +289,7 @@ class Cook(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -292,7 +302,7 @@ class Midwife(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -305,7 +315,7 @@ class YeomanFarmer(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -318,7 +328,7 @@ class Outrider(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -331,7 +341,7 @@ class CharcoalBurner(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -344,7 +354,7 @@ class Chief(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -357,7 +367,7 @@ class SeedSeller(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -370,7 +380,7 @@ class Undergardener(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -383,7 +393,7 @@ class Farmer(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -396,7 +406,7 @@ class FieldWatchman(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -409,7 +419,7 @@ class Patron(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -422,7 +432,7 @@ class MasterShepherd(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -435,7 +445,7 @@ class SheepWhisperer(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -448,7 +458,7 @@ class Swineherd(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -461,7 +471,7 @@ class Braggart(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -474,7 +484,7 @@ class WoodCollector(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -487,7 +497,7 @@ class WoodDeliveryman(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -500,7 +510,7 @@ class Greengrocer(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -513,7 +523,7 @@ class ClayWorker(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -526,7 +536,7 @@ class ClayDeliveryman(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -539,7 +549,7 @@ class ClayMixer(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         pass
 
     def trigger(self, player, **kwargs):
@@ -1074,7 +1084,7 @@ class MajorImprovement(with_metaclass(abc.ABCMeta, Card)):
     def __init__(self):
         pass
 
-    def check_and_apply(self, player, choices):
+    def check_and_apply(self, player):
         print("Applying major improvement {0}.".format(self.name))
         description = "Playing major improvement {0}".format(self)
         player.change_state(description, cost=self.cost.copy())

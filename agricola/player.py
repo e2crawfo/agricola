@@ -808,9 +808,7 @@ class Player(EventGenerator):
     state_change = PlayerStateChange(description, cost=cost, change=change)
     state_change.check_and_apply(self)
 
-  def play_occupation(self, occupation, choices, game):
-    occupation.check_and_apply(self, choices)
-
+  def play_occupation(self, occupation, game):
     self.hand['occupations'].remove(occupation)
     self.occupations.append(occupation)
 

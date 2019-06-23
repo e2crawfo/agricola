@@ -8,7 +8,7 @@ from .choice import (
     VariableLengthListChoice, SpaceChoice, MinorImprovementChoice)
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
-from .step import PlayMinorImprovementStep, PlowingStep
+from .step import PlayMinorImprovementStep, PlowingStep, PlayOccupationStep
 from .player import Pasture
 from . import const
 
@@ -391,17 +391,13 @@ class Fencing(Action):
         return [pasture_array]
 
 class Lessons(Action):
-    choice_classes = [{
-        "class": OccupationChoice,
-        "source": ""
-    }]
 
-    def _effect(self, player, choices):
+    def effect(self, player):
         if len(player.occupations) > 0:
             player.change_state("Playing occupation", cost=dict(food=1))
+        return [PlayOccupationStep()]
 
-        if choices[0].choice_value is not None:
-            player.play_occupation(choices[0].choice_value, choices[1:], player.game)
+
 
 class Lessons3P(Action):
     def choices(self, player):

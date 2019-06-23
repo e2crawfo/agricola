@@ -31,22 +31,13 @@ class ActionChoice(Choice):
 
 class OccupationChoice(Choice):
     def __init__(self, game, player, choice_dict, desc=None, mx=None):
-        super(OccupationChoice, self).__init__(desc, choice_dict)
+        super(OccupationChoice, self).__init__(game, player, choice_dict)
         if "occupation_id" in choice_dict:
             target_occupation = [occupation for occupation in player.hand["occupations"] if occupation.name == choice_dict["occupation_id"]]
             # TODO think about error
             self.choice_value = target_occupation[0]
         else:
             self.choice_value = None
-
-    @property
-    def next_choices(self):
-        if self.choice_value:
-            return self.choice_value.next_choices
-        return None
-
-    def validate(self):
-        pass
 
 class AnimalMarketchoice(Choice):
     def validate(self):
