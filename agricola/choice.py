@@ -1,4 +1,5 @@
 import abc
+from .player import Pasture
 
 class Choice(object):
     def __init__(self, game, player, choice_dict, desc=None):
@@ -86,9 +87,25 @@ class SowingChoice(Choice):
     def validate(self):
         pass
 
+# FencingChoice Sample
+# {
+#   "pastures": [
+#     [
+#       [4,1],
+#       [4,2],
+#       [3,1],
+#       [3,2]
+#     ]
+#   ]
+# }
+
 class FencingChoice(Choice):
-    def validate(self):
-        pass
+    def __init__(self, game, player, choice_dict, desc=None, mx=None):
+        super(FencingChoice, self).__init__(game, player, choice_dict)
+        if "pastures" in choice_dict:
+            self.choice_value = list(map(lambda p_array: Pasture(list(map(lambda pasture: (pasture[1], pasture[0]) ,p_array))), choice_dict["pastures"]))
+        else:
+            self.choice_value = None
 
 # old choices
 

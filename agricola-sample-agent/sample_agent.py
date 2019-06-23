@@ -40,6 +40,11 @@ while True:
             else:
                 output_json = {}
                 break
+        if state_json["current_event"] == "FencingChoice":
+            output_json = {
+                "pastures": [[[4, 1], [4, 2], [3, 1], [3, 2]]]
+            }
+            break
         if state_json["current_event"] == "MinorImprovementChoice":
             output_json = {
                 "minor_improvement_id": player_json["hand_improvements"][0]
@@ -97,11 +102,9 @@ while True:
                 grain_planted = True
                 break
         elif chosen_action["action_id"] == "Fencing":
-            continue
             if (not fence_taken) and player_json["resources"]["wood"] >= 8:
                 output_json = {
-                    "action_id": "Fencing",
-                    "pastures": [[[4, 1], [4, 2], [3, 1], [3, 2]]]
+                    "action_id": "Fencing"
                 }
                 fence_taken = True
                 break 

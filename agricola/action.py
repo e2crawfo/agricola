@@ -5,10 +5,10 @@ from future.utils import iteritems, with_metaclass
 from .errors import AgricolaInvalidChoice, AgricolaImpossible, AgricolaPoorlyFormed
 from .choice import (
     OccupationChoice, DiscreteChoice, CountChoice, ListChoice,
-    VariableLengthListChoice, SpaceChoice, MinorImprovementChoice)
+    VariableLengthListChoice, SpaceChoice, MinorImprovementChoice,)
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
-from .step import PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep
+from .step import PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep, FencingStep
 from .player import Pasture
 from . import const
 
@@ -361,25 +361,8 @@ class MajorImprovement(Action):
         return [action_dict["id"]]
 
 class Fencing(Action):
-    def choices(self, player):
-        return [
-            VariableLengthListChoice(
-                VariableLengthListChoice(SpaceChoice("Space to pasteurize.")))
-        ]
-
-    def _effect(self, player, choices):
-        pastures = choices[0]
-        if pastures is None:
-            pass
-        elif isinstance(pastures, list):
-            player.build_pastures(pastures)
-        else:
-            raise AgricolaInvalidChoice(
-                "Pastures have to be specified as a list of list of spaces.")
-
-    def _convert_action_dict(self, player, action_dict):
-        pasture_array = list(map(lambda p_array: Pasture(list(map(lambda pasture: (pasture[1], pasture[0]) ,p_array))), action_dict["pastures"]))
-        return [pasture_array]
+    def effect(self, player):
+        return [FencingStep()]
 
 class Lessons(Action):
 

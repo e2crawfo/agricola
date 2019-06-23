@@ -1,7 +1,7 @@
 import abc
 import itertools
 from future.utils import with_metaclass
-from .choice import (ActionChoice, MinorImprovementChoice, SpaceChoice, OccupationChoice)
+from .choice import (ActionChoice, MinorImprovementChoice, SpaceChoice, OccupationChoice, FencingChoice)
 from . import const
 
 class Step(with_metaclass(abc.ABCMeta, object)):
@@ -87,7 +87,13 @@ class BakingStep(Step):
     pass
 
 class FencingStep(Step):
-    pass
+    def get_required_choice_and_source(self):
+        # TODO set source
+        return FencingChoice, "fencing"
+    
+    def effect(self, game, player, choice):
+        if choice.choice_value:
+            player.build_pastures(choice.choice_value)
 
 class AnimalMarketStep(Step):
     pass

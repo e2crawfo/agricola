@@ -410,11 +410,7 @@ def play(game, ui, agent_processes, logdir):
             #   print('choices:', choices)
             #   action.effect(player, choices)
             #   #exit(1)
-
-            # check if state is changed
-            if json.dumps(game_copy.get_state_dict("", "")) == json.dumps(game.get_state_dict("", "")):
-              raise AgricolaException("Nothing Happend In Action!")
-
+            
             del game
             game = game_copy
 
