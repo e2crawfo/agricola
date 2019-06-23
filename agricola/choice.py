@@ -20,6 +20,10 @@ class Choice(object):
     def next_choices(self):
         return []
 
+# ActionChoise sample
+# {
+#   "action_id": "Fencing"
+# }
 class ActionChoice(Choice):
     def __init__(self, game, player, choice_dict, desc=None, mx=None):
         super(ActionChoice, self).__init__(game, player, choice_dict)
@@ -148,7 +152,10 @@ class VariableLengthListChoice(Choice):
         self.subchoice = subchoice
         self.mx = mx
 
-
+# SpaceChoice Sample
+# {
+#     "space": [4,0]
+# }
 class SpaceChoice(Choice):
     def __init__(self, game, player, choice_dict, desc=None, mx=None):
         super(SpaceChoice, self).__init__(game, player, choice_dict)
