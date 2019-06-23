@@ -281,9 +281,9 @@ def play(game, ui, agent_processes, logdir):
 
           popen = agent_processes[i]
 
+          game.current_player_idx = i
           game_copy = copy.deepcopy(game)
           player = game_copy.players[i]
-          game_copy.current_player_idx = i
 
           # initialize step stack
           step_stack = [ActionSelectionStep()]
@@ -330,7 +330,7 @@ def play(game, ui, agent_processes, logdir):
 
               additional_steps = next_step.effect(game_copy, player ,choice)
               if additional_steps:
-                step_stack = additional_steps + step_stack
+                step_stack = step_stack + additional_steps
                 dbgprint(step_stack)
                 dbgprint(additional_steps)
             
@@ -410,6 +410,11 @@ def play(game, ui, agent_processes, logdir):
             #   print('choices:', choices)
             #   action.effect(player, choices)
             #   #exit(1)
+
+            # check if state is changed
+            if json.dumps(game_copy.get_state_dict("", "")) == json.dumps(game.get_state_dict("", "")):
+              raise AgricolaException("Nothing Happend In Action!")
+
             del game
             game = game_copy
 
@@ -418,6 +423,7 @@ def play(game, ui, agent_processes, logdir):
             ui.action_failed(str(e))
             action = None
             is_previous_action_failed = True
+            game.players[i].turn_left -= 1
             del game_copy
 
           ui.update_game(game)

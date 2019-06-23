@@ -53,7 +53,6 @@ class RenovatingStep(Step):
     pass
 
 class PlowingStep(Step):
-
     def get_required_choice_and_source(self):
         # TODO set source
         return SpaceChoice, "plowing"
@@ -62,10 +61,24 @@ class PlowingStep(Step):
         player.plow_fields(choice.choice_value)
 
 class HouseBuildingStep(Step):
-    pass
+    def get_required_choice_and_source(self):
+        # TODO set source
+        return SpaceChoice, "room_building"
+    
+    def effect(self, game, player, choice):
+        if choice.choice_value:
+            player.build_rooms(choice.choice_value)
+            return [HouseBuildingStep()]
 
 class StableBuildingStep(Step):
-    pass
+    def get_required_choice_and_source(self):
+        # TODO set source
+        return SpaceChoice, "stable_building"
+    
+    def effect(self, game, player, choice):
+        if choice.choice_value:
+            player.build_stables(choice.choice_value, 2)
+            return [StableBuildingStep()]
 
 class SowingStep(Step):
     pass

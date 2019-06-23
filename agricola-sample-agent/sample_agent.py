@@ -3,6 +3,7 @@ import random
 
 fence_taken = False
 grain_planted = False
+stable_count = 0
 
 while True:
     try:
@@ -14,13 +15,31 @@ while True:
 
     available_action = list(filter(lambda x: x["is_available"], state_json["common_board"]["actions"]))
 
-
     while True:
         if state_json["current_event"] == "SpaceChoice" and state_json["event_source"] == "plowing":
             output_json = {
                 "space": [4, 0]
             }
             break
+        if state_json["current_event"] == "SpaceChoice" and state_json["event_source"] == "room_building":
+            if player_json["resources"]["wood"] >= 5 and player_json["resources"]["reed"] >= 2:
+                output_json = {
+                    "space": [0, 2]
+                }
+                break
+            else:
+                output_json = {}
+                break
+        if state_json["current_event"] == "SpaceChoice" and state_json["event_source"] == "stable_building":
+            if player_json["resources"]["wood"] >= 2 and stable_count != 4:
+                output_json = {
+                    "space": [stable_count + 1, 0]
+                }
+                stable_count += 1
+                break
+            else:
+                output_json = {}
+                break
         if state_json["current_event"] == "MinorImprovementChoice":
             output_json = {
                 "minor_improvement_id": player_json["hand_improvements"][0]
@@ -35,7 +54,10 @@ while True:
         # choose action
         chosen_action = random.choice(available_action)
         if chosen_action["action_id"] == "FarmExpansion":
-            pass
+            output_json = {
+                "action_id": "FarmExpansion"
+            }
+            break
         elif chosen_action["action_id"] == "Farmland":
             if not "object_type" in player_json["board"][0][4]:
                 output_json = {

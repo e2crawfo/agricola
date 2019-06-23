@@ -454,8 +454,9 @@ class Player(EventGenerator):
 
   @property
   def fenced_stables(self):
+    print(self.pastures)
     return len([s for s in self._stables
-          if any(s in p for p in self.pastures)])
+          if any(s in p for p in self._pastures)])
 
   @property
   def free_stables(self):

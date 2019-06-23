@@ -8,7 +8,7 @@ from .choice import (
     VariableLengthListChoice, SpaceChoice, MinorImprovementChoice)
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
-from .step import PlayMinorImprovementStep, PlowingStep, PlayOccupationStep
+from .step import PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep
 from .player import Pasture
 from . import const
 
@@ -271,17 +271,8 @@ class AnimalMarket(ResourceAcquisition):
         return [action_dict["animal_type"]]
 
 class FarmExpansion(Action):
-    def choices(self, player):
-        return [
-            VariableLengthListChoice(SpaceChoice("Room location."), "Number of rooms."),
-            VariableLengthListChoice(SpaceChoice("Stable location."), "Number of stables.")
-        ]
-
-    def _effect(self, player, choices):
-        if not isinstance(choices[0], list) and not isinstance(choices[1], list):
-            raise AgricolaInvalidChoice(
-                "At least one of the two actions (build rooms or build stables) "
-                "must be selected to use this action space.")
+    def effect(self, player):
+        return [StableBuildingStep(), HouseBuildingStep()]
 
         room_spaces = choices[0]
         if room_spaces is None:
