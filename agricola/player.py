@@ -826,6 +826,7 @@ class Player(EventGenerator):
   def play_major_improvement(self, improvement, game):
     improvement.check_and_apply(self)
 
+    self.game.major_improvements.remove(improvement)
     self.major_improvements.append(improvement)
 
   def get_state_dict(self):

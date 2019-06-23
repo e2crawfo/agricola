@@ -8,7 +8,7 @@ from .choice import (
     VariableLengthListChoice, SpaceChoice, MinorImprovementChoice,)
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
-from .step import PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep, FencingStep
+from .step import PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep, FencingStep, PlayMajorImprovementStep
 from .player import Pasture
 from . import const
 
@@ -339,27 +339,9 @@ class FarmRedevelopment(Action):
 
 
 class MajorImprovement(Action):
-    def choices(self, player):
-        imps = player.hand["minor_improvements"] + player.game.major_improvements
-        return [
-            DiscreteChoice(imps, "Choose a major or minor improvement.")
-        ]
-
-    def _effect(self, player, choices):
-        imp = choices[0]
-        if isinstance(imp, MinorImprovementCard):
-            player.play_minor_improvement(imp, player.game)
-        elif isinstance(imp, MajorImprovementCard):
-            player.play_major_improvement(imp, player.game)
-            player.game.major_improvements.remove(imp)
-        else:
-            raise AgricolaPoorlyFormed(
-                "Received {0}, but a major/minor improvement was expected.")
-
-    def _convert_action_dict(self, player, action_dict):
-        # TODO read additional props when needed ex: field
-        return [action_dict["id"]]
-
+    def effect(self, player):
+        return [PlayMajorImprovementStep()]
+        
 class Fencing(Action):
     def effect(self, player):
         return [FencingStep()]

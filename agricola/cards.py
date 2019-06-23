@@ -991,7 +991,7 @@ class Dovecote(MinorImprovement):
     def _check(self, player):
         pass
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         pass
 
 # TODO implement
@@ -1006,7 +1006,7 @@ class Bookshelf(MinorImprovement):
     def _check(self, player):
         pass
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         pass
 
 # TODO implement
@@ -1021,7 +1021,7 @@ class Beehive(MinorImprovement):
     def _check(self, player):
         pass
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         pass
 
 # TODO implement
@@ -1035,7 +1035,7 @@ class WoodCart(MinorImprovement):
     def _check(self, player):
         pass
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         pass
 
 # TODO implement
@@ -1048,7 +1048,7 @@ class HalfTimberedHouse(MinorImprovement):
     def _check(self, player):
         pass
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         pass
 
 # TODO implement
@@ -1061,7 +1061,7 @@ class FishTrap(MinorImprovement):
     def _check(self, player):
         pass
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         pass
 
 # TODO implement
@@ -1075,7 +1075,7 @@ class ClayPit(MinorImprovement):
     def _check(self, player):
         pass
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         pass
 
 class MajorImprovement(with_metaclass(abc.ABCMeta, Card)):
@@ -1088,10 +1088,10 @@ class MajorImprovement(with_metaclass(abc.ABCMeta, Card)):
         print("Applying major improvement {0}.".format(self.name))
         description = "Playing major improvement {0}".format(self)
         player.change_state(description, cost=self.cost.copy())
-        self._apply(player, choices)
+        self._apply(player)
 
     @abc.abstractmethod
-    def _apply(self, player, choices):
+    def _apply(self, player):
         raise NotImplementedError()
 
     @property
@@ -1115,7 +1115,7 @@ class MajorImprovement(with_metaclass(abc.ABCMeta, Card)):
 class Fireplace(with_metaclass(abc.ABCMeta, MajorImprovement)):
     _victory_points = 1
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         player.bread_rates[-1] = max(player.bread_rates[-1], 2)
 
         cooking_rates = player.cooking_rates
@@ -1137,7 +1137,7 @@ class CookingHearth(with_metaclass(abc.ABCMeta, MajorImprovement)):
     def upgrade_of(self):
         return [Fireplace]
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         player.bread_rates[-1] = max(player.bread_rates[-1], 3)
 
         cooking_rates = player.cooking_rates
@@ -1158,7 +1158,7 @@ class Well(MajorImprovement):
     victory_points = 4
     _cost = dict(wood=1, stone=3)
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         player.add_future(range(1, 6), 'food', 1)
 
 
@@ -1166,7 +1166,7 @@ class ClayOven(MajorImprovement):
     victory_points = 2
     _cost = dict(clay=3, stone=1)
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         bread_rates = player.bread_rates[:-1]
         bread_rates.append(5)
         bread_rates = sorted(bread_rates, reverse=True)
@@ -1176,7 +1176,7 @@ class StoneOven(MajorImprovement):
     victory_points = 3
     _cost = dict(clay=1, stone=3)
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         bread_rates = player.bread_rates[:-1]
         bread_rates.append(4)
         bread_rates.append(4)
@@ -1189,7 +1189,7 @@ class Joinery(MajorImprovement):
     def victory_points(self, player):
         return score_mapping(player.wood, [3, 5, 7], [2, 3, 4, 5])
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         player.harvest_rates['wood'].append(2)
 
 class Pottery(MajorImprovement):
@@ -1198,7 +1198,7 @@ class Pottery(MajorImprovement):
     def victory_points(self, player):
         return score_mapping(player.clay, [3, 5, 7], [2, 3, 4, 5])
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         player.harvest_rates['clay'].append(2)
 
 class BasketmakersWorkshop(MajorImprovement):
@@ -1207,6 +1207,6 @@ class BasketmakersWorkshop(MajorImprovement):
     def victory_points(self, player):
         return score_mapping(player.reed, [1, 3, 5], [2, 3, 4, 5])
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         player.harvest_rates['reed'].append(3)
 

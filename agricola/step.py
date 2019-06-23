@@ -1,8 +1,8 @@
 import abc
 import itertools
 from future.utils import with_metaclass
-from .choice import (ActionChoice, MinorImprovementChoice, SpaceChoice, OccupationChoice, FencingChoice)
-from . import const
+from .choice import (ActionChoice, MinorImprovementChoice, SpaceChoice, OccupationChoice, FencingChoice, MajorImprovementChoice)
+from . import const, cards
 
 class Step(with_metaclass(abc.ABCMeta, object)):
     def __init__(self):
@@ -35,7 +35,17 @@ class PlayOccupationStep(Step):
         return choice.choice_value.check_and_apply(player)
 
 class PlayMajorImprovementStep(Step):
-    pass
+    def get_required_choice_and_source(self):
+        # TODO set source
+        return MajorImprovementChoice, "major_improvement"
+
+    def effect(self, game, player, choice):
+        if isinstance(choice.choice_value, cards.MinorImprovement):
+            player.play_minor_improvement(choice.choice_value, game)
+        if isinstance(choice.choice_value, cards.MajorImprovement):
+            player.play_major_improvement(choice.choice_value, game)
+        
+        return choice.choice_value.check_and_apply(player)
 
 class PlayMinorImprovementStep(Step):
     def get_required_choice_and_source(self):

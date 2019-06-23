@@ -50,6 +50,11 @@ while True:
                 "minor_improvement_id": player_json["hand_improvements"][0]
             }
             break
+        if state_json["current_event"] == "MajorImprovementChoice":
+            output_json = {
+                "improvement_id": state_json["common_board"]["remaining_major_improvements"][0]
+            }
+            break
         if state_json["current_event"] == "OccupationChoice":
             output_json = {
                 "occupation_id": player_json["hand_occupations"][0]
@@ -109,7 +114,10 @@ while True:
                 fence_taken = True
                 break 
         elif chosen_action["action_id"] == "MajorImprovement":
-            pass
+            output_json = {
+                "action_id": "MajorImprovement"
+            }
+            break 
         elif chosen_action["action_id"] == "HouseRedevelopment":
             pass
         elif chosen_action["action_id"] == "BasicWishForChildren":

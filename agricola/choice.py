@@ -66,18 +66,22 @@ class MinorImprovementChoice(Choice):
         else:
             self.choice_value = None
 
-    @property
-    def next_choices(self):
-        if self.choice_value:
-            return self.choice_value.next_choices
-        return None
-
-    def validate(self):
-        pass
-
 class MajorImprovementChoice(Choice):
-    def validate(self):
-        pass
+    def __init__(self, game, player, choice_dict, desc=None, mx=None):
+        super(MajorImprovementChoice, self).__init__(desc, game, player, choice_dict)
+        if "improvement_id" in choice_dict:
+            target_improvement = [minor_improvement for minor_improvement in player.hand["minor_improvements"] if minor_improvement.name == choice_dict["improvement_id"]]
+            if len(target_improvement) != 0:
+                # TODO think about error
+                self.choice_value = target_improvement[0]
+                return
+            target_improvement = [major_improvement for major_improvement in game.major_improvements if major_improvement.name == choice_dict["improvement_id"]]
+            if len(target_improvement) != 0:
+                # TODO think about error
+                self.choice_value = target_improvement[0]
+                return
+        else:
+            self.choice_value = None
 
 class FarmlandChoice(Choice):
     def validate(self):
@@ -102,7 +106,6 @@ class SowingChoice(Choice):
 #     ]
 #   ]
 # }
-
 class FencingChoice(Choice):
     def __init__(self, game, player, choice_dict, desc=None, mx=None):
         super(FencingChoice, self).__init__(game, player, choice_dict)
