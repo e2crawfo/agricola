@@ -273,11 +273,11 @@ def play(game, ui, agent_processes, logdir):
       order = list(range(game.n_players))
       order = order[game.first_player_idx:] + order[:game.first_player_idx]
       game.actions_taken = {}
+      is_previous_action_failed = False
 
       for i in itertools.cycle(order):
         if i in remaining_players:
           action = None
-          is_previous_action_failed = False
 
           popen = agent_processes[i]
 
@@ -305,7 +305,9 @@ def play(game, ui, agent_processes, logdir):
                   next_source_name)
 
                 # send the context of current choice
+                state_dict["is_previous_action_failed"] = is_previous_action_failed
                 state_json = json.dumps(state_dict)
+                is_previous_action_failed = False
 
                 # send state to agent
                 popen.stdin.write(state_json + "\n")

@@ -8,7 +8,7 @@ from .choice import (
     VariableLengthListChoice, SpaceChoice, MinorImprovementChoice)
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
-from .step import PlayMinorImprovementStep
+from .step import PlayMinorImprovementStep, PlowingStep
 from .player import Pasture
 from . import const
 
@@ -466,13 +466,8 @@ class MeetingPlaceFamily(Accumulating):
 
 
 class Farmland(Action):
-    choice_classes = [{
-        "class": SpaceChoice,
-        "source": const.event_sources.plough
-    }]
-
-    def _effect(self, player, choices):
-        player.plow_fields(choices[0].choice_value)
+    def effect(self, player):
+        return [PlowingStep()]
 
 class Cultivation(Action):
     def choices(self, player):

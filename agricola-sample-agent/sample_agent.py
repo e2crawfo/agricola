@@ -37,7 +37,6 @@ while True:
         if chosen_action["action_id"] == "FarmExpansion":
             pass
         elif chosen_action["action_id"] == "Farmland":
-            continue
             if not "object_type" in player_json["board"][0][4]:
                 output_json = {
                     "action_id": "Farmland"
