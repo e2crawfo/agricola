@@ -33,7 +33,7 @@ while True:
         if state_json["current_event"] == "SpaceChoice" and state_json["event_source"] == "stable_building":
             if player_json["resources"]["wood"] >= 2 and stable_count != 4:
                 output_json = {
-                    "space": [stable_count + 1, 0]
+                    "space": [stable_count % 2 + 1, int(stable_count / 2)]
                 }
                 stable_count += 1
                 break
@@ -51,10 +51,14 @@ while True:
             }
             break
         if state_json["current_event"] == "MajorImprovementChoice":
-            output_json = {
-                "improvement_id": state_json["common_board"]["remaining_major_improvements"][0]
-            }
-            break
+            if player_json["resources"]["clay"] >= 2:
+                output_json = {
+                    "improvement_id": state_json["common_board"]["remaining_major_improvements"][0]
+                }
+                break
+            else:
+                output_json = {}
+                break
         if state_json["current_event"] == "OccupationChoice":
             output_json = {
                 "occupation_id": player_json["hand_occupations"][0]
@@ -119,7 +123,10 @@ while True:
             }
             break 
         elif chosen_action["action_id"] == "HouseRedevelopment":
-            pass
+            output_json = {
+                "action_id": "HouseRedevelopment"
+            }
+            break
         elif chosen_action["action_id"] == "BasicWishForChildren":
             pass
         elif chosen_action["action_id"] == "Cultivation":

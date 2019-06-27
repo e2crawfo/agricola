@@ -684,7 +684,7 @@ class Player(EventGenerator):
     assert material in self.valid_house_upgrades(), (
       "Cannot upgrade from {} to {}.".format(self.house_type, material))
     description = "Upgrading house from {0} to {1}".format(self.house_type, material)
-    cost = {self.material_required: self.n_rooms, 'reed': 1}
+    cost = {material: self.rooms, 'reed': 1}
     state_change = PlayerStateChange(description, cost=cost)
     state_change.check_and_apply(self)
     self.house_type = material
@@ -845,9 +845,18 @@ class Player(EventGenerator):
         board_space = {}
         space = i, j
         if space in room_spaces:
-          board_space = {
-            "object_type": "wooden_hut"
-          }
+          if self.house_type == "wood":
+            board_space = {
+              "object_type": "wooden_hut"
+            }
+          elif self.house_type == "clay":
+            board_space = {
+              "object_type": "clay_hut"
+            }
+          elif self.house_type == "stone":
+            board_space = {
+              "object_type": "stone_hut"
+            }
         elif space in stable_spaces:
           board_space = {
             "object_type": "stable"

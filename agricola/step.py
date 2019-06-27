@@ -40,6 +40,8 @@ class PlayMajorImprovementStep(Step):
         return MajorImprovementChoice, "major_improvement"
 
     def effect(self, game, player, choice):
+        if not choice.choice_value:
+            return
         if isinstance(choice.choice_value, cards.MinorImprovement):
             player.play_minor_improvement(choice.choice_value, game)
         if isinstance(choice.choice_value, cards.MajorImprovement):

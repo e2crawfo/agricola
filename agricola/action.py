@@ -295,32 +295,16 @@ class FarmExpansion(Action):
     def _convert_action_dict(self, player, action_dict):
         return [action_dict["rooms"], action_dict["stables"]]
 
-    
 
 class HouseRedevelopment(Action):
-    def choices(self, player):
-        house_upgrade_mats = player.valid_house_upgrades()
-        imps = player.hand["minor_improvements"] + player.game.major_improvements
-        return [
-            DiscreteChoice(house_upgrade_mats, "Choose new house material."),
-            DiscreteChoice(imps, "Choose an optional improvement after renovation.")]
-
-    def _effect(self, player, choices):
-        player.upgrade_house(choices[0])
-
-        imp = choices[1]
-        if imp is not None:
-            if isinstance(imp, MinorImprovementCard):
-                player.play_minor_improvement(imp, player.game)
-            elif isinstance(imp, MajorImprovementCard):
-                player.play_major_improvement(imp, player.game)
-                player.game.major_improvements.remove(imp)
-            else:
-                raise AgricolaPoorlyFormed(
-                    "Received {0}, but a major/minor improvement was expected.")
-    
-    def _convert_action_dict(self, player, action_dict):
-        return [action_dict["material"], action_dict["improvement"]["id"]]
+    def effect(self, player):
+        material = ""
+        if player.house_type == "wood":
+            material = "clay"
+        else:
+            material = "stone"
+        player.upgrade_house(material)
+        return [PlayMajorImprovementStep()]
 
 class FarmRedevelopment(Action):
     def choices(self, player):
@@ -341,7 +325,7 @@ class FarmRedevelopment(Action):
 class MajorImprovement(Action):
     def effect(self, player):
         return [PlayMajorImprovementStep()]
-        
+
 class Fencing(Action):
     def effect(self, player):
         return [FencingStep()]
