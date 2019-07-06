@@ -1,10 +1,16 @@
 import abc
+from collections import defaultdict
 from .player import Pasture
+from .utils import dbgprint
+from . import const
 
 class Choice(object):
-    def __init__(self, game, player, choice_dict, desc=None):
+    def __init__(self, game, player, desc=None):
         self.desc = desc
+        self.game = game
         self.player = player
+        self.candidates = self._get_candidates()
+        self.summarized_candidates = self._summarize_candidates(self.candidates)
         self.validate()
 
     @property
@@ -20,9 +26,15 @@ class Choice(object):
     def next_choices(self):
         return []
 
-    @classmethod
-    def get_candidates(self_cls, game, player):
+    def _get_candidates(self):
         return [] # todo: list up default candidates + trigger occupations and improvements?
+    def _summarize_candidates(self, candidates):
+        return candidates
+
+    @abc.abstractmethod
+    def read_players_choice(self, choice_dict):
+        pass
+
 
 class ActionChoice(Choice):
     '''
@@ -31,45 +43,41 @@ class ActionChoice(Choice):
         "action_id": "Fencing"
     }
     '''
-    def __init__(self, game, player, choice_dict, desc=None, mx=None):
-        super(ActionChoice, self).__init__(game, player, choice_dict)
+    def read_players_choice(self, choice_dict):
         if "action_id" in choice_dict:
-            target_action = [action for action in game.actions_remaining if action.name == choice_dict["action_id"]]
+            target_action = [action for action in self.game.actions_remaining if action.name == choice_dict["action_id"]]
             # TODO think about error
             self.choice_value = target_action[0]
         else:
             self.choice_value = None
 
 class OccupationChoice(Choice):
-    def __init__(self, game, player, choice_dict, desc=None, mx=None):
-        super(OccupationChoice, self).__init__(game, player, choice_dict)
+    def read_players_choice(self, choice_dict):
         if "occupation_id" in choice_dict:
-            target_occupation = [occupation for occupation in player.hand["occupations"] if occupation.name == choice_dict["occupation_id"]]
+            target_occupation = [occupation for occupation in self.player.hand["occupations"] if occupation.name == choice_dict["occupation_id"]]
             # TODO think about error
             self.choice_value = target_occupation[0]
         else:
             self.choice_value = None
 
 class MinorImprovementChoice(Choice):
-    def __init__(self, game, player, choice_dict, desc=None, mx=None):
-        super(MinorImprovementChoice, self).__init__(desc, game, player, choice_dict)
+    def read_players_choice(self, choice_dict):
         if "minor_improvement_id" in choice_dict:
-            target_improvement = [minor_improvement for minor_improvement in player.hand["minor_improvements"] if minor_improvement.name == choice_dict["minor_improvement_id"]]
+            target_improvement = [minor_improvement for minor_improvement in self.player.hand["minor_improvements"] if minor_improvement.name == choice_dict["minor_improvement_id"]]
             # TODO think about error
             self.choice_value = target_improvement[0]
         else:
             self.choice_value = None
 
 class MajorImprovementChoice(Choice):
-    def __init__(self, game, player, choice_dict, desc=None, mx=None):
-        super(MajorImprovementChoice, self).__init__(desc, game, player, choice_dict)
+    def read_players_choice(self, choice_dict):
         if "improvement_id" in choice_dict:
-            target_improvement = [minor_improvement for minor_improvement in player.hand["minor_improvements"] if minor_improvement.name == choice_dict["improvement_id"]]
+            target_improvement = [minor_improvement for minor_improvement in self.player.hand["minor_improvements"] if minor_improvement.name == choice_dict["improvement_id"]]
             if len(target_improvement) != 0:
                 # TODO think about error
                 self.choice_value = target_improvement[0]
                 return
-            target_improvement = [major_improvement for major_improvement in game.major_improvements if major_improvement.name == choice_dict["improvement_id"]]
+            target_improvement = [major_improvement for major_improvement in self.game.major_improvements if major_improvement.name == choice_dict["improvement_id"]]
             if len(target_improvement) != 0:
                 # TODO think about error
                 self.choice_value = target_improvement[0]
@@ -91,8 +99,7 @@ class FencingChoice(Choice):
         ]
     }
     '''
-    def __init__(self, game, player, choice_dict, desc=None, mx=None):
-        super(FencingChoice, self).__init__(game, player, choice_dict)
+    def read_players_choice(self, choice_dict):
         if "pastures" in choice_dict:
             self.choice_value = list(map(lambda p_array: Pasture(list(map(lambda pasture: (pasture[1], pasture[0]), p_array))), choice_dict["pastures"]))
         else:
@@ -105,8 +112,7 @@ class SpaceChoice(Choice):
         "space": [4,0]
     }
     '''
-    def __init__(self, game, player, choice_dict, desc=None, mx=None):
-        super(SpaceChoice, self).__init__(game, player, choice_dict)
+    def read_players_choice(self, choice_dict):
         if "space" in choice_dict:
             self.choice_value = [(choice_dict["space"][1], 
                                   choice_dict["space"][0])]
@@ -123,17 +129,35 @@ class PlowingChoice(SpaceChoice):
     pass
 
 class ResourceTradingChoice(Choice):
-  @classmethod
-  def get_candidates(self_cls, game, player):
-    self.resources = resources.copy()
-    self.resource_choices = [({'action_resources': self.resources, 'additional_resources': defaultdict(int)})]
-    # TODO check occupation and improvements
-    resource_choice_filters = player.trigger_event(const.trigger_event_names.take_resources_from_action, player, resource_choices=self.resource_choices)
+    def __init__(self, game, player, resources, desc=None):
+        self.resources = resources
+        self.selected_candidate_idx = 0
+        super(ResourceTradingChoice, self).__init__(game, player, desc=desc)
 
-    # TODO think about junretu
-    for resource_choice_filter in resource_choice_filters:
-      self.resource_choices = resource_choice_filter(self.resource_choices)
+    def _get_candidates(self):
+        choice_candidates = [({'action_resources': self.resources, 
+                               'additional_resources': defaultdict(int)})]
+        # TODO check occupation and improvements
+        choice_filters = self.player.trigger_event(const.trigger_event_names.take_resources_from_action, self.player, resource_choices=choice_candidates)
 
+        # TODO think about junretu
+        for choice_filter in choice_filters:
+            choice_candidates = choice_filter(choice_candidates)
+        self.choice_candidates = choice_candidates
+        return choice_candidates
 
+    def read_players_choice(self, choice_dict):
+        # ここでagentからの入力をもとにselected_candidate_idxを更新
+        raise NotImplementedError
 
+    def _summarize_candidates(self, candidates):
+        summarized = []
+        for c in candidates:
+            sc = defaultdict(int)
+            for k, v in c['action_resources'].items():
+                sc[k] += v
+            for k, v in c['additional_resources'].items():
+                sc[k] += v
+            summarized.append(sc)
+        return summarized
 

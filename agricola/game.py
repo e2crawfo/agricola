@@ -296,42 +296,40 @@ def play(game, ui, agent_processes, logdir):
               next_step = step_stack.pop()
               dbgprint(step_stack)
               dbgprint(next_step)
-              next_choice_class = next_step.get_required_choice()
-              choice_candidates = next_choice_class.get_candidates(game_copy, 
-                                                                   player)
-              choice = None
+              next_choice = next_step.get_required_choice(game_copy, player)
 
-              if next_choice_class:
-                # get player choice
+              if next_choice and len(next_choice.candidates) != 1:
+                # add context of the current choice to the state
                 state_dict = game_copy.get_state_dict()
+                state_dict['current_event'] = next_choice.name
+                state_dict['choice_candidates'] = next_choice.summarized_candidates
 
-                state_dict['current_event'] = next_choice_class.__name__
-                state_dict['choice_candidates'] = choice_candidates
-
-                # send the context of current choice
                 state_dict["is_previous_action_failed"] = is_previous_action_failed
                 state_json = json.dumps(state_dict)
                 is_previous_action_failed = False
 
-                # send state to agent
+                # send the state to agent
                 popen.stdin.write(state_json + "\n")
                 popen.stdin.flush()
 
-                # get action from agent
+                # receive the choice from agent
                 popen.stdout.flush()
-                player_action = popen.stdout.readline()
-                choice_dict = json.loads(player_action)
-                choice = next_choice_class(game_copy, player, choice_dict)
+                players_choice = json.loads(popen.stdout.readline())
 
-                state_dict["player_output"] = choice_dict
+                # add player's choice to the state
+                state_dict["player_output"] = players_choice
                 log_state_json = json.dumps(state_dict)
 
-                # write to log file
+                # log current state 
                 state_log_path = logdir + "/" + game.game_id + "_state.json"
                 with open(state_log_path, mode='a') as f:
                   f.write(log_state_json + "\n")
 
-              additional_steps = next_step.effect(game_copy, player ,choice)
+                # read player's choice 
+                next_choice.read_players_choice(players_choice)
+
+
+              additional_steps = next_step.effect(game_copy, player, next_choice)
               if additional_steps:
                 step_stack = step_stack + additional_steps
                 dbgprint(step_stack)

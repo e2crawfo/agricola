@@ -59,7 +59,7 @@ class ResourceAcquisition(Action):
         return ' '.join(s) + '>'
 
     def effect(self, player):
-        return [TakingResourcesFromActionStep(player, self.resources)]
+        return [TakingResourcesFromActionStep(self.resources)]
 
 
 class Accumulating(ResourceAcquisition):
