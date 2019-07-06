@@ -60,8 +60,19 @@ class PlayMinorImprovementStep(Step):
         player.play_minor_improvement(choice.choice_value, game)
         return choice.choice_value.check_and_apply(player)
 
-# class ResourcePayingStep(Step):
-#     pass
+class ResourcePayingStep(Step):
+  def __init__(self, cost, trigger_name):
+    self.trigger_name = trigger_name
+    self.resources = [cost]
+
+  def get_required_choice(self, game, player): 
+    # TODO make choice
+    return None
+
+  def effect(self, game, player, choice):
+    #TODO use choice
+    selected_candidate = self.resources[0]
+    player.change_state("", cost=selected_candidate)
 
 class TakingResourcesFromActionStep(Step):
     def __init__(self, resources, executed_action):
@@ -86,7 +97,14 @@ class TakingResourcesFromActionStep(Step):
 
 
 class RenovatingStep(Step):
-    pass
+  def __init__(self, resource):
+    self.resource = resource
+
+  def get_required_choice(self, game, player):
+    return None
+
+  def effect(self, game, player, choice):
+    player.upgrade_house(self.resource)
 
 class PlowingStep(Step):
     def get_required_choice(self, game, player):

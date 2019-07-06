@@ -8,7 +8,7 @@ from .choice import (
     OccupationChoice, SpaceChoice, MinorImprovementChoice,)
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
-from .step import PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep, FencingStep, PlayMajorImprovementStep, TakingResourcesFromActionStep
+from .step import ResourcePayingStep, RenovatingStep,PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep, FencingStep, PlayMajorImprovementStep, TakingResourcesFromActionStep
 from .player import Pasture
 from . import const
 from .utils import dbgprint
@@ -144,20 +144,12 @@ class Accumulating(ResourceAcquisition):
         }
 
 class BasicWishForChildren(Action):
-    def choices(self, player):
-        return [
-            DiscreteChoice(
-               player.hand['minor_improvements'],
-               "Pick an optional minor improvement after childbirth.")
-        ]
-
-    def _effect(self, player, choices):
+    def effect(self, player):
+        if len(player._rooms) <= player.people:
+            raise AgricolaImpossible(
+            "Trying to add people, but player has only {0} rooms available.".format(player._rooms))
         player.add_people(1)
-        if choices[0] is not None:
-            player.play_minor_improvement(choices[0], player.game)
-
-    def _convert_action_dict(self, player, action_dict):
-        return [action_dict["improvement"]["id"]]
+        return [PlayMinorImprovementStep()]
 
 class ModestWishForChildren(Action):
     def _effect(self, player, choices):
@@ -326,23 +318,19 @@ class HouseRedevelopment(Action):
             material = "clay"
         else:
             material = "stone"
-        player.upgrade_house(material)
-        return [PlayMajorImprovementStep()]
+        cost = {material: player.rooms, 'reed': 1}
+        return [PlayMajorImprovementStep(), RenovatingStep(material), ResourcePayingStep(cost, const.trigger_event_names.resource_payment_renovation)]
 
 class FarmRedevelopment(Action):
-    def choices(self, player):
-        return [
-            DiscreteChoice(player.house_progression[player.house_type], "Choose new house material."),
-            ListChoice(ListChoice(SpaceChoice("Space to pasteurize.")))
-        ]
+    def effect(self, player):
+        material = ""
+        if player.house_type == "wood":
+            material = "clay"
+        else:
+            material = "stone"
+        cost = {material: player.rooms, 'reed': 1}
+        return [FencingStep(), RenovatingStep(material), ResourcePayingStep(cost, const.trigger_event_names.resource_payment_renovation)]
 
-    def _effect(self, player, choices):
-        player.upgrade_house(choices[0])
-        if choices[1] is not None:
-            player.build_pastures(choices[1])
-
-    def _convert_action_dict(self, player, action_dict):
-        return [action_dict["material"], action_dict["pastures"]]
 
 
 class MajorImprovement(Action):

@@ -19,7 +19,7 @@ def get_minor_improvements():
     # DEBUG
     improvements = []
     for i in range(0, 100):
-       improvements.append(ReedPond())
+       improvements.append(Field())
     return improvements
     ####################
 
