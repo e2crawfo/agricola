@@ -295,7 +295,7 @@ def play(game, ui, agent_processes, logdir):
               next_step = step_stack.pop()
               dbgprint(step_stack)
               dbgprint(next_step)
-              next_choice_class, next_source_name = next_step.get_required_choice_and_source()
+              next_choice_class = next_step.get_required_choice()
               choice_candidates = next_choice_class.get_candidates(game_copy, 
                                                                    player)
               choice = None
@@ -305,7 +305,6 @@ def play(game, ui, agent_processes, logdir):
                 state_dict = game_copy.get_state_dict()
 
                 state_dict['current_event'] = next_choice_class.__name__
-                state_dict['event_source'] = next_source_name
                 state_dict['choice_candidates'] = choice_candidates
 
                 # send the context of current choice
