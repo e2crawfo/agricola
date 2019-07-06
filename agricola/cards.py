@@ -6,6 +6,7 @@ from .choice import (
     SpaceChoice)
 from .step import PlowingStep
 from . import const
+import copy
 
 class Card(with_metaclass(abc.ABCMeta, object)):
     @abc.abstractproperty
@@ -236,11 +237,16 @@ class Woodcutter(Occupation):
         player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 
     def trigger(self, player, **kwargs):
+        return self.resource_choice_filter
+
+    def resource_choice_filter(self, resource_choices):
         result = []
-        for resource_choice in kwargs["resource_choices"]:
-            if "wood" in kwargs.resources and kwargs.resources.wood >= 1:
-                kwargs.resources.additional_resources.wood += 1
-        return kwargs
+        for resource_choice in resource_choices:
+            choice = copy.deepcopy(resource_choice)
+            if "wood" in choice["action_resources"] and choice["action_resources"]["wood"] >= 1:
+                choice["additional_resources"]["wood"] += 1
+            result.append(choice)
+        return result
 
 # TODO implement
 class Conjurer(Occupation):

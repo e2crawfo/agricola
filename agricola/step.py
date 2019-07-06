@@ -3,6 +3,8 @@ import itertools
 from future.utils import with_metaclass
 from .choice import (ActionChoice, MinorImprovementChoice, SpaceChoice, OccupationChoice, FencingChoice, MajorImprovementChoice, PlowingChoice, StableBuildingChoice, HouseBuildingChoice)
 from . import const, cards
+from .utils import dotDict, recDotDefaultDict
+from collections import defaultdict
 
 class Step(with_metaclass(abc.ABCMeta, object)):
     def __init__(self):
@@ -63,9 +65,13 @@ class PlayMinorImprovementStep(Step):
 class TakingResourcesFromActionStep(Step):
   def __init__(self, player, resources):
     self.resources = resources.copy()
-    self.resource_choices = [{'action_resources': self.resources}]
+    self.resource_choices = [({'action_resources': self.resources, 'additional_resources': defaultdict(int)})]
     # TODO check occupation and improvements
-    self.resource_choices = player.trigger_event(const.trigger_event_names.take_resources_from_action, player,  resource_choices=self.resource_choices)
+    resource_choice_filters = player.trigger_event(const.trigger_event_names.take_resources_from_action, player, resource_choices=self.resource_choices)
+    
+    # TODO think about junretu
+    for resource_choice_filter in resource_choice_filters:
+      self.resource_choices = resource_choice_filter(self.resource_choices)
 
   def get_required_choice_and_source(self):
     # TODO trigger event
@@ -74,7 +80,10 @@ class TakingResourcesFromActionStep(Step):
   def effect(self, game, player, choice):
     # TODO use choice
     if len(self.resource_choices) == 1:
-      player.change_state("", change=self.resource_choices[0])
+      change = self.resource_choices[0]["action_resources"]
+      for k, v in self.resource_choices[0]["additional_resources"].items():
+        change[k] += v
+      player.change_state("", change=change)
 
 class RenovatingStep(Step):
     pass
