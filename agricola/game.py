@@ -491,3 +491,4 @@ class StandardAgricolaGame(AgricolaGame):
       minor_improvements=minor_improvements,
       major_improvements=major_improvements)
 
+

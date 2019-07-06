@@ -46,7 +46,6 @@ class PlayMajorImprovementStep(Step):
             player.play_minor_improvement(choice.choice_value, game)
         if isinstance(choice.choice_value, cards.MajorImprovement):
             player.play_major_improvement(choice.choice_value, game)
-        
         return choice.choice_value.check_and_apply(player)
 
 class PlayMinorImprovementStep(Step):
