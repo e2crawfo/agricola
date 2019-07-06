@@ -146,10 +146,6 @@ class ResourceTradingChoice(Choice):
         self.choice_candidates = choice_candidates
         return choice_candidates
 
-    def read_players_choice(self, choice_dict):
-        # ここでagentからの入力をもとにselected_candidate_idxを更新
-        raise NotImplementedError
-
     def _summarize_candidates(self, candidates):
         summarized = []
         for c in candidates:
@@ -160,4 +156,8 @@ class ResourceTradingChoice(Choice):
                 sc[k] += v
             summarized.append(sc)
         return summarized
+
+    def read_players_choice(self, choice_dict):
+        # todo; ここでagentからの入力をもとにselected_candidate_idxを更新
+        raise NotImplementedError
 
