@@ -127,7 +127,6 @@ class Lover(Occupation):
     def trigger(self, player, **kwargs):
         pass
 
-# TODO implement
 class ReedCollector(Occupation):
     deck = 'E'
     id = 205
@@ -135,10 +134,7 @@ class ReedCollector(Occupation):
     text = ''
 
     def check_and_apply(self, player):
-        pass
-
-    def trigger(self, player, **kwargs):
-        pass
+        player.add_future(range(1, 5), 'reed', 1)
 
 # TODO implement
 class PigWhisperer(Occupation):
@@ -499,7 +495,6 @@ class Braggart(Occupation):
     def trigger(self, player, **kwargs):
         pass
 
-# TODO implement
 class WoodCollector(Occupation):
     deck = 'I'
     id = 235
@@ -507,12 +502,8 @@ class WoodCollector(Occupation):
     text = ''
 
     def check_and_apply(self, player):
-        pass
+        player.add_future(range(1, 6), 'wood', 1)
 
-    def trigger(self, player, **kwargs):
-        pass
-
-# TODO implement
 class WoodDeliveryman(Occupation):
     deck = 'K'
     id = 283
@@ -520,10 +511,7 @@ class WoodDeliveryman(Occupation):
     text = ''
 
     def check_and_apply(self, player):
-        pass
-
-    def trigger(self, player, **kwargs):
-        pass
+        player.add_future(range(8, 15), 'wood', 1, absolute=True)
 
 # TODO implement
 class Greengrocer(Occupation):
@@ -551,7 +539,6 @@ class ClayWorker(Occupation):
     def trigger(self, player, **kwargs):
         pass
 
-# TODO implement
 class ClayDeliveryman(Occupation):
     deck = 'E'
     id = 187
@@ -559,10 +546,7 @@ class ClayDeliveryman(Occupation):
     text = ''
 
     def check_and_apply(self, player):
-        pass
-
-    def trigger(self, player, **kwargs):
-        pass
+        player.add_future(range(8, 15), 'clay', 1, absolute=True)
 
 # TODO implement
 class ClayMixer(Occupation):
@@ -742,7 +726,6 @@ class LandingNet(MinorImprovement):
     def _apply(self, player, choices):
         pass
 
-# TODO implement
 class AnimalPen(MinorImprovement):
     _cost = dict(wood=2)
     num_required_occupations = 4
@@ -751,11 +734,8 @@ class AnimalPen(MinorImprovement):
     text = ''
     _vicroty_points = 1
 
-    def _check(self, player):
-        pass
-
     def _apply(self, player, choices):
-        pass
+        player.add_future(range(1, 15), 'food', 2)
 
 # TODO implement
 class Manger(MinorImprovement):
@@ -831,7 +811,6 @@ class WoodenStrongbox(MinorImprovement):
     def _apply(self, player, choices):
         pass
 
-# TODO implement
 class FruitTree(MinorImprovement):
     num_required_occupations = 3
     deck = 'E'
@@ -839,11 +818,8 @@ class FruitTree(MinorImprovement):
     text = ''
     _victory_points = 1
 
-    def _check(self, player):
-        pass
-
     def _apply(self, player, choices):
-        pass
+        player.add_future(range(8, 15), 'food', 1, absolute=True)
 
 # TODO implement
 class Lumber(MinorImprovement):
@@ -899,18 +875,14 @@ class CornShef(MinorImprovement):
     def _apply(self, player, choices):
         pass
 
-# TODO implement
 class PrivateForest(MinorImprovement):
     _cost = dict(food=2)
     deck = 'E'
     id = 45
     text = ''
 
-    def _check(self, player):
-        pass
-
     def _apply(self, player, choices):
-        pass
+        player.add_future([2,4,6,8,10,12,14], 'wood', 1, absolute=True)
 
 # TODO implement
 class GrainCart(MinorImprovement):
@@ -988,7 +960,6 @@ class Field(MinorImprovement):
     def _apply(self, player):
         return [PlowingStep()]
 
-# TODO implement
 class Dovecote(MinorImprovement):
     _cost = dict(store=2)
     deck = 'E'
@@ -996,11 +967,8 @@ class Dovecote(MinorImprovement):
     text = ''
     _victory_points = 2
 
-    def _check(self, player):
-        pass
-
     def _apply(self, player):
-        pass
+        player.add_future([10,11,12,13,14], 'food', 1, absolute=True)
 
 # TODO implement
 class Bookshelf(MinorImprovement):
