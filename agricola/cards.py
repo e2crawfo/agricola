@@ -631,7 +631,7 @@ class ReedPond(MinorImprovement):
     text = ''
     _victory_points = 1
 
-    def _apply(self, player, choices):
+    def _apply(self, player):
         player.add_future(range(1, 3), 'reed', 1)
 
 # TODO implement
@@ -976,7 +976,7 @@ class SwanLake(MinorImprovement):
     _victory_points = 2
 
     def _apply(self, player):
-        player.add_future(range(1, 6, 'food', 1)
+        player.add_future(range(1, 6, 'food', 1))
 
 class Field(MinorImprovement):
     _cost = dict(food=1)
