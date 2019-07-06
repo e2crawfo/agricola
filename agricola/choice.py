@@ -22,7 +22,7 @@ class Choice(object):
 
 class ActionChoice(Choice):
     '''
-    ActionChoise sample
+    ActionChoice sample
     {
         "action_id": "Fencing"
     }
@@ -104,6 +104,21 @@ class SpaceChoice(Choice):
     def __init__(self, game, player, choice_dict, desc=None, mx=None):
         super(SpaceChoice, self).__init__(game, player, choice_dict)
         if "space" in choice_dict:
-            self.choice_value = [(choice_dict["space"][1], choice_dict["space"][0])]
+            self.choice_value = [(choice_dict["space"][1], 
+                                  choice_dict["space"][0])]
         else:
             self.choice_value = None
+
+class HouseBuildingChoice(SpaceChoice):
+    pass
+
+class StableBuildingChoice(SpaceChoice):
+    pass
+
+class PlowingChoice(SpaceChoice):
+    pass
+
+class ResourceTradingChoice(Choice):
+    pass
+
+

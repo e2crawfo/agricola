@@ -297,7 +297,7 @@ def play(game, ui, agent_processes, logdir):
               dbgprint(next_step)
               next_choice_class, next_source_name = next_step.get_required_choice_and_source()
               choice = None
-              
+
               if next_choice_class:
                 # get player choice
                 state_dict = game_copy.get_state_dict(
@@ -305,7 +305,7 @@ def play(game, ui, agent_processes, logdir):
                   next_source_name)
 
                 # send the context of current choice
-                state_dict["is_previous_action_failed"] = is_previous_action_failed
+                state_dict["is_previous_action_failed"] = is_previous_action_failedsne
                 state_json = json.dumps(state_dict)
                 is_previous_action_failed = False
 
@@ -317,7 +317,6 @@ def play(game, ui, agent_processes, logdir):
                 popen.stdout.flush()
                 player_action = popen.stdout.readline()
                 choice_dict = json.loads(player_action)
-                dbgprint(next_choice_class)
                 choice = next_choice_class(game_copy, player, choice_dict)
 
                 state_dict["player_output"] = choice_dict
