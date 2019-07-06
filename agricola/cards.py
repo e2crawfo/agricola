@@ -7,6 +7,10 @@ from .choice import (
 from .step import PlowingStep
 from . import const
 import copy
+from .errors import (
+  AgricolaException, AgricolaNotEnoughResources, AgricolaLogicError,
+  AgricolaPoorlyFormed, AgricolaImpossible)
+
 
 class Card(with_metaclass(abc.ABCMeta, object)):
     @abc.abstractproperty
@@ -53,7 +57,7 @@ def get_minor_improvements():
     # DEBUG
     improvements = []
     for i in range(0, 100):
-       improvements.append(Field())
+       improvements.append(ReedPond())
     return improvements
     ####################
 
@@ -575,6 +579,7 @@ class ClayMixer(Occupation):
 
 class MinorImprovement(with_metaclass(abc.ABCMeta, Card)):
     _victory_points = 0
+    num_required_occupations = 0
     traveling = False
 
     def __init__(self):
@@ -590,7 +595,8 @@ class MinorImprovement(with_metaclass(abc.ABCMeta, Card)):
         return self._apply(player)
 
     def _check(self, player):
-        pass
+        if len(player.occupations) < self.num_required_occupations:
+          raise AgricolaNotEnoughResources("{0} requires {1} occupations. now {2}".format(self.name, self.num_required_occupations, len(player.occupations)))  
 
     def _apply(self, player):
         pass
@@ -618,7 +624,6 @@ class MinorImprovement(with_metaclass(abc.ABCMeta, Card)):
     def text(self):
         pass
 
-# TODO implement
 class ReedPond(MinorImprovement):
     num_required_occupations = 3
     deck = 'E'
@@ -626,11 +631,8 @@ class ReedPond(MinorImprovement):
     text = ''
     _victory_points = 1
 
-    def _check(self, player):
-        pass
-
     def _apply(self, player, choices):
-        pass
+        player.add_future(range(1, 3), 'reed', 1)
 
 # TODO implement
 class Quarry(MinorImprovement):
@@ -797,7 +799,6 @@ class Canoe(MinorImprovement):
     def _apply(self, player, choices):
         pass
 
-# TODO implement
 class DuckPond(MinorImprovement):
     num_required_occupations = 2
     deck = 'K'
@@ -805,11 +806,8 @@ class DuckPond(MinorImprovement):
     text = ''
     _victory_points = 1
 
-    def _check(self, player):
-        pass
-
-    def _apply(self, player, choices):
-        pass
+    def _apply(self, player):
+        player.add_future(range(1, 4), 'food', 1)
 
 # TODO implement
 class Clogs(MinorImprovement):

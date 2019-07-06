@@ -269,6 +269,7 @@ def play(game, ui, agent_processes, logdir):
 
       for p in game.players:
         p.turn_left = p.people
+        p.start_round(game.round_idx)
       remaining_players = set(range(len(game.players)))
       order = list(range(game.n_players))
       order = order[game.first_player_idx:] + order[:game.first_player_idx]
