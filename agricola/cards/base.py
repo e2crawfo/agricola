@@ -17,8 +17,6 @@ def all_subclasses(cls):
         g for s in cls.__subclasses__() for g in all_subclasses(s)]
     return cls.__subclasses__() + recurse
 
-
-
 class Card(with_metaclass(abc.ABCMeta, object)):
     @abc.abstractproperty
     def card_type(self):

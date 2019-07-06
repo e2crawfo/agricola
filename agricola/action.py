@@ -1,4 +1,5 @@
 import abc
+from collections import defaultdict
 from future.utils import iteritems, with_metaclass
 
 #from agricola import AgricolaInvalidChoice, AgricolaImpossible, AgricolaPoorlyFormed
@@ -10,6 +11,7 @@ from .cards import MajorImprovement as MajorImprovementCard
 from .step import PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep, FencingStep, PlayMajorImprovementStep, TakingResourcesFromActionStep
 from .player import Pasture
 from . import const
+from .utils import dbgprint
 
 class Action(with_metaclass(abc.ABCMeta, object)):
     choice_classes = []
@@ -44,9 +46,13 @@ class Action(with_metaclass(abc.ABCMeta, object)):
         # Called at the beginning of every round.
         pass
 
-
 class ResourceAcquisition(Action):
-    resources = {}
+    default_resources = {}
+
+    def __init__(self):
+        self.resources = defaultdict(int)
+        for k, v in iteritems(self.default_resources):
+            self.resources[k] = v
 
     def __str__(self):
         s = ["<" + self.__class__.__name__ + ":"]
@@ -59,14 +65,30 @@ class ResourceAcquisition(Action):
         return ' '.join(s) + '>'
 
     def effect(self, player):
-        return [TakingResourcesFromActionStep(self.resources)]
+        resources = defaultdict(int)
+        for k, v in self.resources.items():
+            resources[k] = v
+        #return [TakingResourcesFromActionStep(self.resources)]
+        return [TakingResourcesFromActionStep(resources, self)]
 
+    def add_resources(self, resources_dict):
+        '''
+        For occupations or improvements that bring resources to board (e.g., MushroomCollector, etc.). 
+        Now we ignore those that do so to actions except ResourceAcquisition and Accumulating (e.g. Foreman), otherwise it is required to implement a process to gather resources from the action even if it originally provide resources.
+        '''
+
+        for k, v in resources_dict.items():
+            self.resources[k] += v
 
 class Accumulating(ResourceAcquisition):
+    '''
+    todo: unify with resource acquisition
+    '''
     acc_amount = {}
 
     def __init__(self):
-        self.resources = {}
+        #self.resources = {}
+        self.resources = defaultdict(int)
         for k, v in iteritems(self.acc_amount):
             self.resources[k] = 0
 
@@ -103,6 +125,8 @@ class Accumulating(ResourceAcquisition):
     def turn(self):
         for resource, amount in iteritems(self.acc_amount):
             self.resources[resource] += amount
+
+
 
     def get_state_dict(self):
         pairs = list(iteritems(self.resources))
@@ -151,7 +175,7 @@ class UrgentWishForChildren(Action):
 
 
 class DayLaborer(ResourceAcquisition):
-    resources = dict(food=2)
+    default_resources = dict(food=2)
 
 
 class Fishing(Accumulating):
@@ -200,11 +224,11 @@ class WesternQuarry(EasternQuarry):
     pass
 
 class ResourceMarket2P(ResourceAcquisition):
-    resources = dict(food=1, stone=1)
+    default_resources = dict(food=1, stone=1)
 
 
 class ResourceMarket3P(ResourceAcquisition):
-    resources = dict(food=1)
+    default_resources = dict(food=1)
 
     def choices(self, player):
         return [
@@ -228,7 +252,7 @@ class ResourceMarket3P(ResourceAcquisition):
 
 
 class ResourceMarket4P(ResourceAcquisition):
-    resources = dict(food=1, stone=1, reed=1)
+    default_resources = dict(food=1, stone=1, reed=1)
 
 class ReedBank(Accumulating):
     acc_amount = dict(reed=1)
@@ -458,11 +482,11 @@ class GrainUtilization(Action):
 
 
 class GrainSeeds(ResourceAcquisition):
-    resources = dict(grain=1)
+    default_resources = dict(grain=1)
 
 
 class VegetableSeeds(ResourceAcquisition):
-    resources = dict(veg=1)
+    default_resources = dict(veg=1)
 
 class SideJob(Action):
     def choices(self, player):

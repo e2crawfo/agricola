@@ -283,6 +283,12 @@ class dotDict(dict):
       return self[key]
     raise AttributeError("\'%s\' is not in %s" % (str(key), str(self.keys())))
 
+
+class dotDefaultDict(defaultdict):
+  __getattr__ = dict.__getitem__
+  __setattr__ = dict.__setitem__
+  __delattr__ = dict.__delitem__
+
 class recDotDict(dict):
   __getattr__ = dict.__getitem__
   __setattr__ = dict.__setitem__

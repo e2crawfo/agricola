@@ -17,7 +17,8 @@ def get_occupations(n_players):
     # DEBUG
     occupations = []
     for i in range(0, 100):
-       occupations.append(Woodcutter())
+        occupations.append(MushroomCollector())
+        #occupations.append(Woodcutter())
     return occupations
     ####################
 
@@ -80,8 +81,9 @@ class ReedCollector(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
+    def _apply(self, player):
         player.add_future(range(1, 5), 'reed', 1)
+
 
 # TODO implement
 class PigWhisperer(Occupation):
@@ -180,20 +182,47 @@ class Woodcutter(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
+    def _apply(self, player):
         player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 
     def trigger(self, player, **kwargs):
         return self.resource_choice_filter
 
-    def resource_choice_filter(self, resource_choices):
+    def resource_choice_filter(self, choice_candidates):
         result = []
-        for resource_choice in resource_choices:
-            choice = copy.deepcopy(resource_choice)
-            if "wood" in choice["action_resources"] and choice["action_resources"]["wood"] >= 1:
+        for choice_candidate in choice_candidates:
+            choice = copy.deepcopy(choice_candidate)
+            if choice['action_resources']['wood'] >= 1:
                 choice["additional_resources"]["wood"] += 1
             result.append(choice)
         return result
+
+class MushroomCollector(Occupation):
+    deck = 'E'
+    id = 196
+    min_players = 0
+    text = ''
+    def _apply(self, player):
+        player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
+
+    def trigger(self, player, **kwargs):
+        return self.resource_choice_filter
+
+    def resource_choice_filter(self, choice_candidates):
+        result = []
+        for choice_candidate in choice_candidates:
+            # do not use the effect (return it without modification)
+            result.append(choice_candidate)
+
+            # apply (put 2 woods back and add 3 foods)
+            choice = copy.deepcopy(choice_candidate)
+            if choice['action_resources']['wood'] >= 1:
+                choice['action_resources']['wood'] -= 1
+                choice['additional_resources']['food'] += 2
+                choice['resources_to_board']['wood'] += 1
+                result.append(choice)
+        return result
+
 
 # TODO implement
 class Conjurer(Occupation):
@@ -507,3 +536,6 @@ class ClayMixer(Occupation):
 
     def trigger(self, player, **kwargs):
         pass
+
+
+    

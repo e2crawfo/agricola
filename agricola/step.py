@@ -3,7 +3,7 @@ import itertools
 from future.utils import with_metaclass
 from .choice import (ActionChoice, MinorImprovementChoice, SpaceChoice, OccupationChoice, FencingChoice, MajorImprovementChoice, PlowingChoice, StableBuildingChoice, HouseBuildingChoice, ResourceTradingChoice)
 from . import const, cards
-from .utils import dotDict, recDotDefaultDict
+from .utils import dotDict, recDotDefaultDict, dbgprint
 from collections import defaultdict
 
 class Step(with_metaclass(abc.ABCMeta, object)):
@@ -64,31 +64,26 @@ class PlayMinorImprovementStep(Step):
 #     pass
 
 class TakingResourcesFromActionStep(Step):
-  def __init__(self, resources):
-    self.resources = resources.copy()
-    # self.resource_choices = [({'action_resources': self.resources, 
-    #                            'additional_resources': defaultdict(int)})]
-    # # TODO check occupation and improvements
-    # resource_choice_filters = player.trigger_event(const.trigger_event_names.take_resources_from_action, player, resource_choices=self.resource_choices)
+    def __init__(self, resources, executed_action):
+        self.resources = resources.copy()
+        self.executed_action = executed_action
+        assert type(self.resources) == defaultdict
 
-    # # TODO think about junretu
-    # for resource_choice_filter in resource_choice_filters:
-    #   self.resource_choices = resource_choice_filter(self.resource_choices)
+    def get_required_choice(self, game, player):
+        # TODO trigger event
+        return ResourceTradingChoice(game, player, self.resources)
 
-  def get_required_choice(self, game, player):
-    # TODO trigger event
-    return ResourceTradingChoice(game, player, self.resources)
+    def effect(self, game, player, choice):
+        selected_summary = choice.selected_summarized_candidate
+        selected_candidate = choice.selected_candidate
+        #if True or 'resources_to_board' in selected_candidate:
+        if selected_candidate['resources_to_board']:
+            self.executed_action.add_resources(selected_candidate['resources_to_board']) # take leftover back to the action if it exists.
+            # raise NotImplementedError
 
-  def effect(self, game, player, choice):
-    # # TODO use choice
-    # if len(self.resource_choices) == 1:
-    #   change = self.resource_choices[0]["action_resources"]
-    #   for k, v in self.resource_choices[0]["additional_resources"].items():
-    #     change[k] += v
-    # player.change_state("", change=change)
-    selected_candidate = choice.summarized_candidates[choice.selected_candidate_idx]
-    player.change_state("", change=selected_candidate)
-    
+
+        player.change_state("", change=selected_summary)
+
 
 class RenovatingStep(Step):
     pass

@@ -9,8 +9,11 @@ class Choice(object):
         self.desc = desc
         self.game = game
         self.player = player
+
+        self.selected_candidate_idx = 0
         self.candidates = self._get_candidates()
         self.summarized_candidates = self._summarize_candidates(self.candidates)
+
         self.validate()
 
     @property
@@ -31,6 +34,14 @@ class Choice(object):
     def _summarize_candidates(self, candidates):
         return candidates
 
+    @property
+    def selected_summarized_candidate(self):
+        return self.summarized_candidates[self.selected_candidate_idx]
+
+    @property
+    def selected_candidate(self):
+        return self.candidates[self.selected_candidate_idx]
+    
     @abc.abstractmethod
     def read_players_choice(self, choice_dict):
         pass
@@ -131,12 +142,14 @@ class PlowingChoice(SpaceChoice):
 class ResourceTradingChoice(Choice):
     def __init__(self, game, player, resources, desc=None):
         self.resources = resources
-        self.selected_candidate_idx = 0
         super(ResourceTradingChoice, self).__init__(game, player, desc=desc)
 
     def _get_candidates(self):
-        choice_candidates = [({'action_resources': self.resources, 
-                               'additional_resources': defaultdict(int)})]
+        choice_candidates = [({
+            'action_resources': self.resources, 
+            'additional_resources': defaultdict(int),
+            'resources_to_board':defaultdict(int)
+        })]
         # TODO check occupation and improvements
         choice_filters = self.player.trigger_event(const.trigger_event_names.take_resources_from_action, self.player, resource_choices=choice_candidates)
 
@@ -159,5 +172,7 @@ class ResourceTradingChoice(Choice):
 
     def read_players_choice(self, choice_dict):
         # todo; ここでagentからの入力をもとにselected_candidate_idxを更新
-        raise NotImplementedError
+        #self.selected_candidate_idx = random.choice(range(len(self.candidates)))
+        self.selected_candidate_idx = len(self.candidates) - 1
+        
 
