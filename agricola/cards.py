@@ -770,7 +770,6 @@ class Manger(MinorImprovement):
     def _apply(self, player, choices):
         pass
 
-# TODO implement
 class GoosePond(MinorImprovement):
     num_required_occupations = 3
     deck = 'I'
@@ -778,11 +777,8 @@ class GoosePond(MinorImprovement):
     text = ''
     _victory_points = 1
 
-    def _check(self, player):
-        pass
-
-    def _apply(self, player, choices):
-        pass
+    def _apply(self, player):
+        player.add_future(range(1, 5), 'food', 1)
 
 # TODO implement
 class Canoe(MinorImprovement):
@@ -972,7 +968,6 @@ class SackCart(MinorImprovement):
     def _apply(self, player, choices):
         pass
 
-# TODO implement
 class SwanLake(MinorImprovement):
     num_required_occupations = 4
     deck = 'K'
@@ -980,11 +975,8 @@ class SwanLake(MinorImprovement):
     text = ''
     _victory_points = 2
 
-    def _check(self, player):
-        pass
-
-    def _apply(self, player, choices):
-        pass
+    def _apply(self, player):
+        player.add_future(range(1, 6, 'food', 1)
 
 class Field(MinorImprovement):
     _cost = dict(food=1)

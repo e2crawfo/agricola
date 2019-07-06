@@ -124,7 +124,7 @@ class PlowingChoice(SpaceChoice):
 
 class ResourceTradingChoice(Choice):
   @classmethod
-    def get_candidates(self_cls, game, player):
+  def get_candidates(self_cls, game, player):
     self.resources = resources.copy()
     self.resource_choices = [({'action_resources': self.resources, 'additional_resources': defaultdict(int)})]
     # TODO check occupation and improvements
