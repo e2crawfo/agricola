@@ -16,12 +16,12 @@ while True:
     available_action = list(filter(lambda x: x["is_available"], state_json["common_board"]["actions"]))
 
     while True:
-        if state_json["current_event"] == "SpaceChoice" and state_json["event_source"] == "plowing":
+        if state_json["current_event"] == "PlowingChoice":
             output_json = {
                 "space": [4, 0]
             }
             break
-        if state_json["current_event"] == "SpaceChoice" and state_json["event_source"] == "room_building":
+        if state_json["current_event"] == "HouseBuildingChoice":
             if player_json["resources"]["wood"] >= 5 and player_json["resources"]["reed"] >= 2:
                 output_json = {
                     "space": [0, 2]
@@ -30,7 +30,7 @@ while True:
             else:
                 output_json = {}
                 break
-        if state_json["current_event"] == "SpaceChoice" and state_json["event_source"] == "stable_building":
+        if state_json["current_event"] == "StableBuildingChoice":
             if player_json["resources"]["wood"] >= 2 and stable_count != 4:
                 output_json = {
                     "space": [stable_count % 2 + 1, int(stable_count / 2)]

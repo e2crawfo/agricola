@@ -305,7 +305,7 @@ def play(game, ui, agent_processes, logdir):
                   next_source_name)
 
                 # send the context of current choice
-                state_dict["is_previous_action_failed"] = is_previous_action_failedsne
+                state_dict["is_previous_action_failed"] = is_previous_action_failed
                 state_json = json.dumps(state_dict)
                 is_previous_action_failed = False
 

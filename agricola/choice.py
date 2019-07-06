@@ -119,6 +119,9 @@ class PlowingChoice(SpaceChoice):
     pass
 
 class ResourceTradingChoice(Choice):
+    '''
+    
+    '''
     pass
 
 
