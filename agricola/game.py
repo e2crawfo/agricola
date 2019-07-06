@@ -256,6 +256,8 @@ def play(game, ui, agent_processes, logdir):
 
   # Main loop
   game.active_actions = [a for a in game.action_order[0]]
+  is_previous_action_failed = False
+  previous_error = ""
   for stage_actions in game.action_order[1:]:
     ui.begin_stage(game.stage_idx)
     for round_action in stage_actions:
@@ -274,8 +276,6 @@ def play(game, ui, agent_processes, logdir):
       order = list(range(game.n_players))
       order = order[game.first_player_idx:] + order[:game.first_player_idx]
       game.actions_taken = {}
-      is_previous_action_failed = False
-      previous_error = ""
 
       for i in itertools.cycle(order):
         if i in remaining_players:
