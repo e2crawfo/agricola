@@ -2,8 +2,7 @@ from future.builtins.misc import input
 import re
 
 from .action import (
-  DiscreteChoice, CountChoice, ListChoice,
-  VariableLengthListChoice, SpaceChoice)
+  SpaceChoice)
   #VariableLengthListChoice, SpaceChoice, DictChoice)
 
 

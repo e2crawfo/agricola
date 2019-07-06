@@ -3,7 +3,7 @@ from future.utils import with_metaclass
 
 from .utils import score_mapping, cumsum
 from .choice import (
-    YesNoChoice, DiscreteChoice, CountChoice, ListChoice, SpaceChoice)
+    SpaceChoice)
 from .step import PlowingStep
 
 class Card(with_metaclass(abc.ABCMeta, object)):

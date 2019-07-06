@@ -4,8 +4,7 @@ from future.utils import iteritems, with_metaclass
 #from agricola import AgricolaInvalidChoice, AgricolaImpossible, AgricolaPoorlyFormed
 from .errors import AgricolaInvalidChoice, AgricolaImpossible, AgricolaPoorlyFormed
 from .choice import (
-    OccupationChoice, DiscreteChoice, CountChoice, ListChoice,
-    VariableLengthListChoice, SpaceChoice, MinorImprovementChoice,)
+    OccupationChoice, SpaceChoice, MinorImprovementChoice,)
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
 from .step import PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep, FencingStep, PlayMajorImprovementStep
