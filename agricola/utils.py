@@ -53,7 +53,6 @@ class EventGenerator(with_metaclass(abc.ABCMeta, object)):
       trigger_results.append(l.trigger(*args, **kwargs))
     return trigger_results
 
-
 class EventScope(object):
   def __init__(self, event_generators, event_name, **kwargs):
     if isinstance(event_generators, EventGenerator):

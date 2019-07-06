@@ -19,6 +19,10 @@ class Choice(object):
     @property
     def next_choices(self):
         return []
+    
+    @classmethod
+    def get_candidates(self_cls, game, player):
+        return []
 
 class ActionChoice(Choice):
     '''
@@ -90,7 +94,7 @@ class FencingChoice(Choice):
     def __init__(self, game, player, choice_dict, desc=None, mx=None):
         super(FencingChoice, self).__init__(game, player, choice_dict)
         if "pastures" in choice_dict:
-            self.choice_value = list(map(lambda p_array: Pasture(list(map(lambda pasture: (pasture[1], pasture[0]) ,p_array))), choice_dict["pastures"]))
+            self.choice_value = list(map(lambda p_array: Pasture(list(map(lambda pasture: (pasture[1], pasture[0]), p_array))), choice_dict["pastures"]))
         else:
             self.choice_value = None
 
@@ -120,8 +124,8 @@ class PlowingChoice(SpaceChoice):
 
 class ResourceTradingChoice(Choice):
     '''
-    
     '''
+    
     pass
 
 
