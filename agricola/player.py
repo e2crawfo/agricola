@@ -339,7 +339,7 @@ class Player(EventGenerator):
     self.house_type = house_type
 
     if rooms is None:
-      rooms = [(0, 0), (1, 0)]
+      rooms = [(0, 0), (1, 0), (2, 0)]
     self._rooms = rooms = [Room(r) for r in rooms]
 
     pastures = pastures or []

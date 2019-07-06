@@ -128,7 +128,10 @@ while True:
             }
             break
         elif chosen_action["action_id"] == "BasicWishForChildren":
-            pass
+            output_json = {
+                "action_id": "BasicWishForChildren"
+            }
+            break
         elif chosen_action["action_id"] == "Cultivation":
             pass
         elif chosen_action["action_id"] == "FarmRedevelopment":

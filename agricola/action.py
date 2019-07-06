@@ -120,20 +120,12 @@ class Accumulating(ResourceAcquisition):
         }
 
 class BasicWishForChildren(Action):
-    def choices(self, player):
-        return [
-            DiscreteChoice(
-               player.hand['minor_improvements'],
-               "Pick an optional minor improvement after childbirth.")
-        ]
-
-    def _effect(self, player, choices):
+    def effect(self, player):
+        if len(player._rooms) <= player.people:
+            raise AgricolaImpossible(
+            "Trying to add people, but player has only {0} rooms available.".format(player._rooms))
         player.add_people(1)
-        if choices[0] is not None:
-            player.play_minor_improvement(choices[0], player.game)
-
-    def _convert_action_dict(self, player, action_dict):
-        return [action_dict["improvement"]["id"]]
+        return [PlayMinorImprovementStep()]
 
 class ModestWishForChildren(Action):
     def _effect(self, player, choices):

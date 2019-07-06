@@ -275,6 +275,7 @@ def play(game, ui, agent_processes, logdir):
       order = order[game.first_player_idx:] + order[:game.first_player_idx]
       game.actions_taken = {}
       is_previous_action_failed = False
+      previous_error = ""
 
       for i in itertools.cycle(order):
         if i in remaining_players:
@@ -305,6 +306,8 @@ def play(game, ui, agent_processes, logdir):
                 state_dict['choice_candidates'] = next_choice.summarized_candidates
 
                 state_dict["is_previous_action_failed"] = is_previous_action_failed
+                if is_previous_action_failed:
+                  state_dict["previous_error"] = previous_error
                 state_json = json.dumps(state_dict)
                 is_previous_action_failed = False
 
@@ -420,6 +423,7 @@ def play(game, ui, agent_processes, logdir):
             ui.action_failed(str(e))
             action = None
             is_previous_action_failed = True
+            previous_error = str(e)
             game.players[i].turn_left -= 1
             del game_copy
 
