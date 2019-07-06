@@ -137,7 +137,8 @@ class AgricolaGame(EventGenerator):
     s += ">"
     return ''.join(s)
 
-  def get_state_dict(self, current_event, event_source):
+  # def get_state_dict(self, current_event, event_source):
+  def get_state_dict(self):
     round_action_array = []
     for stage_action in self.action_order[1:]:
       for round_action in stage_action:
@@ -163,8 +164,8 @@ class AgricolaGame(EventGenerator):
       "current_stage": self.stage_idx,
       "current_round": self.round_idx,
       "current_player": self.current_player_idx,
-      "current_event": current_event,
-      "event_source": event_source,
+      # "current_event": current_event,
+      # "event_source": event_source,
       "start_player": self.first_player_idx,
       "common_board": {
         "round_cards": round_action_array,
@@ -216,7 +217,6 @@ class AgricolaGame(EventGenerator):
       choices = choices[0]
 
     return choices
-
 
 def play(game, ui, agent_processes, logdir):
   game.ui = ui
@@ -296,14 +296,17 @@ def play(game, ui, agent_processes, logdir):
               next_step = step_stack.pop()
               dbgprint(step_stack)
               dbgprint(next_step)
-              next_choice_class, next_source_name = next_step.get_required_choice_and_source()
+              next_choice_class = next_step.get_required_choice()
+              choice_candidates = next_choice_class.get_candidates(game_copy, 
+                                                                   player)
               choice = None
 
               if next_choice_class:
                 # get player choice
-                state_dict = game_copy.get_state_dict(
-                  next_choice_class.__name__,
-                  next_source_name)
+                state_dict = game_copy.get_state_dict()
+
+                state_dict['current_event'] = next_choice_class.__name__
+                state_dict['choice_candidates'] = choice_candidates
 
                 # send the context of current choice
                 state_dict["is_previous_action_failed"] = is_previous_action_failed

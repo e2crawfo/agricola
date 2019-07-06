@@ -10,16 +10,16 @@ class Step(with_metaclass(abc.ABCMeta, object)):
     def __init__(self):
         pass
 
-    def get_required_choice_and_source(self):
-        return None, None
+    def get_required_choice(self):
+        return None
 
     # returns next stack items
     def effect(self, game, player, choice):
         return None
 
 class ActionSelectionStep(Step):
-    def get_required_choice_and_source(self):
-        return ActionChoice, const.event_sources.game
+    def get_required_choice(self):
+        return ActionChoice
 
     def effect(self, game, player, choice):
         game.actions_taken[choice.choice_value] = player.index
@@ -28,18 +28,18 @@ class ActionSelectionStep(Step):
         return choice.choice_value.effect(player)
 
 class PlayOccupationStep(Step):
-    def get_required_choice_and_source(self):
+    def get_required_choice(self):
         # TODO set proper source
-        return OccupationChoice, "occupation"
+        return OccupationChoice
 
     def effect(self, game, player, choice):
         player.play_occupation(choice.choice_value, game)
         return choice.choice_value.check_and_apply(player)
 
 class PlayMajorImprovementStep(Step):
-    def get_required_choice_and_source(self):
+    def get_required_choice(self):
         # TODO set source
-        return MajorImprovementChoice, "major_improvement"
+        return MajorImprovementChoice
 
     def effect(self, game, player, choice):
         if not choice.choice_value:
@@ -51,9 +51,9 @@ class PlayMajorImprovementStep(Step):
         return choice.choice_value.check_and_apply(player)
 
 class PlayMinorImprovementStep(Step):
-    def get_required_choice_and_source(self):
+    def get_required_choice(self):
         # TODO set source
-        return MinorImprovementChoice, "minor_improvement"
+        return MinorImprovementChoice
 
     def effect(self, game, player, choice):
         player.play_minor_improvement(choice.choice_value, game)
@@ -68,14 +68,14 @@ class TakingResourcesFromActionStep(Step):
     self.resource_choices = [({'action_resources': self.resources, 'additional_resources': defaultdict(int)})]
     # TODO check occupation and improvements
     resource_choice_filters = player.trigger_event(const.trigger_event_names.take_resources_from_action, player, resource_choices=self.resource_choices)
-    
+
     # TODO think about junretu
     for resource_choice_filter in resource_choice_filters:
       self.resource_choices = resource_choice_filter(self.resource_choices)
 
-  def get_required_choice_and_source(self):
+  def get_required_choice(self):
     # TODO trigger event
-    return None, None
+    return ResourceTradingChoice
 
   def effect(self, game, player, choice):
     # TODO use choice
@@ -89,17 +89,17 @@ class RenovatingStep(Step):
     pass
 
 class PlowingStep(Step):
-    def get_required_choice_and_source(self):
+    def get_required_choice(self):
         # TODO set source
-        return PlowingChoice, "plowing"
+        return PlowingChoice
 
     def effect(self, game, player, choice):
         player.plow_fields(choice.choice_value)
 
 class HouseBuildingStep(Step):
-    def get_required_choice_and_source(self):
+    def get_required_choice(self):
         # TODO set source
-        return HouseBuildingChoice, "room_building"
+        return HouseBuildingChoice
     
     def effect(self, game, player, choice):
         if choice.choice_value:
@@ -107,9 +107,9 @@ class HouseBuildingStep(Step):
             return [HouseBuildingStep()]
 
 class StableBuildingStep(Step):
-    def get_required_choice_and_source(self):
+    def get_required_choice(self):
         # TODO set source
-        return StableBuildingChoice, "stable_building"
+        return StableBuildingChoice
     
     def effect(self, game, player, choice):
         if choice.choice_value:
@@ -123,9 +123,9 @@ class BakingStep(Step):
     pass
 
 class FencingStep(Step):
-    def get_required_choice_and_source(self):
+    def get_required_choice(self):
         # TODO set source
-        return FencingChoice, "fencing"
+        return FencingChoice
     
     def effect(self, game, player, choice):
         if choice.choice_value:

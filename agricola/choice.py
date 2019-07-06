@@ -20,6 +20,10 @@ class Choice(object):
     def next_choices(self):
         return []
 
+    @classmethod
+    def get_candidates(self_cls, game, player):
+        return [] # todo: list up default candidates + trigger occupations and improvements?
+
 class ActionChoice(Choice):
     '''
     ActionChoice sample
@@ -90,7 +94,7 @@ class FencingChoice(Choice):
     def __init__(self, game, player, choice_dict, desc=None, mx=None):
         super(FencingChoice, self).__init__(game, player, choice_dict)
         if "pastures" in choice_dict:
-            self.choice_value = list(map(lambda p_array: Pasture(list(map(lambda pasture: (pasture[1], pasture[0]) ,p_array))), choice_dict["pastures"]))
+            self.choice_value = list(map(lambda p_array: Pasture(list(map(lambda pasture: (pasture[1], pasture[0]), p_array))), choice_dict["pastures"]))
         else:
             self.choice_value = None
 
@@ -119,9 +123,17 @@ class PlowingChoice(SpaceChoice):
     pass
 
 class ResourceTradingChoice(Choice):
-    '''
-    
-    '''
-    pass
+  @classmethod
+    def get_candidates(self_cls, game, player):
+    self.resources = resources.copy()
+    self.resource_choices = [({'action_resources': self.resources, 'additional_resources': defaultdict(int)})]
+    # TODO check occupation and improvements
+    resource_choice_filters = player.trigger_event(const.trigger_event_names.take_resources_from_action, player, resource_choices=self.resource_choices)
+
+    # TODO think about junretu
+    for resource_choice_filter in resource_choice_filters:
+      self.resource_choices = resource_choice_filter(self.resource_choices)
+
+
 
 
