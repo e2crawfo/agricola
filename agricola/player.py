@@ -339,7 +339,7 @@ class Player(EventGenerator):
     self.house_type = house_type
 
     if rooms is None:
-      rooms = [(0, 0), (1, 0), (2, 0)]
+      rooms = [(0, 0), (1, 0)]
     self._rooms = rooms = [Room(r) for r in rooms]
 
     pastures = pastures or []
@@ -684,9 +684,6 @@ class Player(EventGenerator):
     assert material in self.valid_house_upgrades(), (
       "Cannot upgrade from {} to {}.".format(self.house_type, material))
     description = "Upgrading house from {0} to {1}".format(self.house_type, material)
-    cost = {material: self.rooms, 'reed': 1}
-    state_change = PlayerStateChange(description, cost=cost)
-    state_change.check_and_apply(self)
     self.house_type = material
 
   def build_pastures(self, pastures):

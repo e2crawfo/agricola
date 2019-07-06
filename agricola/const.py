@@ -23,5 +23,6 @@ trigger_event_names = dotDict({
   'occupation': 'occupation',
   'minor_improvement': 'minor_improvement',
   'major_improvement': 'major_improvement',
-  "take_resources_from_action": "take_resources_from_action"
+  "take_resources_from_action": "take_resources_from_action",
+  "resource_payment_renovation": "resource_payment_renovation"
 })
