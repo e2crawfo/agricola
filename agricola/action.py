@@ -7,7 +7,7 @@ from .choice import (
     OccupationChoice, SpaceChoice, MinorImprovementChoice,)
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
-from .step import PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep, FencingStep, PlayMajorImprovementStep, ResourceTradingStep
+from .step import PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep, FencingStep, PlayMajorImprovementStep, TakingResourcesFromActionStep
 from .player import Pasture
 from . import const
 
@@ -59,7 +59,7 @@ class ResourceAcquisition(Action):
         return ' '.join(s) + '>'
 
     def effect(self, player):
-        return [ResourceTradingStep(self.resources)]
+        return [TakingResourcesFromActionStep(player, self.resources)]
 
 
 class Accumulating(ResourceAcquisition):

@@ -60,11 +60,12 @@ class PlayMinorImprovementStep(Step):
 # class ResourcePayingStep(Step):
 #     pass
 
-class ResourceTradingStep(Step):
-  def __init__(self, resources):
+class TakingResourcesFromActionStep(Step):
+  def __init__(self, player, resources):
     self.resources = resources.copy()
+    self.resource_choices = [{'action_resources': self.resources}]
     # TODO check occupation and improvements
-    self.resource_choices = [self.resources]
+    self.resource_choices = player.trigger_event(const.trigger_event_names.take_resources_from_action, player,  resource_choices=self.resource_choices)
 
   def get_required_choice_and_source(self):
     # TODO trigger event

@@ -17,10 +17,11 @@ class EventGenerator(with_metaclass(abc.ABCMeta, object)):
 
   def listen_for_event(self, listener, event_name, before=False):
     valid = self._validate_event_name(event_name)
-    if not valid:
-      raise Exception(
-        "{} is not a valid event name for class {}.".format(
-          event_name, self.__class__.__name__))
+    # TODO disable validation
+    # if not valid:
+    #   raise Exception(
+    #     "{} is not a valid event name for class {}.".format(
+    #       event_name, self.__class__.__name__))
     if before:
       event_name += '-before'
 
@@ -36,18 +37,21 @@ class EventGenerator(with_metaclass(abc.ABCMeta, object)):
 
   def trigger_event(self, event_name, *args, before=False, **kwargs):
     valid = self._validate_event_name(event_name)
-    if not valid:
-      raise Exception(
-        "{} is not a valid event name for class {}.".format(
-          event_name, self.__class__.__name__))
+    # TODO disable validation
+    # if not valid:
+    #   raise Exception(
+    #     "{} is not a valid event name for class {}.".format(
+    #       event_name, self.__class__.__name__))
 
     if before:
       event_name += '-before'
 
     listeners = self.listeners.get(event_name, [])
+    trigger_results = []
     for l in listeners:
       print(l)
-      l.trigger(*args, **kwargs)
+      trigger_results.append(l.trigger(*args, **kwargs))
+    return trigger_results
 
 
 class EventScope(object):

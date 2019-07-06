@@ -5,6 +5,7 @@ from .utils import score_mapping, cumsum
 from .choice import (
     SpaceChoice)
 from .step import PlowingStep
+from . import const
 
 class Card(with_metaclass(abc.ABCMeta, object)):
     @abc.abstractproperty
@@ -33,6 +34,14 @@ def all_subclasses(cls):
 
 
 def get_occupations(n_players):
+    
+    # DEBUG
+    occupations = []
+    for i in range(0, 100):
+       occupations.append(Woodcutter())
+    return occupations
+    ####################
+
     occ_classes = all_subclasses(Occupation)
     return [o() for o in occ_classes if o.min_players <= n_players]
 
@@ -217,18 +226,21 @@ class Tutor(Occupation):
     def trigger(self, player, **kwargs):
         pass
 
-# TODO implement
-class Wodcutter(Occupation):
+class Woodcutter(Occupation):
     deck = 'E'
     id = 176
     min_players = 1
     text = ''
 
     def check_and_apply(self, player):
-        pass
+        player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 
     def trigger(self, player, **kwargs):
-        pass
+        result = []
+        for resource_choice in kwargs["resource_choices"]:
+            if "wood" in kwargs.resources and kwargs.resources.wood >= 1:
+                kwargs.resources.additional_resources.wood += 1
+        return kwargs
 
 # TODO implement
 class Conjurer(Occupation):
