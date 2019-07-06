@@ -577,8 +577,8 @@ class Player(EventGenerator):
       resources = self.futures[round_idx]
 
       for resource, amount in resources.items():
-        # TODO: handle fields differently than the other resources
-        pass
+        #TODO trigger events
+        setattr(self, resource, getattr(self, resource) + amount)
 
   def end_round(self):
     with EventScope(self, 'end_round'):
