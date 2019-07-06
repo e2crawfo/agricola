@@ -57,7 +57,7 @@ def get_minor_improvements():
     # DEBUG
     improvements = []
     for i in range(0, 100):
-       improvements.append(DuckPond())
+       improvements.append(ReedPond())
     return improvements
     ####################
 
@@ -624,7 +624,6 @@ class MinorImprovement(with_metaclass(abc.ABCMeta, Card)):
     def text(self):
         pass
 
-# TODO implement
 class ReedPond(MinorImprovement):
     num_required_occupations = 3
     deck = 'E'
@@ -632,11 +631,8 @@ class ReedPond(MinorImprovement):
     text = ''
     _victory_points = 1
 
-    def _check(self, player):
-        pass
-
     def _apply(self, player, choices):
-        pass
+        player.add_future(range(1, 3), 'reed', 1)
 
 # TODO implement
 class Quarry(MinorImprovement):
