@@ -245,7 +245,6 @@ class Conjurer(Occupation):
     def trigger(self, player, **kwargs):
         pass
 
-# TODO implement
 class SeasonalWorker(Occupation):
     deck = 'E'
     id = 202
