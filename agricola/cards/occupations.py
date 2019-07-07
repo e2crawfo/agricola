@@ -17,7 +17,7 @@ def get_occupations(n_players):
     # DEBUG
     occupations = []
     for i in range(0, 100):
-        occupations.append(SeasonalWorker())
+        occupations.append(Undergardener())
         #occupations.append(Woodcutter())
     return occupations
     ####################
@@ -392,18 +392,28 @@ class SeedSeller(Occupation):
     def trigger(self, player, **kwargs):
         pass
 
-# TODO implement
 class Undergardener(Occupation):
     deck = 'E'
     id = 166
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 
     def trigger(self, player, **kwargs):
-        pass
+        return self.resource_choice_filter
+
+    def resource_choice_filter(self, player, choice_candidates, executed_action):
+        if executed_action.name != "DayLaborer":
+            return choice_candidates
+        result = []
+        for choice_candidate in choice_candidates:
+            # apply (veg)
+            choice = copy.deepcopy(choice_candidate)
+            choice['action_resources']['veg'] += 1
+            result.append(choice)
+        return result
 
 # TODO implement
 class Farmer(Occupation):
