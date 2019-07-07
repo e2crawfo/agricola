@@ -17,7 +17,7 @@ def get_occupations(n_players):
     # DEBUG
     occupations = []
     for i in range(0, 100):
-        occupations.append(MushroomCollector())
+        occupations.append(CattleWhisperer())
         #occupations.append(Woodcutter())
     return occupations
     ####################
@@ -62,6 +62,7 @@ class Occupation(with_metaclass(abc.ABCMeta, Card)):
     def victory_points(self, player):
         return 0
 
+
 # TODO implement
 class Lover(Occupation):
     deck = 'K'
@@ -105,24 +106,30 @@ class BerryPicker(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 
     def trigger(self, player, **kwargs):
-        pass
+        return self.resource_choice_filter
 
-# TODO implement
+    def resource_choice_filter(self, choice_candidates):
+        result = []
+        for choice_candidate in choice_candidates:
+            choice = copy.deepcopy(choice_candidate)
+            if choice['action_resources']['wood'] >= 1:
+                choice["additional_resources"]["food"] += 1
+            result.append(choice)
+        return result
+
 class CattleWhisperer(Occupation):
     deck = 'E'
     id = 201
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.add_future([5, 9], 'cattle', 1)
 
-    def trigger(self, player, **kwargs):
-        pass
 
 # TODO implement
 class Cowhead(Occupation):
@@ -202,6 +209,7 @@ class MushroomCollector(Occupation):
     id = 196
     min_players = 0
     text = ''
+
     def _apply(self, player):
         player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 

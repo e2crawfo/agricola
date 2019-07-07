@@ -452,7 +452,7 @@ def play(game, ui, agent_processes, logdir):
   for i, p in enumerate(game.players):
     game.score[i] = p.score()
   game.ui = None
-  sys.stderr.write('Game log is output to \'%s.\'\n' % state_log_path)
+  sys.stderr.write('The game log was saved to \'%s\'.\n' % state_log_path)
 
 
 class SimpleAgricolaGame(AgricolaGame):
