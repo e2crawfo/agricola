@@ -524,18 +524,28 @@ class WoodDeliveryman(Occupation):
     def check_and_apply(self, player):
         player.add_future(range(8, 15), 'wood', 1, absolute=True)
 
-# TODO implement
 class Greengrocer(Occupation):
     deck = 'E'
     id = 168
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 
     def trigger(self, player, **kwargs):
-        pass
+        return self.resource_choice_filter
+
+    def resource_choice_filter(self, player, choice_candidates, executed_action):
+        if executed_action.name != "GrainSeeds":
+            return choice_candidates
+        result = []
+        for choice_candidate in choice_candidates:
+            # apply (veg)
+            choice = copy.deepcopy(choice_candidate)
+            choice['action_resources']['veg'] += 1
+            result.append(choice)
+        return result
 
 # TODO implement
 class ClayWorker(Occupation):
