@@ -6,9 +6,9 @@ from . import const
 
 class Choice(object):
     def __init__(self, game, player, desc=None):
-        self.desc = desc
         self.game = game
         self.player = player
+        self.desc = desc
 
         self.selected_candidate_idx = 0
         self.candidates = self._get_candidates()

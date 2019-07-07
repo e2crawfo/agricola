@@ -92,7 +92,6 @@ class TakingResourcesFromActionStep(Step):
             self.executed_action.add_resources(selected_candidate['resources_to_board']) # take leftover back to the action if it exists.
             # raise NotImplementedError
 
-
         player.change_state("", change=selected_summary)
 
 
