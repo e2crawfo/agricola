@@ -140,8 +140,9 @@ class PlowingChoice(SpaceChoice):
     pass
 
 class ResourceTradingChoice(Choice):
-    def __init__(self, game, player, resources, desc=None):
+    def __init__(self, game, player, resources, executed_action, desc=None):
         self.resources = resources
+        self.executed_action = executed_action
         super(ResourceTradingChoice, self).__init__(game, player, desc=desc)
 
     def _get_candidates(self):
@@ -151,11 +152,11 @@ class ResourceTradingChoice(Choice):
             'resources_to_board':defaultdict(int)
         })]
         # TODO check occupation and improvements
-        choice_filters = self.player.trigger_event(const.trigger_event_names.take_resources_from_action, self.player, resource_choices=choice_candidates)
+        choice_filters = self.player.trigger_event(const.trigger_event_names.take_resources_from_action, self.player,  resource_choices=choice_candidates)
 
         # TODO think about junretu
         for choice_filter in choice_filters:
-            choice_candidates = choice_filter(choice_candidates)
+            choice_candidates = choice_filter(self.player, choice_candidates, self.executed_action)
         self.choice_candidates = choice_candidates
         return choice_candidates
 

@@ -82,7 +82,7 @@ class TakingResourcesFromActionStep(Step):
 
     def get_required_choice(self, game, player):
         # TODO trigger event
-        return ResourceTradingChoice(game, player, self.resources)
+        return ResourceTradingChoice(game, player, self.resources, self.executed_action)
 
     def effect(self, game, player, choice):
         selected_summary = choice.selected_summarized_candidate
