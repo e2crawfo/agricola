@@ -17,7 +17,7 @@ def get_occupations(n_players):
     # DEBUG
     occupations = []
     for i in range(0, 100):
-        occupations.append(SeasonalWorker())
+        occupations.append(Cowhead())
         #occupations.append(Woodcutter())
     return occupations
     ####################
@@ -86,15 +86,14 @@ class ReedCollector(Occupation):
         player.add_future(range(1, 5), 'reed', 1)
 
 
-# TODO implement
 class PigWhisperer(Occupation):
     deck = 'K'
     id = 302
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.add_future([4, 7, 10], 'boar', 1)
 
     def trigger(self, player, **kwargs):
         pass
@@ -131,18 +130,28 @@ class CattleWhisperer(Occupation):
         player.add_future([5, 9], 'cattle', 1)
 
 
-# TODO implement
 class Cowhead(Occupation):
     deck = 'I'
     id = 240
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 
     def trigger(self, player, **kwargs):
-        pass
+        return self.resource_choice_filter
+
+    def resource_choice_filter(self, player, choice_candidates, executed_action):
+        if executed_action.name != "CattleMarket":
+            return choice_candidates
+        result = []
+        for choice_candidate in choice_candidates:
+            choice = copy.deepcopy(choice_candidate)
+            choice['additional_resources']['cattle'] += 1
+            result.append(choice)
+
+        return result
 
 # TODO implement
 class Dancer(Occupation):
@@ -265,13 +274,13 @@ class SeasonalWorker(Occupation):
         for choice_candidate in choice_candidates:
             # apply (grain)
             choice = copy.deepcopy(choice_candidate)
-            choice['action_resources']['grain'] += 1
+            choice['additional_resources']['grain'] += 1
             result.append(choice)
 
             if player.game.round_idx >= 6:
                 # apply (veg)
                 choice = copy.deepcopy(choice_candidate)
-                choice['action_resources']['veg'] += 1
+                choice['additional_resources']['veg'] += 1
                 result.append(choice)
 
         return result
@@ -445,28 +454,26 @@ class Patron(Occupation):
     def trigger(self, player, **kwargs):
         pass
 
-# TODO implement
 class MasterShepherd(Occupation):
     deck = 'E'
     id = 204
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.add_future(range(1, 4), 'sheep', 1)
 
     def trigger(self, player, **kwargs):
         pass
 
-# TODO implement
 class SheepWhisperer(Occupation):
     deck = 'I'
     id = 250
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.add_future([4, 7, 9, 11], 'sheep', 1)
 
     def trigger(self, player, **kwargs):
         pass
