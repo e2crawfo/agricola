@@ -17,7 +17,7 @@ def get_occupations(n_players):
     # DEBUG
     occupations = []
     for i in range(0, 100):
-        occupations.append(Cowhead())
+        occupations.append(SeedSeller())
         #occupations.append(Woodcutter())
     return occupations
     ####################
@@ -254,7 +254,6 @@ class Conjurer(Occupation):
     def trigger(self, player, **kwargs):
         pass
 
-# TODO implement
 class SeasonalWorker(Occupation):
     deck = 'E'
     id = 202
@@ -389,31 +388,52 @@ class Chief(Occupation):
     def trigger(self, player, **kwargs):
         pass
 
-# TODO implement
 class SeedSeller(Occupation):
     deck = 'K'
     id = 296
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
+        player.change_state("", change={"grain" : 1})
 
     def trigger(self, player, **kwargs):
-        pass
+        return self.resource_choice_filter
 
-# TODO implement
+    def resource_choice_filter(self, player, choice_candidates, executed_action):
+        if executed_action.name != "GrainSeeds":
+            return choice_candidates
+        result = []
+        for choice_candidate in choice_candidates:
+            # apply (grain)
+            choice = copy.deepcopy(choice_candidate)
+            choice['additional_resources']['grain'] += 1
+            result.append(choice)
+        return result
+
 class Undergardener(Occupation):
     deck = 'E'
     id = 166
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 
     def trigger(self, player, **kwargs):
-        pass
+        return self.resource_choice_filter
+
+    def resource_choice_filter(self, player, choice_candidates, executed_action):
+        if executed_action.name != "DayLaborer":
+            return choice_candidates
+        result = []
+        for choice_candidate in choice_candidates:
+            # apply (veg)
+            choice = copy.deepcopy(choice_candidate)
+            choice['additional_resources']['veg'] += 1
+            result.append(choice)
+        return result
 
 # TODO implement
 class Farmer(Occupation):
@@ -522,18 +542,28 @@ class WoodDeliveryman(Occupation):
     def check_and_apply(self, player):
         player.add_future(range(8, 15), 'wood', 1, absolute=True)
 
-# TODO implement
 class Greengrocer(Occupation):
     deck = 'E'
     id = 168
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 
     def trigger(self, player, **kwargs):
-        pass
+        return self.resource_choice_filter
+
+    def resource_choice_filter(self, player, choice_candidates, executed_action):
+        if executed_action.name != "GrainSeeds":
+            return choice_candidates
+        result = []
+        for choice_candidate in choice_candidates:
+            # apply (veg)
+            choice = copy.deepcopy(choice_candidate)
+            choice['additional_resources']['veg'] += 1
+            result.append(choice)
+        return result
 
 # TODO implement
 class ClayWorker(Occupation):
@@ -557,18 +587,26 @@ class ClayDeliveryman(Occupation):
     def check_and_apply(self, player):
         player.add_future(range(8, 15), 'clay', 1, absolute=True)
 
-# TODO implement
 class ClayMixer(Occupation):
     deck = 'E'
     id = 188
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 
     def trigger(self, player, **kwargs):
-        pass
+        return self.resource_choice_filter
+
+    def resource_choice_filter(self, player, choice_candidates, executed_action):
+        result = []
+        for choice_candidate in choice_candidates:
+            choice = copy.deepcopy(choice_candidate)
+            if choice['action_resources']['clay'] >= 1:
+                choice["additional_resources"]["clay"] += 2
+            result.append(choice)
+        return result
 
 
     
