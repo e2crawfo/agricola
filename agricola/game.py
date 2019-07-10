@@ -271,7 +271,8 @@ def play(game, ui, agent_processes, logdir):
 
       for p in game.players:
         p.turn_left = p.people
-        p.start_round(game.round_idx)
+        p.start_round(game.round_idx) #TODO: future_stepを処理
+
       remaining_players = set(range(len(game.players)))
       order = list(range(game.n_players))
       order = order[game.first_player_idx:] + order[:game.first_player_idx]
@@ -291,7 +292,6 @@ def play(game, ui, agent_processes, logdir):
           step_stack = [ActionSelectionStep()]
 
           try:
-
             while len(step_stack) > 0:
               dbgprint(step_stack)
               next_step = step_stack.pop()
@@ -337,7 +337,6 @@ def play(game, ui, agent_processes, logdir):
                 step_stack = step_stack + additional_steps
                 dbgprint(step_stack)
                 dbgprint(additional_steps)
-            
 
             # state_dict = game.get_state_dict(
             #   'ActionChoice',

@@ -393,7 +393,8 @@ class Player(EventGenerator):
     self.occupied['field'] = self._fields
 
     # round_idx -> dictionary of resources
-    self.futures = defaultdict(lambda: defaultdict(int))
+    self.future_resources = defaultdict(lambda: defaultdict(int))
+    self.future_steps = defaultdict(list)
 
     self.pasture_capacity_modifier = 0
 
@@ -574,11 +575,12 @@ class Player(EventGenerator):
 
   def start_round(self, round_idx):
     with EventScope(self, 'start_round'):
-      resources = self.futures[round_idx]
-
+      resources = self.future_resources[round_idx]
       for resource, amount in resources.items():
         #TODO trigger events
         setattr(self, resource, getattr(self, resource) + amount)
+        
+      # TODO: process future_steps
 
   def end_round(self):
     with EventScope(self, 'end_round'):
@@ -626,10 +628,20 @@ class Player(EventGenerator):
               "a {2} already exists.".format(
                 name, space, object_type))
 
-  def add_future(self, rounds, resource, amount, absolute=False):
+  def add_future(self, *args, **kwargs):
+      return self.add_future_resources(*args, **kwargs)
+
+  def add_future_resources(self, rounds, resource, amount, absolute=False):
     offset = 0 if absolute else self.game.round_idx
     for r in rounds:
-      self.futures[offset + r][resource] += amount
+      self.future_resources[offset + r][resource] += amount
+
+  def add_future_steps(self, rounds, step, absolute=False):
+    # step内は実行時の盤面を参照したいためインスタンス化せずに渡すほうが良い？
+    offset = 0 if absolute else self.game.round_idx
+    for r in rounds:
+      self.future_steps[offset + r].append(step)
+
 
   def add_people(self, n=1):
     if self.people_avail < n:
@@ -902,7 +914,7 @@ class Player(EventGenerator):
     return {
       "player_id": int(self.name),
       "resources": resources,
-      "round_resources": self.futures,
+      "round_resources": self.future_resources,
       "board": board,
       "pastures": pasture_state,
       "played_improvements": played_improvements,

@@ -80,6 +80,9 @@ class TakingResourcesFromActionStep(Step):
         self.executed_action = executed_action
         assert type(self.resources) == defaultdict
 
+    def __str__(self):
+        return '<%s>(%s)' % (self.__class__.__name__, str(self.resources)) 
+
     def get_required_choice(self, game, player):
         # TODO trigger event
         return ResourceTradingChoice(game, player, self.resources, self.executed_action)
@@ -93,7 +96,11 @@ class TakingResourcesFromActionStep(Step):
             # raise NotImplementedError
 
         player.change_state("", change=selected_summary)
+        # todo: ここでadditional_stepsからstepを取り出して返す
 
+        #if selected_candidate['additional_steps']:
+            #raise NotImplementedError
+        return selected_candidate['additional_steps']
 
 class RenovatingStep(Step):
   def __init__(self, resource):

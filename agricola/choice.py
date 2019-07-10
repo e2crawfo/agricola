@@ -149,7 +149,8 @@ class ResourceTradingChoice(Choice):
         choice_candidates = [({
             'action_resources': self.resources, 
             'additional_resources': defaultdict(int),
-            'resources_to_board':defaultdict(int)
+            'resources_to_board':defaultdict(int),
+            'additional_steps': [],
         })]
         # TODO check occupation and improvements
         choice_filters = self.player.trigger_event(const.trigger_event_names.take_resources_from_action, self.player,  resource_choices=choice_candidates)
