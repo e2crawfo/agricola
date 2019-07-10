@@ -271,7 +271,8 @@ def play(game, ui, agent_processes, logdir):
 
       for p in game.players:
         p.turn_left = p.people
-        p.start_round(game.round_idx) #TODO: future_stepを処理
+        preround_steps = p.start_round(game.round_idx) 
+        # TODO: preround stepsを処理
 
       remaining_players = set(range(len(game.players)))
       order = list(range(game.n_players))
