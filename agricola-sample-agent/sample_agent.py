@@ -18,7 +18,7 @@ while True:
     while True:
         if state_json["current_event"] == "PlowingChoice":
             output_json = {
-                "space": [4, 0]
+                "space": [random.randint(1, 5), 0]
             }
             break
         if state_json["current_event"] == "HouseBuildingChoice":

@@ -17,7 +17,7 @@ def get_occupations(n_players):
     # DEBUG
     occupations = []
     for i in range(0, 100):
-        occupations.append(ClayWorker())
+        occupations.append(FieldWatchman())
         #occupations.append(Woodcutter())
     return occupations
     ####################
@@ -26,7 +26,7 @@ def get_occupations(n_players):
     return [o() for o in occ_classes if o.min_players <= n_players]
 
 class Occupation(with_metaclass(abc.ABCMeta, Card)):
-     # returns steps
+    # returns steps
     def check_and_apply(self, player):
         print("Applying occupation {0}.".format(self.name))
 
@@ -86,15 +86,14 @@ class ReedCollector(Occupation):
         player.add_future(range(1, 5), 'reed', 1)
 
 
-# TODO implement
 class PigWhisperer(Occupation):
     deck = 'K'
     id = 302
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.add_future([4, 7, 10], 'boar', 1)
 
     def trigger(self, player, **kwargs):
         pass
@@ -112,7 +111,7 @@ class BerryPicker(Occupation):
     def trigger(self, player, **kwargs):
         return self.resource_choice_filter
 
-    def resource_choice_filter(self, choice_candidates):
+    def resource_choice_filter(self, player, choice_candidates, executed_action):
         result = []
         for choice_candidate in choice_candidates:
             choice = copy.deepcopy(choice_candidate)
@@ -131,18 +130,28 @@ class CattleWhisperer(Occupation):
         player.add_future([5, 9], 'cattle', 1)
 
 
-# TODO implement
 class Cowhead(Occupation):
     deck = 'I'
     id = 240
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 
     def trigger(self, player, **kwargs):
-        pass
+        return self.resource_choice_filter
+
+    def resource_choice_filter(self, player, choice_candidates, executed_action):
+        if executed_action.name != "CattleMarket":
+            return choice_candidates
+        result = []
+        for choice_candidate in choice_candidates:
+            choice = copy.deepcopy(choice_candidate)
+            choice['additional_resources']['cattle'] += 1
+            result.append(choice)
+
+        return result
 
 # TODO implement
 class Dancer(Occupation):
@@ -446,11 +455,23 @@ class FieldWatchman(Occupation):
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.listen_for_event(self, const.trigger_event_names.take_resources_from_action)
 
     def trigger(self, player, **kwargs):
-        pass
+        return self.resource_choice_filter
+
+    def resource_choice_filter(self, player, choice_candidates, executed_action):
+        if executed_action.name != 'GrainSeeds':
+            return choice_candidates
+
+        result = []
+        for choice_candidate in choice_candidates:
+            choice = copy.deepcopy(choice_candidate)
+            choice['additional_steps'].append(PlowingStep())
+            result.append(choice)
+        return result
+
 
 # TODO implement
 class Patron(Occupation):
@@ -465,28 +486,26 @@ class Patron(Occupation):
     def trigger(self, player, **kwargs):
         pass
 
-# TODO implement
 class MasterShepherd(Occupation):
     deck = 'E'
     id = 204
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.add_future(range(1, 4), 'sheep', 1)
 
     def trigger(self, player, **kwargs):
         pass
 
-# TODO implement
 class SheepWhisperer(Occupation):
     deck = 'I'
     id = 250
     min_players = 1
     text = ''
 
-    def check_and_apply(self, player):
-        pass
+    def _apply(self, player):
+        player.add_future([4, 7, 9, 11], 'sheep', 1)
 
     def trigger(self, player, **kwargs):
         pass
