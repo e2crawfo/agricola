@@ -4,6 +4,7 @@ import itertools
 from collections import OrderedDict, Counter, defaultdict
 from future.utils import iteritems, with_metaclass
 import abc
+import copy
 
 
 class EventGenerator(with_metaclass(abc.ABCMeta, object)):
@@ -267,6 +268,29 @@ def cumsum(lst):
     acc += l
     cs.append(acc)
   return cs
+
+def _is_candidate_valid(player, candidate):
+  for k in candidate['additional_resources'].keys():
+      if getattr(player, k) + candidate['additional_resources'][k] < 0:
+          return False
+  return True
+
+def generate_resource_trading_candidates(player, choice_candidates, trading_effects):
+  result = []
+  for choice_candidate in choice_candidates:
+    # do not use the effect (return it without modification)
+    result.append(choice_candidate)
+
+    for trading_effect in trading_effects:
+      candidate = copy.deepcopy(choice_candidate)
+      while(True):
+        for k, v in trading_effect.items():
+          candidate['additional_resources'][k] += v
+        if not _is_candidate_valid(player, candidate):
+          break
+        result.append(candidate)
+        candidate = copy.deepcopy(candidate)
+  return result
 
 
 #######################################

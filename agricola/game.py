@@ -18,7 +18,7 @@ from .action import *
 from .cards import (
   get_occupations, get_minor_improvements, get_major_improvements)
 from .utils import EventGenerator, EventScope, dbgprint
-from .step import ActionSelectionStep
+from .step import ActionSelectionStep, ResourceTradingStep
 from .choice import Choice
 from . import const
 # TODO: make sure that certain actions which allow two things to be done have
@@ -290,7 +290,8 @@ def play(game, ui, agent_processes, logdir):
           player = game_copy.players[i]
 
           # initialize step stack
-          step_stack = [ActionSelectionStep()]
+          # TODO move trading step to proper position
+          step_stack = [ActionSelectionStep(), ResourceTradingStep()]
 
           try:
             while len(step_stack) > 0:
@@ -305,6 +306,8 @@ def play(game, ui, agent_processes, logdir):
                 state_dict = game_copy.get_state_dict()
                 state_dict['current_event'] = next_choice.name
                 state_dict['choice_candidates'] = next_choice.summarized_candidates
+
+                dbgprint(next_choice.summarized_candidates)
 
                 state_dict["is_previous_action_failed"] = is_previous_action_failed
                 if is_previous_action_failed:

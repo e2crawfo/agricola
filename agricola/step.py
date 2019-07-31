@@ -74,6 +74,16 @@ class ResourcePayingStep(Step):
     selected_candidate = self.resources[0]
     player.change_state("", cost=selected_candidate)
 
+class ResourceTradingStep(Step):
+    def get_required_choice(self, game, player):
+        #TODO magic string constant
+        return ResourceTradingChoice(game, player, defaultdict(int), None, const.trigger_event_names.resource_trading)
+
+    def effect(self, game, player, choice):
+        selected_summary = choice.selected_summarized_candidate
+        selected_candidate = choice.selected_candidate
+        player.change_state("", change=selected_summary)
+
 class TakingResourcesFromActionStep(Step):
     def __init__(self, resources, executed_action):
         self.resources = resources.copy()
@@ -85,7 +95,7 @@ class TakingResourcesFromActionStep(Step):
 
     def get_required_choice(self, game, player):
         # TODO trigger event
-        return ResourceTradingChoice(game, player, self.resources, self.executed_action)
+        return ResourceTradingChoice(game, player, self.resources, self.executed_action, const.trigger_event_names.take_resources_from_action)
 
     def effect(self, game, player, choice):
         selected_summary = choice.selected_summarized_candidate
@@ -100,6 +110,8 @@ class TakingResourcesFromActionStep(Step):
 
         #if selected_candidate['additional_steps']:
             #raise NotImplementedError
+        if 'additional_steps' not in selected_candidate:
+            return None
         return selected_candidate['additional_steps']
 
 class RenovatingStep(Step):
