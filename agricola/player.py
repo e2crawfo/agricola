@@ -4,13 +4,14 @@ from collections import OrderedDict, Counter, defaultdict
 from future.utils import with_metaclass
 from copy import deepcopy
 from pprint import pformat
+from agricola import const
 
 import numpy as np
 import networkx as nx
 
 from .utils import (
   EventGenerator, EventScope, multiset_satisfy, draw_grid,
-  index_check, orthog_adjacent, score_mapping)
+  index_check, orthog_adjacent, score_mapping, generate_resource_trading_candidates)
 from .errors import (
   AgricolaException, AgricolaNotEnoughResources, AgricolaLogicError,
   AgricolaPoorlyFormed, AgricolaImpossible)
@@ -298,6 +299,25 @@ class PlayerStateChange(object):
 
     return ' '.join(s)
 
+# class for default convert
+class DefaultResourceTrading:
+  trading_effects = [
+    {
+      "grain": -1,
+      "food": 1
+    },
+    {
+      "veg": -1,
+      "food": 1
+    }
+  ]
+
+  def trigger(self, player, **kwargs):
+    return self.resource_choice_filter
+
+  def resource_choice_filter(self, player, choice_candidates, executed_action):
+    return generate_resource_trading_candidates(player, choice_candidates, self.trading_effects)
+
 
 class Player(EventGenerator):
   # TODO: In the constructor, just set all self attributes without doing checks. Then at the end, call a function
@@ -323,6 +343,9 @@ class Player(EventGenerator):
     super(Player, self).__init__()
     self.name = name
     self.begging_cards = 0
+
+    # set default trading rate
+    self.listen_for_event(DefaultResourceTrading(), const.trigger_event_names.resource_trading)
 
     self.people = people
     self.people_avail = people_avail

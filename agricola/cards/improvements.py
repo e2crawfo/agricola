@@ -1,7 +1,7 @@
 import abc
 from future.utils import with_metaclass
 
-from agricola.utils import score_mapping, cumsum
+from agricola.utils import score_mapping, cumsum, generate_resource_trading_candidates
 from agricola.choice import (
     SpaceChoice)
 from agricola.step import PlowingStep
@@ -579,6 +579,10 @@ class Fireplace(with_metaclass(abc.ABCMeta, MajorImprovement)):
         {
             "cattle": -1,
             "food": 3
+        },
+        {
+            "veg": -1,
+            "food": 2
         }
     ]
 
@@ -588,28 +592,8 @@ class Fireplace(with_metaclass(abc.ABCMeta, MajorImprovement)):
     def trigger(self, player, **kwargs):
         return self.resource_choice_filter
 
-    def _is_candidate_valid(self, player, candidate):
-        for k in candidate.keys():
-            if getattr(player, k) + candidate[k] < 0:
-                return False
-        return True
-
     def resource_choice_filter(self, player, choice_candidates, executed_action):
-        result = []
-        for choice_candidate in choice_candidates:
-            # do not use the effect (return it without modification)
-            result.append(choice_candidate)
-
-            for trading_effect in self.trading_effects:
-                candidate = copy.deepcopy(choice_candidate)
-                while(True):
-                    for k, v in trading_effect.items():
-                        candidate[k] += v
-                    if not self._is_candidate_valid(player, candidate):
-                        break
-                    result.append(candidate)
-                    candidate = copy.deepcopy(candidate)
-        return result
+        return generate_resource_trading_candidates(player, choice_candidates, self.trading_effects)
 
 class Fireplace2(Fireplace):
     _cost = {'clay': 2}
@@ -623,15 +607,33 @@ class CookingHearth(with_metaclass(abc.ABCMeta, MajorImprovement)):
     def upgrade_of(self):
         return [Fireplace]
 
+    trading_effects = [
+        {
+            "sheep": -1,
+            "food": 2
+        },
+        {
+            "boar": -1,
+            "food": 3
+        },
+        {
+            "cattle": -1,
+            "food": 4
+        },
+        {
+            "veg": -1,
+            "food": 3
+        }
+    ]
+
     def _apply(self, player):
-        player.bread_rates[-1] = max(player.bread_rates[-1], 3)
+        player.listen_for_event(self, const.trigger_event_names.resource_trading)
 
-        cooking_rates = player.cooking_rates
+    def trigger(self, player, **kwargs):
+        return self.resource_choice_filter
 
-        cooking_rates['veg'] = max(cooking_rates['veg'], 3)
-        cooking_rates['sheep'] = max(cooking_rates['sheep'], 2)
-        cooking_rates['boar'] = max(cooking_rates['boar'], 3)
-        cooking_rates['cattle'] = max(cooking_rates['cattle'], 4)
+    def resource_choice_filter(self, player, choice_candidates, executed_action):
+        return generate_resource_trading_candidates(player, choice_candidates, self.trading_effects)
 
 class CookingHearth4(CookingHearth):
     _cost = {'clay': 4}

@@ -149,6 +149,7 @@ class ResourceTradingChoice(Choice):
         choice_candidates = [({
             'action_resources': self.resources, 
             'additional_resources': defaultdict(int),
+            'additional_steps': [],
             'resources_to_board':defaultdict(int)
         })]
         # TODO check occupation and improvements
