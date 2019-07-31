@@ -567,16 +567,49 @@ class MajorImprovement(with_metaclass(abc.ABCMeta, Card)):
 
 class Fireplace(with_metaclass(abc.ABCMeta, MajorImprovement)):
     _victory_points = 1
+    trading_effects = [
+        {
+            "sheep": -1,
+            "food": 2
+        },
+        {
+            "boar": -1,
+            "food": 2
+        },
+        {
+            "cattle": -1,
+            "food": 3
+        }
+    ]
 
     def _apply(self, player):
-        player.bread_rates[-1] = max(player.bread_rates[-1], 2)
+        player.listen_for_event(self, const.trigger_event_names.resource_trading)
 
-        cooking_rates = player.cooking_rates
+    def trigger(self, player, **kwargs):
+        return self.resource_choice_filter
 
-        cooking_rates['veg'] = max(cooking_rates['veg'], 2)
-        cooking_rates['sheep'] = max(cooking_rates['sheep'], 2)
-        cooking_rates['boar'] = max(cooking_rates['boar'], 2)
-        cooking_rates['cattle'] = max(cooking_rates['cattle'], 3)
+    def _is_candidate_valid(self, player, candidate):
+        for k in candidate.keys():
+            if getattr(player, k) + candidate[k] < 0:
+                return False
+        return True
+
+    def resource_choice_filter(self, player, choice_candidates, executed_action):
+        result = []
+        for choice_candidate in choice_candidates:
+            # do not use the effect (return it without modification)
+            result.append(choice_candidate)
+
+            for trading_effect in self.trading_effects:
+                candidate = copy.deepcopy(choice_candidate)
+                while(True):
+                    for k, v in trading_effect.items():
+                        candidate[k] += v
+                    if not self._is_candidate_valid(player, candidate):
+                        break
+                    result.append(candidate)
+                    candidate = copy.deepcopy(candidate)
+        return result
 
 class Fireplace2(Fireplace):
     _cost = {'clay': 2}

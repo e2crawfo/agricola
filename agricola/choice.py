@@ -46,7 +46,6 @@ class Choice(object):
     def read_players_choice(self, choice_dict):
         pass
 
-
 class ActionChoice(Choice):
     '''
     ActionChoice sample
@@ -140,20 +139,20 @@ class PlowingChoice(SpaceChoice):
     pass
 
 class ResourceTradingChoice(Choice):
-    def __init__(self, game, player, resources, executed_action, desc=None):
+    def __init__(self, game, player, resources, executed_action, trigger_event_name, desc=None):
         self.resources = resources
         self.executed_action = executed_action
+        self.trigger_event_name = trigger_event_name
         super(ResourceTradingChoice, self).__init__(game, player, desc=desc)
 
     def _get_candidates(self):
         choice_candidates = [({
             'action_resources': self.resources, 
             'additional_resources': defaultdict(int),
-            'resources_to_board':defaultdict(int),
-            'additional_steps': [],
+            'resources_to_board':defaultdict(int)
         })]
         # TODO check occupation and improvements
-        choice_filters = self.player.trigger_event(const.trigger_event_names.take_resources_from_action, self.player,  resource_choices=choice_candidates)
+        choice_filters = self.player.trigger_event(self.trigger_event_name, self.player,  resource_choices=choice_candidates)
 
         # TODO think about junretu
         for choice_filter in choice_filters:
