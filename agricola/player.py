@@ -8,6 +8,7 @@ from agricola import const
 
 import numpy as np
 import networkx as nx
+import copy
 
 from .utils import (
   EventGenerator, EventScope, multiset_satisfy, draw_grid,
@@ -85,7 +86,7 @@ class SingleSpaceObject(SpatialObject):
 
 
 class Field(SingleSpaceObject):
-  def __init__(self, space, n_items=0, kind=None):
+  def __init__(self, space, player, n_items=0, kind=None):
     self.space = space
     if bool(n_items) != bool(kind):
       raise ValueError(
@@ -93,21 +94,45 @@ class Field(SingleSpaceObject):
         "``kind`` must be supplied. Got {0} and {1}.".format(n_items, kind))
     self._n_items = n_items
     self._kind = kind
+    self.player = player
+    player.listen_for_event(self, const.trigger_event_names.get_sowing_candidates)
+
+  def trigger(self, player, **kwargs):
+    return self.sowing_choice_filter
+
+  def sowing_choice_filter(self, player, choice_candidates):
+    if self.n_items != 0:
+      return choice_candidates
+    result = []
+    for choice_candidate in choice_candidates:
+      # sow nothing
+      result.append(choice_candidate)
+      for seed in ["veg", "grain"]:
+        if getattr(self.player, seed) > choice_candidate["sowing_resources"][seed]:
+          new_candidate = copy.deepcopy(choice_candidate)
+          new_candidate["sowing_resources"][seed] += 1
+          new_candidate["sowing_fields"].append(
+            {
+              "field_space": self.space,
+              "seed": seed
+            }
+          )
+          result.append(new_candidate)
+    return result
 
   def is_empty(self):
     return self.n_items == 0
 
-  def plant_grain(self):
+  def sow(self, seed):
     if not self.is_empty():
       raise AgricolaLogicError("Attempting to plant grain in a non-empty field.")
-    self._n_items = 3
-    self._kind = 'grain'
-
-  def plant_veg(self):
-    if not self.is_empty():
-      raise AgricolaLogicError("Attempting to plant veg in a non-empty field.")
-    self._n_items = 2
-    self._kind = 'veg'
+    self._kind = seed
+    if seed == "grain":
+      self._n_items = 3
+    elif seed == "veg":
+      self._n_items = 2
+    else:
+      raise AgricolaLogicError("invalid seed")
 
   @property
   def n_items(self):
@@ -300,16 +325,17 @@ class PlayerStateChange(object):
     return ' '.join(s)
 
 # class for default convert
+# TODO temporary disabled
 class DefaultResourceTrading:
   trading_effects = [
-    {
-      "grain": -1,
-      "food": 1
-    },
-    {
-      "veg": -1,
-      "food": 1
-    }
+    # {
+    #   "grain": -1,
+    #   "food": 1
+    # },
+    # {
+    #   "veg": -1,
+    #   "food": 1
+    # }
   ]
 
   def trigger(self, player, **kwargs):
@@ -374,7 +400,7 @@ class Player(EventGenerator):
     self.stables_avail = stables_avail
 
     fields = fields or []
-    self._fields = fields = [Field(f) for f in fields]
+    self._fields = fields = [Field(f, self) for f in fields]
 
     # Played cards
     self.occupations = occupations or []
@@ -787,27 +813,12 @@ class Player(EventGenerator):
   def plow_fields(self, spaces):
     if isinstance(spaces[0], int):
       spaces = [spaces]
-    fields = [Field(s) for s in spaces]
+    fields = [Field(s, self) for s in spaces]
 
     self._check_spatial_objects(fields, 'field')
     Field.check_connected_group(self._fields + fields)
 
     self._fields.extend(fields)
-
-  def sow(self, n_grain, n_veg):
-    description = "Sowing {0} grain and {1} veg".format(n_grain, n_veg)
-    cost = dict(grain=n_grain, veg=n_veg)
-    prereq = dict(empty_fields=n_grain+n_veg)
-    state_change = PlayerStateChange(description, cost=cost, prereq=prereq)
-    state_change.check_and_apply(self)
-
-    empty_fields = (f for f in self._fields if f.is_empty())
-
-    for g in range(n_grain):
-      next(empty_fields).plant_grain()
-
-    for v in range(n_veg):
-      next(empty_fields).plant_veg()
 
   def bake_bread(self, n):
     if n > len(self.bread_rates) - 1 and self.bread_rates[-1] == 0:

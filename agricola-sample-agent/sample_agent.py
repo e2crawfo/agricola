@@ -91,25 +91,10 @@ while True:
                 }
                 break
         elif chosen_action["action_id"] == "GrainUtilization":
-            continue
-            if player_json["resources"]["grain"] >= 1 and "object_type" in player_json["board"][0][4] and not grain_planted:
-                output_json = {
-                    "action_id": "GrainUtilization",
-                    "plant_grain_count": 1,
-                    "plant_vegitable_count": 0,
-                    "bake_grain_count": 0
-                }
-                grain_planted = True
-                break
-            elif player_json["resources"]["veg"] >= 1 and "object_type" in player_json["board"][0][4] and not grain_planted:
-                output_json = {
-                    "action_id": "GrainUtilization",
-                    "plant_grain_count": 0,
-                    "plant_vegitable_count": 1,
-                    "bake_grain_count": 0
-                }
-                grain_planted = True
-                break
+            output_json = {
+                "action_id": "GrainUtilization"
+            }
+            break
         elif chosen_action["action_id"] == "Fencing":
             if (not fence_taken) and player_json["resources"]["wood"] >= 8:
                 output_json = {

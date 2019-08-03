@@ -1,10 +1,13 @@
 import abc
 import itertools
 from future.utils import with_metaclass
-from .choice import (ActionChoice, MinorImprovementChoice, SpaceChoice, OccupationChoice, FencingChoice, MajorImprovementChoice, PlowingChoice, StableBuildingChoice, HouseBuildingChoice, ResourceTradingChoice)
+from .choice import (ActionChoice, MinorImprovementChoice, SpaceChoice, OccupationChoice, FencingChoice, MajorImprovementChoice, PlowingChoice, StableBuildingChoice, HouseBuildingChoice, ResourceTradingChoice, SowingChoice)
 from . import const, cards
 from .utils import dotDict, recDotDefaultDict, dbgprint
 from collections import defaultdict
+from .errors import (
+  AgricolaException, AgricolaNotEnoughResources, AgricolaLogicError,
+  AgricolaPoorlyFormed, AgricolaImpossible)
 
 class Step(with_metaclass(abc.ABCMeta, object)):
     def __init__(self):
@@ -30,7 +33,6 @@ class ActionSelectionStep(Step):
 
 class PlayOccupationStep(Step):
     def get_required_choice(self, game, player):
-        # TODO set proper source
         return OccupationChoice(game, player)
 
     def effect(self, game, player, choice):
@@ -76,7 +78,6 @@ class ResourcePayingStep(Step):
 
 class ResourceTradingStep(Step):
     def get_required_choice(self, game, player):
-        #TODO magic string constant
         return ResourceTradingChoice(game, player, defaultdict(int), None, const.trigger_event_names.resource_trading)
 
     def effect(self, game, player, choice):
@@ -153,10 +154,32 @@ class StableBuildingStep(Step):
             return [StableBuildingStep()]
 
 class SowingStep(Step):
-    pass
+    def get_required_choice(self, game, player):
+        return SowingChoice(game, player)
+
+    def effect(self, game, player, choice):
+        selected_candidate = choice.selected_candidate
+        player.change_state("", change=selected_candidate["sowing_resources"])
+        # sow
+        for sowing_field in selected_candidate["sowing_fields"]:
+            sow_completed = False
+            for field in player._fields:
+                if field.space == sowing_field["field_space"]:
+                    field.sow(sowing_field["seed"])
+                    sow_completed = True
+                    break
+            if not sow_completed:
+                raise AgricolaLogicError("Attempting to plant to invalid field {0}.".format(sowing_field["field_space"]))
+
 
 class BakingStep(Step):
-    pass
+    def get_required_choice(self, game, player):
+        return ResourceTradingChoice(game, player, defaultdict(int), None, const.trigger_event_names.baking)
+
+    def effect(self, game, player, choice):
+        selected_summary = choice.selected_summarized_candidate
+        selected_candidate = choice.selected_candidate
+        player.change_state("", change=selected_summary)
 
 class FencingStep(Step):
     def get_required_choice(self, game, player):

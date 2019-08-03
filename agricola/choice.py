@@ -3,6 +3,7 @@ from collections import defaultdict
 from .player import Pasture
 from .utils import dbgprint
 from . import const
+import copy
 
 class Choice(object):
     def __init__(self, game, player, desc=None):
@@ -171,6 +172,32 @@ class ResourceTradingChoice(Choice):
                 sc[k] += v
             summarized.append(sc)
         return summarized
+
+    def read_players_choice(self, choice_dict):
+        # todo; ここでagentからの入力をもとにselected_candidate_idxを更新
+        #self.selected_candidate_idx = random.choice(range(len(self.candidates)))
+        self.selected_candidate_idx = len(self.candidates) - 1
+        
+
+
+class SowingChoice(Choice):
+    def __init__(self, game, player, desc=None):
+        super(SowingChoice, self).__init__(game, player, desc=desc)
+
+    def _get_candidates(self):
+        choice_candidates = [({
+            'sowing_resources': defaultdict(int),
+            'sowing_fields': []
+        })]
+        
+        # TODO check occupation and improvements
+        choice_filters = self.player.trigger_event(const.trigger_event_names.get_sowing_candidates, self.player)
+
+        # TODO think about junretu
+        for choice_filter in choice_filters:
+            choice_candidates = choice_filter(self.player, choice_candidates)
+        self.choice_candidates = choice_candidates
+        return choice_candidates   
 
     def read_players_choice(self, choice_dict):
         # todo; ここでagentからの入力をもとにselected_candidate_idxを更新
