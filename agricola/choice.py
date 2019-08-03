@@ -1,3 +1,4 @@
+# coding: utf-8
 import abc
 from collections import defaultdict
 from .player import Pasture

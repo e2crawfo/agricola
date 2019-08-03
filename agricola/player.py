@@ -1,3 +1,4 @@
+# coding: utf-8
 import abc
 import itertools
 from collections import OrderedDict, Counter, defaultdict
@@ -612,6 +613,7 @@ class Player(EventGenerator):
 
   def harvest(self):
     # harvest from field
+    
     for field in self._fields:
       kind = field.kind
       if field.harvest():

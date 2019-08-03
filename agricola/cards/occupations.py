@@ -120,6 +120,7 @@ class BerryPicker(Occupation):
             result.append(choice)
         return result
 
+
 class CattleWhisperer(Occupation):
     deck = 'E'
     id = 201

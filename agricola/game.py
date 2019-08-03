@@ -1,3 +1,4 @@
+# coding: utf-8
 import itertools
 import numpy as np
 import copy
@@ -24,6 +25,35 @@ from . import const
 # TODO: make sure that certain actions which allow two things to be done have
 # the order of the two things respected (and make sure player can't take the
 # action if they can't take the first action.
+
+
+def communicate_with_player(game, next_choice, previous_error, logdir, popen):
+  # add context of the current choice to the state
+  state_dict = game.get_state_dict()
+  state_dict['current_event'] = next_choice.name
+  state_dict['choice_candidates'] = next_choice.summarized_candidates
+  state_dict["is_previous_action_failed"] = True if previous_error else False
+  if previous_error:
+    state_dict["previous_error"] = previous_error
+  state_json = json.dumps(state_dict)
+  previous_error = ''
+  
+  # send the state to agent
+  popen.stdin.write(state_json + "\n")
+  popen.stdin.flush()
+  
+  # receive the choice from agent
+  popen.stdout.flush()
+  players_choice = json.loads(popen.stdout.readline())
+  
+  # add player's choice to the state
+  state_dict["player_output"] = players_choice
+
+  # log current state 
+  state_log_path = logdir + "/" + game.game_id + "_state.json"
+  with open(state_log_path, mode='a') as f:
+    f.write(json.dumps(state_dict) + "\n")
+  return players_choice
 
 
 class Deck(object):
@@ -256,8 +286,8 @@ def play(game, ui, agent_processes, logdir):
 
   # Main loop
   game.active_actions = [a for a in game.action_order[0]]
-  is_previous_action_failed = False
   previous_error = ""
+
   for stage_actions in game.action_order[1:]:
     ui.begin_stage(game.stage_idx)
     for round_action in stage_actions:
@@ -281,151 +311,39 @@ def play(game, ui, agent_processes, logdir):
 
       for i in itertools.cycle(order):
         if i in remaining_players:
-          action = None
-
-          popen = agent_processes[i]
-
           game.current_player_idx = i
           game_copy = copy.deepcopy(game)
           player = game_copy.players[i]
 
           # initialize step stack
           # TODO move trading step to proper position
-          step_stack = [ActionSelectionStep(), ResourceTradingStep()]
+          step_stack += [ActionSelectionStep(), ResourceTradingStep()]
 
           try:
             while len(step_stack) > 0:
-              dbgprint(step_stack)
               next_step = step_stack.pop()
-              dbgprint(step_stack)
-              dbgprint(next_step)
               next_choice = next_step.get_required_choice(game_copy, player)
 
               if next_choice and len(next_choice.candidates) != 1:
-                # add context of the current choice to the state
-                state_dict = game_copy.get_state_dict()
-                state_dict['current_event'] = next_choice.name
-                state_dict['choice_candidates'] = next_choice.summarized_candidates
-
-                dbgprint(next_choice.summarized_candidates)
-
-                state_dict["is_previous_action_failed"] = is_previous_action_failed
-                if is_previous_action_failed:
-                  state_dict["previous_error"] = previous_error
-                state_json = json.dumps(state_dict)
-                is_previous_action_failed = False
-
-                # send the state to agent
-                popen.stdin.write(state_json + "\n")
-                popen.stdin.flush()
-
-                # receive the choice from agent
-                popen.stdout.flush()
-                players_choice = json.loads(popen.stdout.readline())
-
-                # add player's choice to the state
-                state_dict["player_output"] = players_choice
-                log_state_json = json.dumps(state_dict)
-
-                # log current state 
-                state_log_path = logdir + "/" + game.game_id + "_state.json"
-                with open(state_log_path, mode='a') as f:
-                  f.write(log_state_json + "\n")
+                communicate_with_player(game_copy, 
+                                        next_choice, 
+                                        previous_error,
+                                        logdir, 
+                                        agent_processes[i])
 
                 # read player's choice 
                 next_choice.read_players_choice(players_choice)
 
-
               additional_steps = next_step.effect(game_copy, player, next_choice)
               if additional_steps:
                 step_stack = step_stack + additional_steps
-                dbgprint(step_stack)
-                dbgprint(additional_steps)
 
-            # state_dict = game.get_state_dict(
-            #   'ActionChoice',
-            #   const.event_sources.game,
-            # )
-            # state_dict["is_previous_action_failed"] = is_previous_action_failed
-            # state_json = json.dumps(state_dict)
-            # is_previous_action_failed = False
-
-            # # send state to agent
-            # popen.stdin.write(state_json + "\n")
-            # popen.stdin.flush()
-
-            # # get action from agent
-            # popen.stdout.flush()
-            # player_action = popen.stdout.readline()
-            # json_action = json.loads(player_action)
-            # state_dict["player_output"] = json_action
-            # log_state_json = json.dumps(state_dict)
-
-            # # write to log file
-            # state_log_path = logdir + "/" + game.game_id + "_state.json"
-            # with open(state_log_path, mode='a') as f:
-            #   f.write(log_state_json + "\n")
-
-            # # search class from actions_remaining and action taken
-            # selected_action = list(filter(lambda x: x.__class__.__name__ == json_action["action_id"], game_copy.actions_remaining + list(game_copy.actions_taken.keys())))
-            # action = selected_action[0] if len(selected_action) else None
-
-            # if action is None:
-            #   raise AgricolaException("No action chosen")
-            # elif action not in game_copy.actions_remaining:
-            #   raise AgricolaException("That action is not available this round")
-            # elif action in game_copy.actions_taken:
-            #   raise AgricolaException(
-            #     "That action has already been taken by "
-            #     "player {0}".format(game_copy.actions_taken[action]))
-
-            # json_choices = []
-            # choices = []
-
-            # while True:
-            #   choices, next_choice = action.choices(player, json_choices)
-            #   if not next_choice:
-            #     break
-
-            #   # get next choice for player
-            #   state_dict = game.get_state_dict(next_choice["class"].__name__,
-            #                                    next_choice["source"])
-
-            #   # send the context of current choice
-            #   state_json = json.dumps(state_dict)
-
-            #   # send state to agent
-            #   popen.stdin.write(state_json + "\n")
-            #   popen.stdin.flush()
-
-            #   # get action from agent
-            #   popen.stdout.flush()
-            #   player_action = popen.stdout.readline()
-            #   json_action = json.loads(player_action)
-            #   json_choices.append(json_action)
-            #   state_dict["player_output"] = json_action
-            #   log_state_json = json.dumps(state_dict)
-
-            #   # write to log file
-            #   state_log_path = logdir + "/" + game.game_id + "_state.json"
-            #   with open(state_log_path, mode='a') as f:
-            #     f.write(log_state_json + "\n")
-
-            # event_name = "Action: {}".format(action.__class__.__name__)
-            # with EventScope([game_copy, player], event_name, 
-            #                 player=player, action=action):
-            #   print('choices:', choices)
-            #   action.effect(player, choices)
-            #   #exit(1)
-            
             del game
             game = game_copy
 
           except AgricolaException as e:
             print(e)
             ui.action_failed(str(e))
-            action = None
-            is_previous_action_failed = True
             previous_error = str(e)
             game.players[i].turn_left -= 1
             del game_copy
