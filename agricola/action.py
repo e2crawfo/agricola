@@ -8,7 +8,7 @@ from .choice import (
     OccupationChoice, SpaceChoice, MinorImprovementChoice,)
 from .cards import MinorImprovement as MinorImprovementCard
 from .cards import MajorImprovement as MajorImprovementCard
-from .step import ResourcePayingStep, RenovatingStep,PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep, FencingStep, PlayMajorImprovementStep, TakingResourcesFromActionStep
+from .step import BakingStep,SowingStep,ResourcePayingStep, RenovatingStep,PlayMinorImprovementStep, PlowingStep, PlayOccupationStep, HouseBuildingStep, StableBuildingStep, FencingStep, PlayMajorImprovementStep, TakingResourcesFromActionStep
 from .player import Pasture
 from . import const
 from .utils import dbgprint
@@ -456,30 +456,8 @@ class Cultivation(Action):
 
 
 class GrainUtilization(Action):
-    def choices(self, player):
-        return [
-            CountChoice(player.grain, "Number of grain seeds to plant."),
-            CountChoice(player.veg, "Number of vegatable seeds to plant."),
-            CountChoice(player.grain, "Number of grain bushels to bake into bread.")]
-
-    def _effect(self, player, choices):
-        if all(i is None for i in choices):
-            raise AgricolaInvalidChoice("Must perform at least one of: sow, bake bread.")
-
-        if choices[0] is not None or choices[1] is not None:
-            grain = choices[0] or 0
-            veg = choices[1] or 0
-            player.sow(grain, veg)
-
-        if choices[2] is not None:
-            player.bake_bread(choices[2])
-
-    def _convert_action_dict(self, player, action_dict):
-        # TODO choose grain plant field
-        # TODO choose vegitable plant field
-        # TODO choose baking improvement
-        return [action_dict["plant_grain_count"], action_dict["plant_vegitable_count"], action_dict["bake_grain_count"]]
-
+    def effect(self, player):
+        return [BakingStep(), SowingStep()]
 
 
 class GrainSeeds(ResourceAcquisition):

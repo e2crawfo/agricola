@@ -26,4 +26,6 @@ trigger_event_names = dotDict({
   "take_resources_from_action": "take_resources_from_action",
   "resource_payment_renovation": "resource_payment_renovation",
   "resource_trading": "resource_trading",
+  "baking": "baking",
+  "get_sowing_candidates": "get_sowing_candidates"
 })
