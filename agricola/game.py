@@ -301,7 +301,6 @@ def play(game, ui, agent_processes, logdir):
 
       step_stack = []
       for p in game.players:
-        p.turn_left = p.people
         preround_steps = p.start_round(game.round_idx) 
         # TODO: preround stepsを処理
 
@@ -328,7 +327,7 @@ def play(game, ui, agent_processes, logdir):
         try:
           while len(step_stack) > 0:
             next_step = step_stack.pop()
-            next_choice = next_step.get_required_choice(game_copy, player)
+            next_choice = next_step.get_required_choice(game_copy)
 
             if next_choice and len(next_choice.candidates) != 1:
               players_choice = communicate_with_player(game_copy, 
@@ -339,7 +338,7 @@ def play(game, ui, agent_processes, logdir):
               # read player's choice 
               next_choice.read_players_choice(players_choice)
 
-            additional_steps = next_step.effect(game_copy, player, next_choice)
+            additional_steps = next_step.effect(game_copy, next_choice)
             if additional_steps:
               step_stack = step_stack + additional_steps
 
