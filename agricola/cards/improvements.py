@@ -586,14 +586,28 @@ class Fireplace(with_metaclass(abc.ABCMeta, MajorImprovement)):
         }
     ]
 
+    baking_rates = [
+        {
+            "grain": -1,
+            "food": 2
+        }
+    ]
+
     def _apply(self, player):
         player.listen_for_event(self, const.trigger_event_names.resource_trading)
+        player.listen_for_event(self, const.trigger_event_names.baking)
 
     def trigger(self, player, **kwargs):
-        return self.resource_choice_filter
+        if kwargs["event_name"] == const.trigger_event_names.resource_trading:
+            return self.resource_choice_filter
+        else:
+            return self.resource_choice_filter_baking
 
     def resource_choice_filter(self, player, choice_candidates, executed_action):
         return generate_resource_trading_candidates(player, choice_candidates, self.trading_effects)
+    
+    def resource_choice_filter_baking(self, player, choice_candidates, executed_action):
+        return generate_resource_trading_candidates(player, choice_candidates, self.baking_rates)
 
 class Fireplace2(Fireplace):
     _cost = {'clay': 2}
@@ -626,14 +640,28 @@ class CookingHearth(with_metaclass(abc.ABCMeta, MajorImprovement)):
         }
     ]
 
+    baking_rates = [
+        {
+            "grain": -1,
+            "food": 3
+        }
+    ]
+
     def _apply(self, player):
         player.listen_for_event(self, const.trigger_event_names.resource_trading)
+        player.listen_for_event(self, const.trigger_event_names.baking)
 
     def trigger(self, player, **kwargs):
-        return self.resource_choice_filter
+        if kwargs["event_name"] == const.trigger_event_names.resource_trading:
+            return self.resource_choice_filter
+        else:
+            return self.resource_choice_filter_baking
 
     def resource_choice_filter(self, player, choice_candidates, executed_action):
         return generate_resource_trading_candidates(player, choice_candidates, self.trading_effects)
+    
+    def resource_choice_filter_baking(self, player, choice_candidates, executed_action):
+        return generate_resource_trading_candidates(player, choice_candidates, self.baking_rates)
 
 class CookingHearth4(CookingHearth):
     _cost = {'clay': 4}

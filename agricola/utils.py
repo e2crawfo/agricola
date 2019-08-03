@@ -38,6 +38,7 @@ class EventGenerator(with_metaclass(abc.ABCMeta, object)):
 
   def trigger_event(self, event_name, *args, before=False, **kwargs):
     valid = self._validate_event_name(event_name)
+    kwargs["event_name"] = event_name
     # TODO disable validation
     # if not valid:
     #   raise Exception(
