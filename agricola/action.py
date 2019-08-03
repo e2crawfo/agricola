@@ -69,7 +69,7 @@ class ResourceAcquisition(Action):
         for k, v in self.resources.items():
             resources[k] = v
         #return [TakingResourcesFromActionStep(self.resources)]
-        return [TakingResourcesFromActionStep(resources, self)]
+        return [TakingResourcesFromActionStep(player, resources, self)]
 
     def add_resources(self, resources_dict):
         '''
@@ -149,7 +149,7 @@ class BasicWishForChildren(Action):
             raise AgricolaImpossible(
             "Trying to add people, but player has only {0} rooms available.".format(player._rooms))
         player.add_people(1)
-        return [PlayMinorImprovementStep()]
+        return [PlayMinorImprovementStep(player)]
 
 class ModestWishForChildren(Action):
     def _effect(self, player, choices):
@@ -287,7 +287,7 @@ class AnimalMarket(ResourceAcquisition):
 
 class FarmExpansion(Action):
     def effect(self, player):
-        return [StableBuildingStep(), HouseBuildingStep()]
+        return [StableBuildingStep(player), HouseBuildingStep(player)]
 
         room_spaces = choices[0]
         if room_spaces is None:
@@ -319,7 +319,11 @@ class HouseRedevelopment(Action):
         else:
             material = "stone"
         cost = {material: player.rooms, 'reed': 1}
-        return [PlayMajorImprovementStep(), RenovatingStep(material), ResourcePayingStep(cost, const.trigger_event_names.resource_payment_renovation)]
+        return [
+          PlayMajorImprovementStep(player), 
+          RenovatingStep(player, material), 
+          ResourcePayingStep(player, cost, const.trigger_event_names.resource_payment_renovation)
+        ]
 
 class FarmRedevelopment(Action):
     def effect(self, player):
@@ -329,24 +333,30 @@ class FarmRedevelopment(Action):
         else:
             material = "stone"
         cost = {material: player.rooms, 'reed': 1}
-        return [FencingStep(), RenovatingStep(material), ResourcePayingStep(cost, const.trigger_event_names.resource_payment_renovation)]
+        return [
+          FencingStep(player), 
+          RenovatingStep(player, material), 
+          ResourcePayingStep(
+            player, cost, 
+            const.trigger_event_names.resource_payment_renovation)
+        ]
 
 
 
 class MajorImprovement(Action):
     def effect(self, player):
-        return [PlayMajorImprovementStep()]
+        return [PlayMajorImprovementStep(player)]
 
 class Fencing(Action):
     def effect(self, player):
-        return [FencingStep()]
+        return [FencingStep(player)]
 
 class Lessons(Action):
 
     def effect(self, player):
         if len(player.occupations) > 0:
             player.change_state("Playing occupation", cost=dict(food=1))
-        return [PlayOccupationStep()]
+        return [PlayOccupationStep(player)]
 
 
 
@@ -399,7 +409,7 @@ class Lessons4P(Action):
 class MeetingPlace(Action):
     def effect(self, player):
         player.game.set_first_player(int(player.name))
-        return [PlayMinorImprovementStep()]
+        return [PlayMinorImprovementStep(player)]
 
 class MeetingPlaceFamily(Accumulating):
     acc_amount = dict(food=1)
@@ -414,7 +424,7 @@ class MeetingPlaceFamily(Accumulating):
 
 class Farmland(Action):
     def effect(self, player):
-        return [PlowingStep()]
+        return [PlowingStep(player)]
 
 class Cultivation(Action):
     def choices(self, player):

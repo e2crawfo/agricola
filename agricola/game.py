@@ -284,7 +284,7 @@ def play(game, ui, agent_processes, logdir):
   for p in game.players:
     print(p)
 
-  # Main loop
+  ##################  Main loop  ########################
   game.active_actions = [a for a in game.action_order[0]]
   previous_error = ""
 
@@ -299,66 +299,64 @@ def play(game, ui, agent_processes, logdir):
 
       ui.begin_round(game.round_idx, round_action)
 
+      step_stack = []
       for p in game.players:
         p.turn_left = p.people
         preround_steps = p.start_round(game.round_idx) 
         # TODO: preround stepsを処理
 
-      remaining_players = set(range(len(game.players)))
       order = list(range(game.n_players))
       order = order[game.first_player_idx:] + order[:game.first_player_idx]
       game.actions_taken = {}
 
       for i in itertools.cycle(order):
-        if i in remaining_players:
-          game.current_player_idx = i
-          game_copy = copy.deepcopy(game)
-          player = game_copy.players[i]
+        end_round = sum([game.players[j].turn_left for j in range(game.n_players)]) == 0
+        if end_round:
+          break
+        elif game.players[i].turn_left <= 0:
+          continue
 
-          # initialize step stack
-          # TODO move trading step to proper position
-          step_stack += [ActionSelectionStep(), ResourceTradingStep()]
+        game.current_player_idx = i
+        game_copy = copy.deepcopy(game)
+        player = game_copy.players[i]
 
-          try:
-            while len(step_stack) > 0:
-              next_step = step_stack.pop()
-              next_choice = next_step.get_required_choice(game_copy, player)
+        # initialize step stack
+        # TODO move trading step to proper position
+        step_stack += [ActionSelectionStep(player), 
+                       ResourceTradingStep(player)]
 
-              if next_choice and len(next_choice.candidates) != 1:
-                communicate_with_player(game_copy, 
-                                        next_choice, 
-                                        previous_error,
-                                        logdir, 
-                                        agent_processes[i])
+        try:
+          while len(step_stack) > 0:
+            next_step = step_stack.pop()
+            next_choice = next_step.get_required_choice(game_copy, player)
 
-                # read player's choice 
-                next_choice.read_players_choice(players_choice)
+            if next_choice and len(next_choice.candidates) != 1:
+              players_choice = communicate_with_player(game_copy, 
+                                                       next_choice, 
+                                                       previous_error,
+                                                       logdir, 
+                                                       agent_processes[i])
+              # read player's choice 
+              next_choice.read_players_choice(players_choice)
 
-              additional_steps = next_step.effect(game_copy, player, next_choice)
-              if additional_steps:
-                step_stack = step_stack + additional_steps
+            additional_steps = next_step.effect(game_copy, player, next_choice)
+            if additional_steps:
+              step_stack = step_stack + additional_steps
 
-            del game
-            game = game_copy
+          del game
+          game = game_copy
 
-          except AgricolaException as e:
-            print(e)
-            ui.action_failed(str(e))
-            previous_error = str(e)
-            game.players[i].turn_left -= 1
-            del game_copy
+        except AgricolaException as e:
+          print(e)
+          ui.action_failed(str(e))
+          previous_error = str(e)
+          game.players[i].turn_left -= 1
+          del game_copy
 
-          ui.update_game(game)
-          ui.action_successful()
-
-          for p in game.players:
-            print(p)
-
-          if game.players[i].turn_left <= 0:
-            remaining_players.remove(i)
-            if not remaining_players:
-              break
-
+        ui.update_game(game)
+        ui.action_successful()
+        for p in game.players:
+          print(p)
       ui.end_round()
       game.round_idx += 1
 
@@ -368,11 +366,13 @@ def play(game, ui, agent_processes, logdir):
     ui.end_stage()
 
     game.stage_idx += 1
+    ##################  Main loop  ########################
 
   game.score = {}
   for i, p in enumerate(game.players):
     game.score[i] = p.score()
   game.ui = None
+  state_log_path = logdir + "/" + game.game_id + "_state.json"
   sys.stderr.write('The game log was saved to \'%s\'.\n' % state_log_path)
 
 

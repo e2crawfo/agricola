@@ -435,7 +435,7 @@ class Field(MinorImprovement):
     traveling = True
 
     def _apply(self, player):
-        return [PlowingStep()]
+        return [PlowingStep(player)]
 
 class Dovecote(MinorImprovement):
     _cost = dict(store=2)

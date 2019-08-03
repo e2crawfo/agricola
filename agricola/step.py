@@ -7,8 +7,8 @@ from .utils import dotDict, recDotDefaultDict, dbgprint
 from collections import defaultdict
 
 class Step(with_metaclass(abc.ABCMeta, object)):
-    def __init__(self):
-        pass
+    def __init__(self, player):
+        self.player = player
 
     @abc.abstractmethod
     def get_required_choice(self, game, player):
@@ -61,7 +61,8 @@ class PlayMinorImprovementStep(Step):
         return choice.choice_value.check_and_apply(player)
 
 class ResourcePayingStep(Step):
-  def __init__(self, cost, trigger_name):
+  def __init__(self, player, cost, trigger_name):
+    super(ResourcePayingStep, self).__init__(player)
     self.trigger_name = trigger_name
     self.resources = [cost]
 
@@ -85,7 +86,8 @@ class ResourceTradingStep(Step):
         player.change_state("", change=selected_summary)
 
 class TakingResourcesFromActionStep(Step):
-    def __init__(self, resources, executed_action):
+    def __init__(self, player, resources, executed_action):
+        super(TakingResourcesFromActionStep, self).__init__(player)
         self.resources = resources.copy()
         self.executed_action = executed_action
         assert type(self.resources) == defaultdict
@@ -115,7 +117,8 @@ class TakingResourcesFromActionStep(Step):
         return selected_candidate['additional_steps']
 
 class RenovatingStep(Step):
-  def __init__(self, resource):
+  def __init__(self, player, resource):
+    super(RenovatingStep, self).__init__(player)
     self.resource = resource
 
   def get_required_choice(self, game, player):
@@ -140,7 +143,7 @@ class HouseBuildingStep(Step):
     def effect(self, game, player, choice):
         if choice.choice_value:
             player.build_rooms(choice.choice_value)
-            return [HouseBuildingStep()]
+            return [HouseBuildingStep(player)]
 
 class StableBuildingStep(Step):
     def get_required_choice(self, game, player):
@@ -150,7 +153,7 @@ class StableBuildingStep(Step):
     def effect(self, game, player, choice):
         if choice.choice_value:
             player.build_stables(choice.choice_value, 2)
-            return [StableBuildingStep()]
+            return [StableBuildingStep(player)]
 
 class SowingStep(Step):
     pass
