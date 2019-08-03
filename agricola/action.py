@@ -457,7 +457,7 @@ class Cultivation(Action):
 
 class GrainUtilization(Action):
     def effect(self, player):
-        return [BakingStep(), SowingStep()]
+        return [BakingStep(player), SowingStep(player)]
 
 
 class GrainSeeds(ResourceAcquisition):

@@ -155,16 +155,16 @@ class StableBuildingStep(Step):
             return [StableBuildingStep(self.player)]
 
 class SowingStep(Step):
-    def get_required_choice(self, game, player):
-        return SowingChoice(game, player)
+    def get_required_choice(self, game):
+        return SowingChoice(game, self.player)
 
-    def effect(self, game, player, choice):
+    def effect(self, game, choice):
         selected_candidate = choice.selected_candidate
-        player.change_state("", change=selected_candidate["sowing_resources"])
+        self.player.change_state("", change=selected_candidate["sowing_resources"])
         # sow
         for sowing_field in selected_candidate["sowing_fields"]:
             sow_completed = False
-            for field in player._fields:
+            for field in self.player._fields:
                 if field.space == sowing_field["field_space"]:
                     field.sow(sowing_field["seed"])
                     sow_completed = True
@@ -174,13 +174,13 @@ class SowingStep(Step):
 
 
 class BakingStep(Step):
-    def get_required_choice(self, game, player):
-        return ResourceTradingChoice(game, player, defaultdict(int), None, const.trigger_event_names.baking)
+    def get_required_choice(self, game):
+        return ResourceTradingChoice(game, self.player, defaultdict(int), None, const.trigger_event_names.baking)
 
-    def effect(self, game, player, choice):
+    def effect(self, game, choice):
         selected_summary = choice.selected_summarized_candidate
         selected_candidate = choice.selected_candidate
-        player.change_state("", change=selected_summary)
+        self.player.change_state("", change=selected_summary)
 
 class FencingStep(Step):
     def get_required_choice(self, game):
