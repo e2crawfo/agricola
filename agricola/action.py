@@ -319,9 +319,9 @@ class HouseRedevelopment(Action):
         else:
             material = "stone"
         cost = {material: player.rooms, 'reed': 1}
-        print('================')
-        print(player)
-        print(material)
+        # print('================')
+        # print(player)
+        # print(material)
         return [
           PlayMajorImprovementStep(player), 
           RenovatingStep(player, material), 

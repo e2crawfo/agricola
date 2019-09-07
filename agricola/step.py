@@ -13,12 +13,14 @@ from .errors import (
 class Step(with_metaclass(abc.ABCMeta, object)):
     def __init__(self, player):
         self.player = player
-
-    @abc.abstractmethod
+    
+    # @abc.abstractmethod
+    # def get_required_choice(self, game):
+    #     pass
     def get_required_choice(self, game):
-        pass
+        return None
 
-    # returns next stack items
+    # Returns next stack steps
     def effect(self, game, choice):
         return None
 
@@ -27,6 +29,9 @@ class ActionSelectionStep(Step):
         return ActionChoice(game, self.player)
 
     def effect(self, game, choice):
+        # Do nothing if the player has no families left.
+        if self.player.turn_left <= 0:
+          return []
         game.actions_taken[choice.choice_value] = self.player.index
         game.actions_remaining.remove(choice.choice_value)
         game.players[self.player.index].turn_left -= 1
@@ -193,3 +198,9 @@ class FencingStep(Step):
 
 class AnimalMarketStep(Step):
     pass
+
+
+
+class RoundStartStep(Step):
+  def effect(self, game, choice):
+    return self.player.start_round(game.round_idx)

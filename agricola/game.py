@@ -19,13 +19,16 @@ from .action import *
 from .cards import (
   get_occupations, get_minor_improvements, get_major_improvements)
 from .utils import EventGenerator, EventScope, dbgprint
-from .step import ActionSelectionStep, ResourceTradingStep
+from .step import ActionSelectionStep, ResourceTradingStep, RoundStartStep
 from .choice import Choice
 from . import const
 # TODO: make sure that certain actions which allow two things to be done have
 # the order of the two things respected (and make sure player can't take the
 # action if they can't take the first action.
 
+
+RANDOM_SEED = 0
+np.random.seed(seed=RANDOM_SEED)
 
 def communicate_with_player(game, next_choice, previous_error, logdir, popen):
   # add context of the current choice to the state
@@ -36,7 +39,6 @@ def communicate_with_player(game, next_choice, previous_error, logdir, popen):
   if previous_error:
     state_dict["previous_error"] = previous_error
   state_json = json.dumps(state_dict)
-  previous_error = ''
   
   # send the state to agent
   popen.stdin.write(state_json + "\n")
@@ -49,6 +51,7 @@ def communicate_with_player(game, next_choice, previous_error, logdir, popen):
   # add player's choice to the state
   state_dict["player_output"] = players_choice
 
+  
   # log current state 
   state_log_path = logdir + "/" + game.game_id + "_state.json"
   with open(state_log_path, mode='a') as f:
@@ -115,6 +118,7 @@ class AgricolaGame(EventGenerator):
     self.game_id = game_id
     self.actions = actions
     self.n_players = n_players
+    self.step_stack = []
 
     # 0 is always first player
     self.set_first_player(0)
@@ -149,7 +153,6 @@ class AgricolaGame(EventGenerator):
     except:
       pass
     self.minor_improvements = minor_improvements
-
     self.major_improvements = major_improvements or []
 
     self.randomize = randomize
@@ -248,6 +251,51 @@ class AgricolaGame(EventGenerator):
 
     return choices
 
+  def start_stage(self):
+    self.ui.begin_stage(self.stage_idx)
+
+  def start_round(self, round_action):
+    self.ui.begin_round(self.round_idx, round_action)
+    self.actions_remaining = self.active_actions + []
+    self.active_actions.append(round_action)
+    for action in self.active_actions:
+      action.turn()
+    self.actions_taken = {}
+
+    roundstart_stepstack = [RoundStartStep(p) for p in self.players]
+    roundstart_stepstack = list(reversed(roundstart_stepstack))
+    self.step_stack += roundstart_stepstack
+
+    order = list(range(self.n_players))
+    order = order[self.first_player_idx:] + order[:self.first_player_idx]
+    return order
+
+  def end_round(self, player_order):
+    print('End round %d' % self.round_idx, file=sys.stderr)
+    self.ui.end_round()
+    self.round_idx += 1
+    for i in player_order:
+        self.players[i].end_round()
+
+  def end_stage(self, player_order):
+    self.ui.harvest()
+    for i in player_order:
+        self.players[i].harvest()
+    self.ui.end_stage()
+    self.stage_idx += 1
+
+  @property
+  def is_end_of_round(self):
+    # ** player.turn_left can be less than 0 **
+    return len([1 for j in range(self.n_players) if self.players[j].turn_left >= 1]) == 0
+
+  def revert_failed_step(self, player_idx, e):
+    
+    print(e, file=sys.stderr)
+    self.ui.action_failed(str(e))
+    self.players[player_idx].turn_left -= 1
+
+
 def play(game, ui, agent_processes, logdir):
   game.ui = ui
   if game.randomize:
@@ -281,54 +329,37 @@ def play(game, ui, agent_processes, logdir):
   game.stage_idx = 1
   game.actions_taken = {}
 
-  for p in game.players:
-    print(p)
+  # for p in game.players:
+  #   print(p)
 
   ##################  Main loop  ########################
   game.active_actions = [a for a in game.action_order[0]]
   previous_error = ""
-
   for stage_actions in game.action_order[1:]:
-    ui.begin_stage(game.stage_idx)
+    game.start_stage()
+    game.step_stack = []
     for round_action in stage_actions:
-      game.active_actions.append(round_action)
-      for action in game.active_actions:
-        action.turn()
+      player_order = game.start_round(round_action)
 
-      game.actions_remaining = game.active_actions + []
+      for i in itertools.cycle(player_order):
 
-      ui.begin_round(game.round_idx, round_action)
-
-      step_stack = []
-      for p in game.players:
-        preround_steps = p.start_round(game.round_idx) 
-        # TODO: preround stepsを処理
-
-      order = list(range(game.n_players))
-      order = order[game.first_player_idx:] + order[:game.first_player_idx]
-      game.actions_taken = {}
-
-      for i in itertools.cycle(order):
-        end_round = sum([game.players[j].turn_left for j in range(game.n_players)]) == 0
-        if end_round:
+        if game.is_end_of_round:
           break
-        elif game.players[i].turn_left <= 0:
-          continue
-
         game.current_player_idx = i
+        game.prevous_error = ''
         game_copy = copy.deepcopy(game)
         player = game_copy.players[i]
 
-        # initialize step stack
-        # TODO move trading step to proper position
-        step_stack += [ActionSelectionStep(player), 
-                       ResourceTradingStep(player)]
-
+        # TODO: move optional trading step to proper position
+        # TODO: do this ResourceTradingStap occur even if he have no family?
+        game_copy.step_stack += [ActionSelectionStep(player), 
+                                 ResourceTradingStep(player)]
         try:
-          while len(step_stack) > 0:
-            next_step = step_stack.pop()
+          while len(game_copy.step_stack) > 0:
+            next_step = game_copy.step_stack.pop()
             next_choice = next_step.get_required_choice(game_copy)
-
+            # print(game.stage_idx, game.round_idx, file=sys.stderr)
+            # print(True if next_choice and len(next_choice.candidates) != 1 else False, file=sys.stderr)
             if next_choice and len(next_choice.candidates) != 1:
               players_choice = communicate_with_player(game_copy, 
                                                        next_choice, 
@@ -340,31 +371,19 @@ def play(game, ui, agent_processes, logdir):
 
             additional_steps = next_step.effect(game_copy, next_choice)
             if additional_steps:
-              step_stack = step_stack + additional_steps
-
+              game_copy.step_stack += additional_steps
+            previous_error = ''
           del game
           game = game_copy
-
         except AgricolaException as e:
-          print(e)
-          ui.action_failed(str(e))
+          game.revert_failed_step(i, e)
           previous_error = str(e)
-          game.players[i].turn_left -= 1
           del game_copy
 
         ui.update_game(game)
         ui.action_successful()
-        for p in game.players:
-          print(p)
-      ui.end_round()
-      game.round_idx += 1
-
-    ui.harvest()
-    for p in game.players:
-      p.harvest()
-    ui.end_stage()
-
-    game.stage_idx += 1
+      game.end_round(player_order)
+    game.end_stage(player_order)
     ##################  Main loop  ########################
 
   game.score = {}

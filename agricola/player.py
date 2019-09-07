@@ -506,7 +506,7 @@ class Player(EventGenerator):
 
   @property
   def fenced_stables(self):
-    print(self.pastures)
+    # print(self.pastures)
     return len([s for s in self._stables
           if any(s in p for p in self._pastures)])
 
@@ -637,7 +637,7 @@ class Player(EventGenerator):
 
   def end_round(self):
     with EventScope(self, 'end_round'):
-      pass
+        self.turn_left = self.people
 
   def harvest(self):
     # harvest from field
@@ -943,13 +943,13 @@ class Player(EventGenerator):
         "newborn": False
       })
 
-    print(self._pastures)
+    # print(self._pastures)
     pasture_state = list(map(lambda pasture: list(map(lambda space: (space[1], space[0]), pasture.spaces)), self._pastures))
 
     fences_state = list(map(lambda fence: list(map(lambda point: (point[1], point[0]), fence)), self.fences))
 
-    print("=--=--=--=-=-=--=-=-=--=")
-    print(pasture_state)
+    # print("=--=--=--=-=-=--=-=-=--=")
+    # print(pasture_state)
 
     return {
       "player_id": int(self.name),
