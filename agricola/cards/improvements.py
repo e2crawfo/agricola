@@ -48,7 +48,7 @@ class MinorImprovement(with_metaclass(abc.ABCMeta, Card)):
 
     # returns steps
     def check_and_apply(self, player):
-        print("Applying minor improvement {0}.".format(self.name))
+        #print("Applying minor improvement {0}.".format(self.name))
         description = "Playing minor improvement {0}".format(self)
 
         player.change_state(description, cost=self.cost.copy())
@@ -538,7 +538,7 @@ class MajorImprovement(with_metaclass(abc.ABCMeta, Card)):
         pass
 
     def check_and_apply(self, player):
-        print("Applying major improvement {0}.".format(self.name))
+        #print("Applying major improvement {0}.".format(self.name))
         description = "Playing major improvement {0}".format(self)
         player.change_state(description, cost=self.cost.copy())
         self._apply(player)

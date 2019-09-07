@@ -39,9 +39,10 @@ class UserInterface(object):
       pass
 
   def end_round(self):
-   print(self.game)
-   for p in self.game.players:
-       print(p)
+      pass
+   # print(self.game)
+   # for p in self.game.players:
+   #     print(p)
    # print("End of round.")
 
   def end_stage(self):
@@ -117,7 +118,7 @@ class UserInterface(object):
             raise Exception()
           break
         except:
-          print("x. {0} is not a valid response.".format(response))
+          print("x. {0} is not a valid response.".format(response), file=sys.stderr)
 
       return _response
 
@@ -154,7 +155,7 @@ class UserInterface(object):
           _response = (int(m.group(1)), int(m.group(2)))
           break
         except:
-          print("x. {0} is not a valid response.".format(response))
+          print("x. {0} is not a valid response.".format(response), file=sys.stderr)
 
       return _response
     else:

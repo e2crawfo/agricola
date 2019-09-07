@@ -629,15 +629,16 @@ class Player(EventGenerator):
       self.turn_left = self.people
       resources = self.future_resources[round_idx]
       for resource, amount in resources.items():
-        #TODO trigger events
         setattr(self, resource, getattr(self, resource) + amount)
 
-      # TODO: process future_steps
-      return self.future_steps[round_idx]
+      #TODO trigger events
+      return self.future_steps[round_idx] + self.trigger_event(const.trigger_event_names.start_round)
 
   def end_round(self):
-    with EventScope(self, 'end_round'):
-        self.turn_left = self.people
+      return self.trigger_event(const.trigger_event_names.end_round)
+
+  def end_stage(self):
+      return self.trigger_event(const.trigger_event_names.end_stage)
 
   def harvest(self):
     # harvest from field
@@ -780,8 +781,7 @@ class Player(EventGenerator):
     state_change.check_and_apply(self)
 
     self._pastures.extend(pastures)
-    for p in pastures:
-      self.trigger_event('build_pasture', pasture=p)
+
 
   def build_stables(self, spaces, unit_cost):
     if isinstance(spaces, int):

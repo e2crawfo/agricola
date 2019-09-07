@@ -200,7 +200,15 @@ class AnimalMarketStep(Step):
     pass
 
 
-
 class RoundStartStep(Step):
-  def effect(self, game, choice):
-    return self.player.start_round(game.round_idx)
+    def effect(self, game, choice):
+        return self.player.start_round(game.round_idx)
+
+
+class RoundEndStep(Step):
+    def effect(self, game, choice):
+        return self.player.end_round()
+
+class StageEndStep(Step):
+    def effect(self, game, choice):
+        return self.player.harvest()

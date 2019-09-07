@@ -28,8 +28,7 @@ def get_occupations(n_players):
 class Occupation(with_metaclass(abc.ABCMeta, Card)):
     # returns steps
     def check_and_apply(self, player):
-        print("Applying occupation {0}.".format(self.name))
-
+        # print("Applying occupation {0}.".format(self.name))
         self._check(player)
         return self._apply(player)
 

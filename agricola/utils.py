@@ -6,6 +6,8 @@ from future.utils import iteritems, with_metaclass
 import abc
 import copy
 
+from itertools import chain
+
 
 class EventGenerator(with_metaclass(abc.ABCMeta, object)):
   def __init__(self):
@@ -51,7 +53,6 @@ class EventGenerator(with_metaclass(abc.ABCMeta, object)):
     listeners = self.listeners.get(event_name, [])
     trigger_results = []
     for l in listeners:
-      print(l)
       trigger_results.append(l.trigger(*args, **kwargs))
     return trigger_results
 
@@ -356,3 +357,9 @@ from inspect import currentframe
 def dbgprint(*args):
   names = {id(v):k for k,v in currentframe().f_back.f_locals.items()}
   print(', '.join(names.get(id(arg),'???')+' = '+repr(arg) for arg in args))
+
+
+
+
+def flatten(l):
+  return list(chain.from_iterable(l))
