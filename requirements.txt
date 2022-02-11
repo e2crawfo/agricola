@@ -17,7 +17,7 @@ pandas==0.19.1
 pexpect==4.2.1
 pickleshare==0.7.4
 prompt-toolkit==1.0.9
-protobuf==3.1.0.post1
+protobuf==3.15.0
 ptyprocess==0.5.1
 py==1.4.32
 pycodestyle==2.2.0
