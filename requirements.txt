@@ -12,7 +12,7 @@ networkx==1.11
 nltk==3.2.1
 nose==1.3.7
 -e git+git@github.com:e2crawfo/notetaker.git@8895b42af10a85979b6d75a188e2f0cecc84bd8a#egg=notetaker
-numpy==1.11.2
+numpy==1.22.0
 pandas==0.19.1
 pexpect==4.2.1
 pickleshare==0.7.4
